@@ -95,7 +95,7 @@ namespace controller_interface
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_injection;
 
             //sprine_pid
-            rclcpp::Publisher<std_msgs::msg::String>::SharedPtr _pub_sprine_pid;
+            rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_move_node;
 
             //timer
             rclcpp::TimerBase::SharedPtr _pub_heartbeat;
