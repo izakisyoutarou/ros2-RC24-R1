@@ -56,6 +56,7 @@ namespace controller_interface
             //spline_pidから
             rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_spline;
 
+            rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_in_process;
 
             //injection_param_calculatorから
             rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_injection_calculator;
@@ -70,9 +71,9 @@ namespace controller_interface
             //各nodeと共有
             rclcpp::Publisher<controller_interface_msg::msg::BaseControl>::SharedPtr _pub_base_control;
             rclcpp::Publisher<controller_interface_msg::msg::Convergence>::SharedPtr _pub_convergence;
-            rclcpp::Publisher<controller_interface_msg::msg::Colorball>::SharedPtr _pub_color_ball;
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_injection;
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_coat_state;
+            rclcpp::Publisher<controller_interface_msg::msg::Colorball>::SharedPtr _pub_color_information;
+            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_is_backside;
+            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_coat_color;
 
             //ボールと苗の回収&設置
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_seedling_collection;
@@ -130,6 +131,7 @@ namespace controller_interface
             //sequencerからのcallback
             void callback_injection_strage(const std_msgs::msg::String::SharedPtr msg);
             void callback_collecting_ball(const std_msgs::msg::String::SharedPtr msg);
+            void callback_in_process(const std_msgs::msg::Bool::SharedPtr msg);
             void _recv_callback();
 
 
@@ -168,6 +170,8 @@ namespace controller_interface
             bool ballhand0 = false;
             bool ballhand1 = false;
             bool injection_flag = false;
+
+            bool in_process_flag = false;
 
 
             //canusb

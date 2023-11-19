@@ -160,6 +160,12 @@ namespace controller_interface
                 _qos,
                 std::bind(&SmartphoneGamepad::callback_injection_calculator, this, std::placeholders::_1)
             );
+            //緊急停止及びリスタート以外のボタンをすべて無効化する
+            _sub_in_process = this->create_subscription<std_msgs::msg::Bool>(
+                "in_process",
+                _qos,
+                std::bind(&SmartphoneGamepad::callback_in_process, this, std::placeholders::_1)
+            );
 
             //canusbへpub
             //txは送信でrxは受信
@@ -168,9 +174,9 @@ namespace controller_interface
             //各nodeへ共有。
             _pub_base_control = this->create_publisher<controller_interface_msg::msg::BaseControl>("base_control",_qos);
             _pub_convergence = this->create_publisher<controller_interface_msg::msg::Convergence>("convergence" , _qos);
-            _pub_color_ball = this->create_publisher<controller_interface_msg::msg::Colorball>("color_information", _qos);
-            _pub_injection = this->create_publisher<std_msgs::msg::Bool>("is_backside", _qos);
-            _pub_coat_state = this->create_publisher<std_msgs::msg::Bool>("coat_color", _qos);
+            _pub_color_information = this->create_publisher<controller_interface_msg::msg::Colorball>("color_information", _qos);
+            _pub_is_backside = this->create_publisher<std_msgs::msg::Bool>("is_backside", _qos);
+            _pub_coat_color = this->create_publisher<std_msgs::msg::Bool>("coat_color", _qos);
             //sprine_pid
             pub_move_node = this->create_publisher<std_msgs::msg::String>("move_node", _qos);
             //gazebo用のpub
@@ -216,7 +222,7 @@ namespace controller_interface
             //コンストラクタ限定
             auto msg_injection_con = std::make_shared<std_msgs::msg::Bool>();
             msg_injection_con->data = injection_flag;
-            _pub_injection->publish(*msg_injection_con);
+            _pub_is_backside->publish(*msg_injection_con);
 
             auto msg_unity_initial_state = std::make_shared<std_msgs::msg::String>();
             msg_unity_initial_state->data = initial_state;
@@ -285,7 +291,7 @@ namespace controller_interface
             msg_colorball_info->color_info[9] = defalt_color_information_flag;
             msg_colorball_info->color_info[10] = defalt_color_information_flag;
             msg_colorball_info->color_info[11] = defalt_color_information_flag;
-            _pub_color_ball->publish(*msg_colorball_info);
+            _pub_color_information->publish(*msg_colorball_info);
 
             //ハートビート
             //コントローラの鼓動
@@ -357,6 +363,16 @@ namespace controller_interface
             velPlanner_angular_z.limit(limit_angular);
         }
 
+        void SmartphoneGamepad::callback_in_process(const std_msgs::msg::Bool::SharedPtr msg){
+            
+            auto msg_in_process = std::make_shared<std_msgs::msg::Bool>();
+            if(msg->data == true){
+                in_process_flag = true;
+            }else if(msg->data == false){
+                in_process_flag = false;
+            }
+        }
+
         void SmartphoneGamepad::callback_main_pad(const std_msgs::msg::String::SharedPtr msg)
         {
             //リスタートの処理
@@ -384,9 +400,9 @@ namespace controller_interface
             //resertがtureをpubした後にfalseをpubする
             bool flag_restart = false;
 
-            //upで射出機構の停止
-            if(msg->data == "right"){
-                RCLCPP_INFO(this->get_logger(), "right");
+            //xで射出機構の停止
+            if(msg->data == "x" && in_process_flag == false){
+                RCLCPP_INFO(this->get_logger(), "x");
                 robotcontrol_flag = true;
                 if(is_injection_mech_stop_m == true){
                     is_injection_mech_stop_m = false;
@@ -395,26 +411,26 @@ namespace controller_interface
                 }
             }
 
-            //downでボールの射出する位置を決める
+            //rightでボールの射出する位置を決める
             auto msg_injection = std::make_shared<std_msgs::msg::Bool>();
-            if(msg->data == "up")
+            if(msg->data == "right" && in_process_flag == false)
             {
-                RCLCPP_INFO(this->get_logger(), "up");
+                RCLCPP_INFO(this->get_logger(), "right");
                 
                 injection_flag = false;
                 msg_injection->data = injection_flag;
-                _pub_injection->publish(*msg_injection);
+                _pub_is_backside->publish(*msg_injection);
             }
-            if(msg->data == "down")
+            if(msg->data == "left" && in_process_flag == false)
             {
-                RCLCPP_INFO(this->get_logger(), "down");
+                RCLCPP_INFO(this->get_logger(), "left");
                 
                 injection_flag = true;
                 msg_injection->data = injection_flag;
-                _pub_injection->publish(*msg_injection);
+                _pub_is_backside->publish(*msg_injection);
             }
             //r2で低速モートのonoff。トグル。
-            if(msg->data == "r2")
+            if(msg->data == "r2" && in_process_flag == false)
             {
                 RCLCPP_INFO(this->get_logger(), "r2");
                 robotcontrol_flag = true;
@@ -425,7 +441,7 @@ namespace controller_interface
                 }
             }
             //r3は足回りの手自動の切り替え。is_move_autonomousを使って、トグルになるようにしてる。R1の上物からもらう必要はない。
-            if(msg->data == "r3")
+            if(msg->data == "r3" && in_process_flag == false)
             {
                 RCLCPP_INFO(this->get_logger(), "r3");
                 robotcontrol_flag = true;
@@ -437,7 +453,7 @@ namespace controller_interface
                 }
             }
             //l3でR1の状態確認
-            if(msg->data == "l3")
+            if(msg->data == "l3" && in_process_flag == false)
             {
                 RCLCPP_INFO(this->get_logger(), "l3");
                 start_r1_main = true;
@@ -555,124 +571,126 @@ namespace controller_interface
 
             auto msg_move_node = std::make_shared<std_msgs::msg::String>();
             auto msg_move_node_bool = std::make_shared<std_msgs::msg::Bool>();
-            if(msg->data == "S0"){
-                RCLCPP_INFO(this->get_logger(), "S0");
-                msg_move_node->data = "S0";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "S1"){
-                msg_move_node->data = "S1";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "S2"){
-                msg_move_node->data = "S2";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "S3"){
-                msg_move_node->data = "S3";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "P0"){
-                msg_move_node->data = "P0";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "P1"){
-                msg_move_node->data = "P1";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "P2"){
-                msg_move_node->data = "P2";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "P3"){
-                msg_move_node->data = "P3";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "P4"){
-                msg_move_node->data = "P4";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "P5"){
-                msg_move_node->data = "P5";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "P6"){
-                msg_move_node->data = "P6";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "P7"){
-                RCLCPP_INFO(this->get_logger(), "L");
-                msg_move_node->data = "P7";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "H0"){
-                msg_move_node->data = "H0";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "H1"){
-                msg_move_node->data = "H1";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "H2"){
-                msg_move_node->data = "H2";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "H3"){
-                msg_move_node->data = "H3";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "H4"){
-                msg_move_node->data = "H4";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "H5"){
-                msg_move_node->data = "H5";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "H6"){
-                msg_move_node->data = "H6";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "H7"){
-                msg_move_node->data = "H7";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "H8"){
-                msg_move_node->data = "H8";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "H9"){
-                msg_move_node->data = "H9";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "H10"){
-                msg_move_node->data = "H10";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "H11"){
-                msg_move_node->data = "H11";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "IJ"){
-                msg_move_node->data = "IJ";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "O"){
-                msg_move_node->data = "O";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "Seedling_Collection"){
-                RCLCPP_INFO(this->get_logger(), "Seedling_Collection");
-                msg_move_node_bool->data = true;
-                _pub_seedling_collection->publish(*msg_move_node_bool);
-            }
-            if(msg->data == "Seedling_Installation"){
-                msg_move_node_bool->data = true;
-                _pub_seedling_installation->publish(*msg_move_node_bool);
-            }
-            if(msg->data == "ball_Collection"){
-                msg_move_node_bool->data = true;
-                _pub_ball_collection->publish(*msg_move_node_bool);
+            if(in_process_flag == false){
+                if(msg->data == "S0"){
+                    RCLCPP_INFO(this->get_logger(), "S0");
+                    msg_move_node->data = "S0";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "S1"){
+                    msg_move_node->data = "S1";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "S2"){
+                    msg_move_node->data = "S2";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "S3"){
+                    msg_move_node->data = "S3";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "P0"){
+                    msg_move_node->data = "P0";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "P1"){
+                    msg_move_node->data = "P1";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "P2"){
+                    msg_move_node->data = "P2";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "P3"){
+                    msg_move_node->data = "P3";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "P4"){
+                    msg_move_node->data = "P4";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "P5"){
+                    msg_move_node->data = "P5";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "P6"){
+                    msg_move_node->data = "P6";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "P7"){
+                    RCLCPP_INFO(this->get_logger(), "L");
+                    msg_move_node->data = "P7";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "H0"){
+                    msg_move_node->data = "H0";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "H1"){
+                    msg_move_node->data = "H1";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "H2"){
+                    msg_move_node->data = "H2";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "H3"){
+                    msg_move_node->data = "H3";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "H4"){
+                    msg_move_node->data = "H4";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "H5"){
+                    msg_move_node->data = "H5";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "H6"){
+                    msg_move_node->data = "H6";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "H7"){
+                    msg_move_node->data = "H7";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "H8"){
+                    msg_move_node->data = "H8";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "H9"){
+                    msg_move_node->data = "H9";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "H10"){
+                    msg_move_node->data = "H10";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "H11"){
+                    msg_move_node->data = "H11";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "IJ"){
+                    msg_move_node->data = "IJ";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "O"){
+                    msg_move_node->data = "O";
+                    pub_move_node->publish(*msg_move_node);
+                }
+                if(msg->data == "Seedling_Collection"){
+                    RCLCPP_INFO(this->get_logger(), "Seedling_Collection");
+                    msg_move_node_bool->data = true;
+                    _pub_seedling_collection->publish(*msg_move_node_bool);
+                }
+                if(msg->data == "Seedling_Installation"){
+                    msg_move_node_bool->data = true;
+                    _pub_seedling_installation->publish(*msg_move_node_bool);
+                }
+                if(msg->data == "ball_Collection"){
+                    msg_move_node_bool->data = true;
+                    _pub_ball_collection->publish(*msg_move_node_bool);
+                }
             }
 
         }
@@ -683,128 +701,123 @@ namespace controller_interface
             if(msg->data == true){
                 RCLCPP_INFO(this->get_logger(), "true");
                 msg_coatstate->data = true;
-                _pub_coat_state->publish(*msg_coatstate);
+                _pub_coat_color->publish(*msg_coatstate);
             }else if(msg->data == false){
                 RCLCPP_INFO(this->get_logger(), "false");
                 msg_coatstate->data = false;
-                _pub_coat_state->publish(*msg_coatstate);
+                _pub_coat_color->publish(*msg_coatstate);
             }
 
-        }   
-
+        }
 
 
         void SmartphoneGamepad::callback_sub_pad(const std_msgs::msg::String::SharedPtr msg){
             auto msg_unity_sub_control = std::make_shared<std_msgs::msg::Bool>();
             int colordlc = 12;
             bool color_data[12];
-
-            if(msg->data == "A_red"){
-                RCLCPP_INFO(this->get_logger(), "color_red_A");
-                color_data[0] = true;
-                msg_colorball_info.color_info[0] = color_data[0];
-            }
-            if(msg->data == "A_purple"){
-                color_data[0] = false;
-                RCLCPP_INFO(this->get_logger(), "color_purple_A");
-                msg_colorball_info.color_info[0] = color_data[0];
-            }
-            if(msg->data == "B_red"){
-                color_data[1] = true;
-                msg_colorball_info.color_info[1] = color_data[1];                
-            }
-            if(msg->data == "B_purple"){
-                color_data[1] = false;
-                msg_colorball_info.color_info[1] = color_data[1];
-            }
-            if(msg->data == "C_red"){
-                color_data[2] = true;
-                msg_colorball_info.color_info[2] = color_data[2];
-            }
-            if(msg->data == "C_purple"){
-                color_data[2] = false;
-                msg_colorball_info.color_info[2] = color_data[2];
-            }
-            if(msg->data == "D_red"){
-                color_data[3] = true;
-                msg_colorball_info.color_info[3] = color_data[3];
-            }
-            if(msg->data == "D_purple"){
-                color_data[3] = false;
-                msg_colorball_info.color_info[3] = color_data[3];
-            }
-            if(msg->data == "E_red"){
-                color_data[4] = true;
-                msg_colorball_info.color_info[4] = color_data[4];
-            }
-            if(msg->data == "E_purple"){
-                color_data[4] = false;
-                msg_colorball_info.color_info[4] = color_data[4];
-            }
-            if(msg->data == "F_red"){
-                color_data[5] = true;
-                msg_colorball_info.color_info[5] = color_data[5];
-            }
-            if(msg->data == "F_purple"){
-                color_data[5] = false;
-                msg_colorball_info.color_info[5] = color_data[5];
-            }
-            if(msg->data == "G_red"){
-                color_data[6] = true;
-                msg_colorball_info.color_info[6] = color_data[6];
-            }
-            if(msg->data == "G_purple"){
-                color_data[6] = false;
-                msg_colorball_info.color_info[6] = color_data[6];
-            }
-            if(msg->data == "H_red"){
-                color_data[7] = true;
-                msg_colorball_info.color_info[7] = color_data[7];
-            }
-            if(msg->data == "H_purple"){
-                color_data[7] = false;
-                msg_colorball_info.color_info[7] = color_data[7];
-            }
-            if(msg->data == "I_red"){
-                color_data[8] = true;
-                msg_colorball_info.color_info[8] = color_data[8];
-            }
-            if(msg->data == "I_purple"){
-                color_data[8] = false;
-                msg_colorball_info.color_info[8] = color_data[8];
-            }
-            if(msg->data == "J_red"){
-                color_data[9] = true;
-                msg_colorball_info.color_info[9] = color_data[9];
-            }
-            if(msg->data == "J_purple"){
-                color_data[9] = false;
-                msg_colorball_info.color_info[9] = color_data[9];
-            }
-            if(msg->data == "K_red"){
-                color_data[10] = true;
-                msg_colorball_info.color_info[10] = color_data[10];
-            }
-            if(msg->data == "K_purple"){
-                color_data[10] = false;
-                msg_colorball_info.color_info[10] = color_data[10];
-            }
-            if(msg->data == "L_red"){
-                color_data[11] = true;
-                msg_colorball_info.color_info[11] = color_data[11];
-            }
-            if(msg->data == "L_purple"){
-                color_data[11] = false;
-                msg_colorball_info.color_info[11] = color_data[11];
-            }
-
-            // for(int k=0; k<colordlc;k++){
-            //     msg_colorball_info.color_info[k] = color_data[k];
-            // }
-            
-            if(msg->data == "Btn_info_msg"){
-                RCLCPP_INFO(this->get_logger(), "color_info_all");
-                _pub_color_ball->publish(msg_colorball_info);
+            if(in_process_flag == false){
+                if(msg->data == "A_red"){
+                    RCLCPP_INFO(this->get_logger(), "color_red_A");
+                    color_data[0] = true;
+                    msg_colorball_info.color_info[0] = color_data[0];
+                }
+                if(msg->data == "A_purple"){
+                    color_data[0] = false;
+                    RCLCPP_INFO(this->get_logger(), "color_purple_A");
+                    msg_colorball_info.color_info[0] = color_data[0];
+                }
+                if(msg->data == "B_red"){
+                    color_data[1] = true;
+                    msg_colorball_info.color_info[1] = color_data[1];                
+                }
+                if(msg->data == "B_purple"){
+                    color_data[1] = false;
+                    msg_colorball_info.color_info[1] = color_data[1];
+                }
+                if(msg->data == "C_red"){
+                    color_data[2] = true;
+                    msg_colorball_info.color_info[2] = color_data[2];
+                }
+                if(msg->data == "C_purple"){
+                    color_data[2] = false;
+                    msg_colorball_info.color_info[2] = color_data[2];
+                }
+                if(msg->data == "D_red"){
+                    color_data[3] = true;
+                    msg_colorball_info.color_info[3] = color_data[3];
+                }
+                if(msg->data == "D_purple"){
+                    color_data[3] = false;
+                    msg_colorball_info.color_info[3] = color_data[3];
+                }
+                if(msg->data == "E_red"){
+                    color_data[4] = true;
+                    msg_colorball_info.color_info[4] = color_data[4];
+                }
+                if(msg->data == "E_purple"){
+                    color_data[4] = false;
+                    msg_colorball_info.color_info[4] = color_data[4];
+                }
+                if(msg->data == "F_red"){
+                    color_data[5] = true;
+                    msg_colorball_info.color_info[5] = color_data[5];
+                }
+                if(msg->data == "F_purple"){
+                    color_data[5] = false;
+                    msg_colorball_info.color_info[5] = color_data[5];
+                }
+                if(msg->data == "G_red"){
+                    color_data[6] = true;
+                    msg_colorball_info.color_info[6] = color_data[6];
+                }
+                if(msg->data == "G_purple"){
+                    color_data[6] = false;
+                    msg_colorball_info.color_info[6] = color_data[6];
+                }
+                if(msg->data == "H_red"){
+                    color_data[7] = true;
+                    msg_colorball_info.color_info[7] = color_data[7];
+                }
+                if(msg->data == "H_purple"){
+                    color_data[7] = false;
+                    msg_colorball_info.color_info[7] = color_data[7];
+                }
+                if(msg->data == "I_red"){
+                    color_data[8] = true;
+                    msg_colorball_info.color_info[8] = color_data[8];
+                }
+                if(msg->data == "I_purple"){
+                    color_data[8] = false;
+                    msg_colorball_info.color_info[8] = color_data[8];
+                }
+                if(msg->data == "J_red"){
+                    color_data[9] = true;
+                    msg_colorball_info.color_info[9] = color_data[9];
+                }
+                if(msg->data == "J_purple"){
+                    color_data[9] = false;
+                    msg_colorball_info.color_info[9] = color_data[9];
+                }
+                if(msg->data == "K_red"){
+                    color_data[10] = true;
+                    msg_colorball_info.color_info[10] = color_data[10];
+                }
+                if(msg->data == "K_purple"){
+                    color_data[10] = false;
+                    msg_colorball_info.color_info[10] = color_data[10];
+                }
+                if(msg->data == "L_red"){
+                    color_data[11] = true;
+                    msg_colorball_info.color_info[11] = color_data[11];
+                }
+                if(msg->data == "L_purple"){
+                    color_data[11] = false;
+                    msg_colorball_info.color_info[11] = color_data[11];
+                }            
+                if(msg->data == "Btn_info_msg"){
+                    RCLCPP_INFO(this->get_logger(), "color_info_all");
+                    _pub_color_information->publish(msg_colorball_info);
+                }
             }
 
         }
