@@ -63,8 +63,7 @@ namespace controller_interface
         //苗ハンドの収束状況を保存するための変数
         defalt_seedlinghand_convergence(get_parameter("defalt_seedlinghand_convergence").as_bool()),
         //ボール回収ハンドの収束状況を保存するための変数
-        defalt_ballhand0_convergence(get_parameter("defalt_ballhand0_convergence").as_bool()),
-        defalt_ballhand1_convergence(get_parameter("defalt_ballhand1_convergence").as_bool()),
+        defalt_ballhand_convergence(get_parameter("defalt_ballhand_convergence").as_bool()),
         //通信系
         udp_port_state(get_parameter("port.robot_state").as_int()),
         udp_port_pole(get_parameter("port.pole_share").as_int()),
@@ -127,26 +126,20 @@ namespace controller_interface
 
             //mainからsub
             _sub_main_injection_possible = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
-                "can_rx_201",
+                "can_rx_203",
                 _qos,
-                std::bind(&SmartphoneGamepad::callback_main, this, std::placeholders::_1)
+                std::bind(&SmartphoneGamepad::callback_main_injection_possible, this, std::placeholders::_1)
             );
             _sub_main_Seedlinghand_possible = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
                 "can_rx_212",
                 _qos,
-                std::bind(&SmartphoneGamepad::callback_main, this, std::placeholders::_1)
+                std::bind(&SmartphoneGamepad::callback_main_Seedlinghand_possible, this, std::placeholders::_1)
             );
-            _sub_main_ballhand0_possible = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
+            _sub_main_ballhand_possible = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
                 "can_rx_222",
                 _qos,
-                std::bind(&SmartphoneGamepad::callback_main, this, std::placeholders::_1)
+                std::bind(&SmartphoneGamepad::callback_main_ballhand_possible, this, std::placeholders::_1)
             );
-            _sub_main_ballhand1_possible = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
-                "can_rx_223",
-                _qos,
-                std::bind(&SmartphoneGamepad::callback_main, this, std::placeholders::_1)
-            );
-
             //spline_pidからsub
             _sub_spline = this->create_subscription<std_msgs::msg::Bool>(
                 "is_move_tracking",
@@ -172,7 +165,7 @@ namespace controller_interface
             _pub_injection = this->create_publisher<std_msgs::msg::Bool>("is_backside", _qos);
             _pub_coat_state = this->create_publisher<std_msgs::msg::Bool>("coat_color", _qos);
             //sprine_pid
-            _pub_sprine_pid = this->create_publisher<std_msgs::msg::String>("move_node", _qos);
+            pub_move_node = this->create_publisher<std_msgs::msg::String>("move_node", _qos);
             //gazebo用のpub
             _pub_gazebo = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", _qos);
 
@@ -250,15 +243,13 @@ namespace controller_interface
             msg_convergence->injection_calculator = defalt_injection_calculator_convergence;
             msg_convergence->injection = defalt_injection_convergence;
             msg_convergence->seedlinghand = defalt_seedlinghand_convergence;
-            msg_convergence->ballhand0 = defalt_ballhand0_convergence;
-            msg_convergence->ballhand1 = defalt_ballhand1_convergence;
+            msg_convergence->ballhand = defalt_ballhand_convergence;
 
             this->spline_convergence = defalt_spline_convergence;
             this->injection_calculator = defalt_injection_calculator_convergence;
             this->injection = defalt_injection_convergence;
             this->seedlinghand = defalt_seedlinghand_convergence;
-            this->ballhand0 = defalt_ballhand0_convergence;
-            this->ballhand1 = defalt_ballhand1_convergence;
+            this->ballhand = defalt_ballhand_convergence;
 
             _pub_convergence->publish(*msg_convergence);
 
@@ -313,8 +304,7 @@ namespace controller_interface
                     msg_convergence->injection_calculator = is_injection_calculator_convergence;
                     msg_convergence->injection = is_injection_convergence;
                     msg_convergence->seedlinghand = is_seedlinghand_convergence;
-                    msg_convergence->ballhand0 = is_ballhand0_convergence;
-                    msg_convergence->ballhand1 = is_ballhand1_convergence;
+                    msg_convergence->ballhand = is_ballhand_convergence;
 
                     _pub_convergence->publish(*msg_convergence);
                 }
@@ -466,8 +456,7 @@ namespace controller_interface
                 is_injection_calculator_convergence = defalt_injection_calculator_convergence;
                 is_injection_convergence = defalt_injection_convergence;
                 is_seedlinghand_convergence = defalt_seedlinghand_convergence;
-                is_ballhand0_convergence = defalt_ballhand0_convergence;
-                is_ballhand1_convergence = defalt_ballhand1_convergence;
+                is_ballhand_convergence = defalt_ballhand_convergence;
                 
             }
             //リセットボタンを押しているか確認する
@@ -553,126 +542,126 @@ namespace controller_interface
 
         void SmartphoneGamepad::callback_screen_pad(const std_msgs::msg::String::SharedPtr msg){
 
-            auto msg_sprine_pid = std::make_shared<std_msgs::msg::String>();
-            auto msg_sprine_pid_bool = std::make_shared<std_msgs::msg::Bool>();
-            if(msg->data == "A"){
-                RCLCPP_INFO(this->get_logger(), "A");
-                msg_sprine_pid->data = "A";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
+            auto msg_move_node = std::make_shared<std_msgs::msg::String>();
+            auto msg_move_node_bool = std::make_shared<std_msgs::msg::Bool>();
+            if(msg->data == "S0"){
+                RCLCPP_INFO(this->get_logger(), "S0");
+                msg_move_node->data = "S0";
+                pub_move_node->publish(*msg_move_node);
             }
-            if(msg->data == "B"){
-                msg_sprine_pid->data = "B";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
+            if(msg->data == "S1"){
+                msg_move_node->data = "S1";
+                pub_move_node->publish(*msg_move_node);
             }
-            if(msg->data == "C"){
-                msg_sprine_pid->data = "C";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
+            if(msg->data == "S2"){
+                msg_move_node->data = "S2";
+                pub_move_node->publish(*msg_move_node);
             }
-            if(msg->data == "D"){
-                msg_sprine_pid->data = "D";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
+            if(msg->data == "S3"){
+                msg_move_node->data = "S3";
+                pub_move_node->publish(*msg_move_node);
             }
-            if(msg->data == "E"){
-                msg_sprine_pid->data = "E";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
+            if(msg->data == "P0"){
+                msg_move_node->data = "P0";
+                pub_move_node->publish(*msg_move_node);
             }
-            if(msg->data == "F"){
-                msg_sprine_pid->data = "F";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
+            if(msg->data == "P1"){
+                msg_move_node->data = "P1";
+                pub_move_node->publish(*msg_move_node);
             }
-            if(msg->data == "G"){
-                msg_sprine_pid->data = "G";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
+            if(msg->data == "P2"){
+                msg_move_node->data = "P2";
+                pub_move_node->publish(*msg_move_node);
             }
-            if(msg->data == "H"){
-                msg_sprine_pid->data = "H";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
+            if(msg->data == "P3"){
+                msg_move_node->data = "P3";
+                pub_move_node->publish(*msg_move_node);
             }
-            if(msg->data == "I"){
-                msg_sprine_pid->data = "I";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
+            if(msg->data == "P4"){
+                msg_move_node->data = "P4";
+                pub_move_node->publish(*msg_move_node);
             }
-            if(msg->data == "J"){
-                msg_sprine_pid->data = "J";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
+            if(msg->data == "P5"){
+                msg_move_node->data = "P5";
+                pub_move_node->publish(*msg_move_node);
             }
-            if(msg->data == "K"){
-                msg_sprine_pid->data = "K";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
+            if(msg->data == "P6"){
+                msg_move_node->data = "P6";
+                pub_move_node->publish(*msg_move_node);
             }
-            if(msg->data == "L"){
+            if(msg->data == "P7"){
                 RCLCPP_INFO(this->get_logger(), "L");
-                msg_sprine_pid->data = "L";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
+                msg_move_node->data = "P7";
+                pub_move_node->publish(*msg_move_node);
             }
-            if(msg->data == "M"){
-                msg_sprine_pid->data = "M";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
+            if(msg->data == "H0"){
+                msg_move_node->data = "H0";
+                pub_move_node->publish(*msg_move_node);
             }
-            if(msg->data == "N"){
-                msg_sprine_pid->data = "N";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
+            if(msg->data == "H1"){
+                msg_move_node->data = "H1";
+                pub_move_node->publish(*msg_move_node);
+            }
+            if(msg->data == "H2"){
+                msg_move_node->data = "H2";
+                pub_move_node->publish(*msg_move_node);
+            }
+            if(msg->data == "H3"){
+                msg_move_node->data = "H3";
+                pub_move_node->publish(*msg_move_node);
+            }
+            if(msg->data == "H4"){
+                msg_move_node->data = "H4";
+                pub_move_node->publish(*msg_move_node);
+            }
+            if(msg->data == "H5"){
+                msg_move_node->data = "H5";
+                pub_move_node->publish(*msg_move_node);
+            }
+            if(msg->data == "H6"){
+                msg_move_node->data = "H6";
+                pub_move_node->publish(*msg_move_node);
+            }
+            if(msg->data == "H7"){
+                msg_move_node->data = "H7";
+                pub_move_node->publish(*msg_move_node);
+            }
+            if(msg->data == "H8"){
+                msg_move_node->data = "H8";
+                pub_move_node->publish(*msg_move_node);
+            }
+            if(msg->data == "H9"){
+                msg_move_node->data = "H9";
+                pub_move_node->publish(*msg_move_node);
+            }
+            if(msg->data == "H10"){
+                msg_move_node->data = "H10";
+                pub_move_node->publish(*msg_move_node);
+            }
+            if(msg->data == "H11"){
+                msg_move_node->data = "H11";
+                pub_move_node->publish(*msg_move_node);
+            }
+            if(msg->data == "IJ"){
+                msg_move_node->data = "IJ";
+                pub_move_node->publish(*msg_move_node);
             }
             if(msg->data == "O"){
-                msg_sprine_pid->data = "O";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
-            }
-            if(msg->data == "P"){
-                msg_sprine_pid->data = "P";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
-            }
-            if(msg->data == "Q"){
-                msg_sprine_pid->data = "Q";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
-            }
-            if(msg->data == "R"){
-                msg_sprine_pid->data = "R";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
-            }
-            if(msg->data == "S"){
-                msg_sprine_pid->data = "S";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
-            }
-            if(msg->data == "T"){
-                msg_sprine_pid->data = "T";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
-            }
-            if(msg->data == "U"){
-                msg_sprine_pid->data = "U";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
-            }
-            if(msg->data == "V"){
-                msg_sprine_pid->data = "V";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
-            }
-            if(msg->data == "W"){
-                msg_sprine_pid->data = "W";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
-            }
-            if(msg->data == "X"){
-                msg_sprine_pid->data = "X";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
-            }
-            if(msg->data == "Y"){
-                msg_sprine_pid->data = "Y";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
-            }
-            if(msg->data == "Z"){
-                msg_sprine_pid->data = "Z";
-                _pub_sprine_pid->publish(*msg_sprine_pid);
+                msg_move_node->data = "O";
+                pub_move_node->publish(*msg_move_node);
             }
             if(msg->data == "Seedling_Collection"){
                 RCLCPP_INFO(this->get_logger(), "Seedling_Collection");
-                msg_sprine_pid_bool->data = true;
-                _pub_seedling_collection->publish(*msg_sprine_pid_bool);
+                msg_move_node_bool->data = true;
+                _pub_seedling_collection->publish(*msg_move_node_bool);
             }
             if(msg->data == "Seedling_Installation"){
-                msg_sprine_pid_bool->data = true;
-                _pub_seedling_installation->publish(*msg_sprine_pid_bool);
+                msg_move_node_bool->data = true;
+                _pub_seedling_installation->publish(*msg_move_node_bool);
             }
             if(msg->data == "ball_Collection"){
-                msg_sprine_pid_bool->data = true;
-                _pub_ball_collection->publish(*msg_sprine_pid_bool);
+                msg_move_node_bool->data = true;
+                _pub_ball_collection->publish(*msg_move_node_bool);
             }
 
         }
@@ -821,17 +810,23 @@ namespace controller_interface
             command.state_num_R1(data, r1_pc,udp_port_state);
         }
         //コントローラから射出情報をsubsclib
-        void SmartphoneGamepad::callback_main(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg)
+        void SmartphoneGamepad::callback_main_injection_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg)
         {
             ///mainから射出可能司令のsub。上物の収束状況。
-            RCLCPP_INFO(this->get_logger(), "can_rx_201");
-            RCLCPP_INFO(this->get_logger(), "can_rx_212");
-            RCLCPP_INFO(this->get_logger(), "can_rx_222");
-            RCLCPP_INFO(this->get_logger(), "can_rx_223");
+            RCLCPP_INFO(this->get_logger(), "can_rx_203");
             is_injection_convergence = static_cast<bool>(msg->candata[0]);
+        }
+        void SmartphoneGamepad::callback_main_Seedlinghand_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg)
+        {
+            ///mainから射出可能司令のsub。上物の収束状況。
+            RCLCPP_INFO(this->get_logger(), "can_rx_212");
             is_seedlinghand_convergence = static_cast<bool>(msg->candata[1]);
-            is_ballhand0_convergence = static_cast<bool>(msg->candata[2]);
-            is_ballhand0_convergence = static_cast<bool>(msg->candata[3]);
+        }
+        void SmartphoneGamepad::callback_main_ballhand_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg)
+        {
+            ///mainから射出可能司令のsub。上物の収束状況。
+            RCLCPP_INFO(this->get_logger(), "can_rx_222");
+            is_ballhand_convergence = static_cast<bool>(msg->candata[2]);
         }
         //splineからの情報をsubsclib
         void SmartphoneGamepad::callback_spline(const std_msgs::msg::Bool::SharedPtr msg)
