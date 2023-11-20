@@ -49,14 +49,12 @@ namespace controller_interface
 
             //mainボードから
             rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_main_injection_possible;
-            rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_main_ballhand0_possible;
-            rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_main_ballhand1_possible;
+            rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_main_ballhand_possible;
             rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_main_Seedlinghand_possible;
 
             //spline_pidから
             rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_spline;
 
-            rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_in_process;
 
             //injection_param_calculatorから
             rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_injection_calculator;
@@ -71,9 +69,9 @@ namespace controller_interface
             //各nodeと共有
             rclcpp::Publisher<controller_interface_msg::msg::BaseControl>::SharedPtr _pub_base_control;
             rclcpp::Publisher<controller_interface_msg::msg::Convergence>::SharedPtr _pub_convergence;
-            rclcpp::Publisher<controller_interface_msg::msg::Colorball>::SharedPtr _pub_color_information;
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_is_backside;
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_coat_color;
+            rclcpp::Publisher<controller_interface_msg::msg::Colorball>::SharedPtr _pub_color_ball;
+            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_injection;
+            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_coat_state;
 
             //ボールと苗の回収&設置
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_seedling_collection;
@@ -117,7 +115,9 @@ namespace controller_interface
             void callback_sub_pad(const std_msgs::msg::String::SharedPtr msg);
 
             //mainからのcallback
-            void callback_main(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
+            void callback_main_injection_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
+            void callback_main_Seedlinghand_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
+            void callback_main_ballhand_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
             void callback_injection_complete(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
 
             //splineからのcallback
@@ -131,7 +131,6 @@ namespace controller_interface
             //sequencerからのcallback
             void callback_injection_strage(const std_msgs::msg::String::SharedPtr msg);
             void callback_collecting_ball(const std_msgs::msg::String::SharedPtr msg);
-            void callback_in_process(const std_msgs::msg::Bool::SharedPtr msg);
             void _recv_callback();
 
 
@@ -167,11 +166,8 @@ namespace controller_interface
             bool injection_calculator = false;
             bool injection = false;
             bool seedlinghand = false;
-            bool ballhand0 = false;
-            bool ballhand1 = false;
+            bool ballhand = false;
             bool injection_flag = false;
-
-            bool in_process_flag = false;
 
 
             //canusb
@@ -199,8 +195,7 @@ namespace controller_interface
             bool is_injection_calculator_convergence;
             bool is_injection_convergence;
             bool is_seedlinghand_convergence;
-            bool is_ballhand0_convergence;
-            bool is_ballhand1_convergence;
+            bool is_ballhand_convergence;
 
             //初期化指定用
             const float high_manual_linear_max_vel;
@@ -219,9 +214,7 @@ namespace controller_interface
             const bool defalt_injection_calculator_convergence;
             const bool defalt_injection_convergence;
             const bool defalt_seedlinghand_convergence;
-            const bool defalt_ballhand0_convergence;
-            const bool defalt_ballhand1_convergence;
-            
+            const bool defalt_ballhand_convergence;            
             const int16_t can_emergency_id;
             const int16_t can_heartbeat_id;
             const int16_t can_restart_id;
