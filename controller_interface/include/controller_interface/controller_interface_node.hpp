@@ -92,6 +92,8 @@ namespace controller_interface
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_spline;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_colcurator;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_injection;
+            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_seedlinghand;
+            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_ballhand;
 
             //sprine_pid
             rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_move_node;
