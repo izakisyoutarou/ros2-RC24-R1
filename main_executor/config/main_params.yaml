@@ -122,8 +122,7 @@ controller_interface_node:
     defalt_injection_calculator_convergence: false
     defalt_injection_convergence: false
     defalt_seedlinghand_convergence: false
-    defalt_ballhand0_convergence: false
-    defalt_ballhand1_convergence: false
+    defalt_ballhand_convergence: false
 
     initial_pickup_state: "A"
     initial_inject_state: "B"

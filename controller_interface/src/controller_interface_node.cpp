@@ -494,7 +494,7 @@ namespace controller_interface
 
             if(start_r1_main == true)
             {
-                //c_strがポインタ型を返すためアス＝＝タリスクをつける
+                //c_strがポインタ型を返すためアスタリスクをつける
                 const char* char_ptr = initial_pickup_state.c_str();
                 //reinterpret_castでポインタ型の変換
                 //char_ptr1をconst unsigned charに置き換える
