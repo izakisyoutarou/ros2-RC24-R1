@@ -30,6 +30,7 @@ namespace injection_param_calculator
             _pub_isConvergenced = this->create_publisher<std_msgs::msg::Bool>("calculator_convergenced_", _qos);
             RCLCPP_INFO(this->get_logger(), "create injection_param");
         }
+
     void InjectionParamCalculator::callback_injection(const injection_interface_msg::msg::InjectionCommand::SharedPtr msg)
     {
         auto msg_injection = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
@@ -91,6 +92,7 @@ namespace injection_param_calculator
         }
         return isConvergenced;
     }
+
     double InjectionParamCalculator::f(double v0)
     {
         double m = mass;
@@ -102,6 +104,7 @@ namespace injection_param_calculator
         double y = injection_command.height;
         return -m / k * log(cos(atan(v0 * sin(angle) * sqrt(k / (m * g)))) * cosh(1 / (v0 * sin(angle)) * sqrt(m * g / k) * (exp(k * x / m) - 1) - atan(v0 * sin(angle) * sqrt(k / (m * g))))) + y0 - y;
     }
+
     double InjectionParamCalculator::diff(double v0)
     {
         return (f(v0 + eps) - f(v0 - eps)) / (2.0 * eps);

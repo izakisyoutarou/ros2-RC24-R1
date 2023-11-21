@@ -271,21 +271,20 @@ namespace controller_interface
             msg_unity_control->data = injection;
             _pub_con_injection->publish(*msg_unity_control);
 
-            auto msg_colorball_info = std::make_shared<controller_interface_msg::msg::Colorball>();
-
-            msg_colorball_info->color_info[0] = defalt_color_information_flag;
-            msg_colorball_info->color_info[1] = defalt_color_information_flag;
-            msg_colorball_info->color_info[2] = defalt_color_information_flag;
-            msg_colorball_info->color_info[3] = defalt_color_information_flag;
-            msg_colorball_info->color_info[4] = defalt_color_information_flag;
-            msg_colorball_info->color_info[5] = defalt_color_information_flag;
-            msg_colorball_info->color_info[6] = defalt_color_information_flag;
-            msg_colorball_info->color_info[7] = defalt_color_information_flag;
-            msg_colorball_info->color_info[8] = defalt_color_information_flag;
-            msg_colorball_info->color_info[9] = defalt_color_information_flag;
-            msg_colorball_info->color_info[10] = defalt_color_information_flag;
-            msg_colorball_info->color_info[11] = defalt_color_information_flag;
-            _pub_color_ball->publish(*msg_colorball_info);
+            // auto msg_colorball_info = std::make_shared<controller_interface_msg::msg::Colorball>();
+            // msg_colorball_info->color_info[0] = defalt_color_information_flag;
+            // msg_colorball_info->color_info[1] = defalt_color_information_flag;
+            // msg_colorball_info->color_info[2] = defalt_color_information_flag;
+            // msg_colorball_info->color_info[3] = defalt_color_information_flag;
+            // msg_colorball_info->color_info[4] = defalt_color_information_flag;
+            // msg_colorball_info->color_info[5] = defalt_color_information_flag;
+            // msg_colorball_info->color_info[6] = defalt_color_information_flag;
+            // msg_colorball_info->color_info[7] = defalt_color_information_flag;
+            // msg_colorball_info->color_info[8] = defalt_color_information_flag;
+            // msg_colorball_info->color_info[9] = defalt_color_information_flag;
+            // msg_colorball_info->color_info[10] = defalt_color_information_flag;
+            // msg_colorball_info->color_info[11] = defalt_color_information_flag;
+            // _pub_color_ball->publish(*msg_colorball_info);
 
             //ハートビート
             //コントローラの鼓動
@@ -297,7 +296,7 @@ namespace controller_interface
                     //get_parametorで取得したパラメータをrc23pkgsのmsgに格納
                     msg_heartbeat->canid = can_heartbeat_id;
                     msg_heartbeat->candlc = 0;
-                    _pub_canusb->publish(*msg_heartbeat);
+                    // _pub_canusb->publish(*msg_heartbeat);
                 }
             );
 
@@ -516,27 +515,32 @@ namespace controller_interface
                 start_flag = true;
                 start_r1_main = false;
             }
+
+            msg_emergency->candata[0] = is_emergency;
+
+
             if(msg->data=="g")
-            {
+            {   
                 _pub_canusb->publish(*msg_emergency);
             }
+
             if(robotcontrol_flag == true)
             {
                 _pub_base_control->publish(msg_base_control);
 
-                msg_unity_initial_state.data = initial_state_unity;
+                msg_unity_initial_state.data = initial_state;
                 _pub_initial_state->publish(msg_unity_initial_state);
 
-                msg_unity_control.data = is_reset_unity;
+                msg_unity_control.data = is_reset;
                 _pub_base_restart->publish(msg_unity_control);
 
-                msg_unity_control.data = is_emergency_unity;
+                msg_unity_control.data = is_emergency;
                 _pub_base_emergency->publish(msg_unity_control);
 
-                msg_unity_control.data = is_move_autonomous_unity;
+                msg_unity_control.data = is_move_autonomous;
                 _pub_move_auto->publish(msg_unity_control);
 
-                msg_unity_control.data = is_injection_autonomous_unity;
+                msg_unity_control.data = is_injection_autonomous;
                 _pub_base_injection->publish(msg_unity_control);
             }
             if(msg->data == "s")
@@ -907,8 +911,8 @@ namespace controller_interface
                     float_to_bytes(_candata_joy, static_cast<float>(velPlanner_angular_z.vel()) * manual_angular_max_vel);
                     for(int i=0; i<msg_angular->candlc; i++) msg_angular->candata[i] = _candata_joy[i];
                     //canusbに速度、回転、加速度の値をpublish
-                    _pub_canusb->publish(*msg_linear);
-                    _pub_canusb->publish(*msg_angular);
+                    // _pub_canusb->publish(*msg_linear);
+                    // _pub_canusb->publish(*msg_angular);
                     
                     //msg_gazeboに速度計画機の値を格納
                     msg_gazebo->linear.x = slow_velPlanner_linear_x.vel();
@@ -938,8 +942,8 @@ namespace controller_interface
                     float_to_bytes(_candata_joy, static_cast<float>(velPlanner_angular_z.vel()) * manual_angular_max_vel);
                     for(int i=0; i<msg_angular->candlc; i++) msg_angular->candata[i] = _candata_joy[i];
 
-                    _pub_canusb->publish(*msg_linear);
-                    _pub_canusb->publish(*msg_angular);
+                    // _pub_canusb->publish(*msg_linear);
+                    // _pub_canusb->publish(*msg_angular);
                     
                     msg_gazebo->linear.x = high_velPlanner_linear_x.vel();
                     msg_gazebo->linear.y = high_velPlanner_linear_y.vel();
