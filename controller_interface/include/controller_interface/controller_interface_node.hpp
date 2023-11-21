@@ -49,8 +49,7 @@ namespace controller_interface
 
             //mainボードから
             rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_main_injection_possible;
-            rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_main_ballhand0_possible;
-            rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_main_ballhand1_possible;
+            rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_main_ballhand_possible;
             rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_main_Seedlinghand_possible;
 
             //spline_pidから
@@ -95,7 +94,7 @@ namespace controller_interface
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_injection;
 
             //sprine_pid
-            rclcpp::Publisher<std_msgs::msg::String>::SharedPtr _pub_sprine_pid;
+            rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_move_node;
 
             //timer
             rclcpp::TimerBase::SharedPtr _pub_heartbeat;
@@ -116,7 +115,9 @@ namespace controller_interface
             void callback_sub_pad(const std_msgs::msg::String::SharedPtr msg);
 
             //mainからのcallback
-            void callback_main(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
+            void callback_main_injection_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
+            void callback_main_Seedlinghand_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
+            void callback_main_ballhand_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
             void callback_injection_complete(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
 
             //splineからのcallback
@@ -165,8 +166,7 @@ namespace controller_interface
             bool injection_calculator = false;
             bool injection = false;
             bool seedlinghand = false;
-            bool ballhand0 = false;
-            bool ballhand1 = false;
+            bool ballhand = false;
             bool injection_flag = false;
 
 
@@ -195,8 +195,7 @@ namespace controller_interface
             bool is_injection_calculator_convergence;
             bool is_injection_convergence;
             bool is_seedlinghand_convergence;
-            bool is_ballhand0_convergence;
-            bool is_ballhand1_convergence;
+            bool is_ballhand_convergence;
 
             //初期化指定用
             const float high_manual_linear_max_vel;
@@ -215,9 +214,7 @@ namespace controller_interface
             const bool defalt_injection_calculator_convergence;
             const bool defalt_injection_convergence;
             const bool defalt_seedlinghand_convergence;
-            const bool defalt_ballhand0_convergence;
-            const bool defalt_ballhand1_convergence;
-            
+            const bool defalt_ballhand_convergence;            
             const int16_t can_emergency_id;
             const int16_t can_heartbeat_id;
             const int16_t can_restart_id;
