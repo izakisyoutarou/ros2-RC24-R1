@@ -224,6 +224,9 @@ namespace controller_interface
             const int16_t can_angular_id;
             const int16_t can_main_button_id;
             const int16_t can_sub_button_id;
+            const int16_t can_inject_id;
+            const int16_t can_inject_spinning_id;
+
 
             const std::string r1_pc;
             const std::string r2_pc;

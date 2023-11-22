@@ -78,6 +78,8 @@ namespace controller_interface
         can_angular_id(get_parameter("canid.angular").as_int()),
         can_main_button_id(get_parameter("canid.main_digital_button").as_int()),
         can_sub_button_id(get_parameter("canid.sub_digital_button").as_int()),
+        can_inject_id(get_parameter("canid.inject").as_int()),
+        can_inject_spinning_id(get_parameter("canid.inject_spinning").as_int()),
 
         //ipアドレスの取得
         r1_pc(get_parameter("ip.r1_pc").as_string()),
@@ -376,34 +378,50 @@ namespace controller_interface
             //resertがtureをpubした後にfalseをpubする
             bool flag_restart = false;
 
+            auto msg_inject_spinning = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+            msg_inject_spinning->canid = can_inject_spinning_id;
+            msg_inject_spinning->candlc = 1;
+
             //upで射出機構の停止
             if(msg->data == "right"){
                 RCLCPP_INFO(this->get_logger(), "right");
-                robotcontrol_flag = true;
-                if(is_injection_mech_stop_m == true){
-                    is_injection_mech_stop_m = false;
-                }else{
-                    is_injection_mech_stop_m = true;
+                is_injection_mech_stop_m = true;
+                msg_inject_spinning->candata[0] = false;
+                _pub_canusb->publish(*msg_inject_spinning);
+            }
+
+            if(msg->data == "left"){
+                if(is_injection_convergence){
+                    auto msg_inject = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_inject->canid = can_inject_id;
+                    msg_inject->candlc = 0;
+                    _pub_canusb->publish(*msg_inject);
                 }
             }
 
             //downでボールの射出する位置を決める
             auto msg_injection = std::make_shared<std_msgs::msg::Bool>();
+
             if(msg->data == "up")
             {
                 RCLCPP_INFO(this->get_logger(), "up");
                 injection_flag = false;
                 msg_injection->data = injection_flag;
                 _pub_injection->publish(*msg_injection);
+                msg_inject_spinning->candata[0] = true;
+                _pub_canusb->publish(*msg_inject_spinning);
+                is_injection_mech_stop_m = false;
             }
-            
+
             if(msg->data == "down")
             {
                 RCLCPP_INFO(this->get_logger(), "down");
-                
                 injection_flag = true;
                 msg_injection->data = injection_flag;
                 _pub_injection->publish(*msg_injection);
+                msg_inject_spinning->candata[0] = true;
+                _pub_canusb->publish(*msg_inject_spinning);
+                is_injection_mech_stop_m = false;
             }
 
             //r2で低速モートのonoff。トグル。
