@@ -143,7 +143,7 @@ rasnac_localization:
     voxel_size: 0.05
     trial_num: 40
     inlier_dist_threshold: 0.01
-    inlier_length_threshold: 1.0 #インライアのしきい値
+    inlier_length_threshold: 0.9 #インライアのしきい値
 
 sequencer_node:
   ros__parameters:
