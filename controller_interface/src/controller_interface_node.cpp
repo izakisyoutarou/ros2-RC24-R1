@@ -392,11 +392,11 @@ namespace controller_interface
             if(msg->data == "up")
             {
                 RCLCPP_INFO(this->get_logger(), "up");
-                
                 injection_flag = false;
                 msg_injection->data = injection_flag;
                 _pub_injection->publish(*msg_injection);
             }
+            
             if(msg->data == "down")
             {
                 RCLCPP_INFO(this->get_logger(), "down");
