@@ -13,10 +13,11 @@ namespace injection_param_calculator
           foundation_hight(get_parameter("foundation_hight").as_double()),                          // 射出機構の地面からの高さ[m]
           velocity_lim_max(get_parameter("velocity_lim_max").as_double()),                          // 最大初速度[m/s]
           injection_angle(get_parameter("injection_angle").as_double()),                            // 射出角度[deg]
-          max_loop(get_parameter("max_loop").as_int())                                              // ニュートン法のループ制限回数
+          max_loop(get_parameter("max_loop").as_int()),                                             // ニュートン法のループ制限回数
+          can_inject_vel_id(get_parameter("canid.inject_vel").as_int())    
         {
             _sub_injection_command = this->create_subscription<injection_interface_msg::msg::InjectionCommand>(
-                "parameters", _qos,
+                "injection_command", _qos,
                 std::bind(&InjectionParamCalculator::callback_injection,this,std::placeholders::_1)
             );
 
@@ -30,9 +31,14 @@ namespace injection_param_calculator
             _pub_isConvergenced = this->create_publisher<std_msgs::msg::Bool>("calculator_convergenced_", _qos);
             RCLCPP_INFO(this->get_logger(), "create injection_param");
         }
+
     void InjectionParamCalculator::callback_injection(const injection_interface_msg::msg::InjectionCommand::SharedPtr msg)
     {
         auto msg_injection = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+        msg_injection->canid = can_inject_vel_id;        
+        msg_injection->candlc = 8;
+
+
         auto msg_isConvergenced = std::make_shared<std_msgs::msg::Bool>();
         bool isConvergenced = false;
         injection_command.distance = msg->distance;
@@ -41,13 +47,12 @@ namespace injection_param_calculator
 
         isConvergenced = calculateVelocity();
         msg_isConvergenced->data = isConvergenced;
-
-        msg_injection->candlc = 8;
-
-        //送信
+        
         uint8_t _candata[4];
         float_to_bytes(_candata, static_cast<float>(velocity));
         for (int i = 0; i < msg_injection->candlc; i++)msg_injection->candata[i] = _candata[i];
+
+        //送信
         _pub_isConvergenced->publish(*msg_isConvergenced);
 
         if (isConvergenced)
@@ -91,6 +96,7 @@ namespace injection_param_calculator
         }
         return isConvergenced;
     }
+
     double InjectionParamCalculator::f(double v0)
     {
         double m = mass;
@@ -102,6 +108,7 @@ namespace injection_param_calculator
         double y = injection_command.height;
         return -m / k * log(cos(atan(v0 * sin(angle) * sqrt(k / (m * g)))) * cosh(1 / (v0 * sin(angle)) * sqrt(m * g / k) * (exp(k * x / m) - 1) - atan(v0 * sin(angle) * sqrt(k / (m * g))))) + y0 - y;
     }
+
     double InjectionParamCalculator::diff(double v0)
     {
         return (f(v0 + eps) - f(v0 - eps)) / (2.0 * eps);

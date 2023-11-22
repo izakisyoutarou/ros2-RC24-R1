@@ -92,6 +92,8 @@ namespace controller_interface
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_spline;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_colcurator;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_injection;
+            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_seedlinghand;
+            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_ballhand;
 
             //sprine_pid
             rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_move_node;
@@ -222,6 +224,9 @@ namespace controller_interface
             const int16_t can_angular_id;
             const int16_t can_main_button_id;
             const int16_t can_sub_button_id;
+            const int16_t can_inject_id;
+            const int16_t can_inject_spinning_id;
+
 
             const std::string r1_pc;
             const std::string r2_pc;

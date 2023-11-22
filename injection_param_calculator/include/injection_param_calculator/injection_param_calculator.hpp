@@ -32,6 +32,7 @@ namespace injection_param_calculator
         double diff(double v0);
 
         injection_interface_msg::msg::InjectionCommand injection_command;
+        const int16_t can_inject_vel_id;
         double velocity;
 
         const double mass;                                    // リングの重量[kg]

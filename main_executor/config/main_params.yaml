@@ -71,7 +71,7 @@ spline_pid_node:
     linear_planner_vel_limit_gain: 0.6  #速度計画機の速度上限値にかけるゲイン
 
     linear_planner_gain: 0.1 #並進速度計画機ゲイン
-    linear_pos_gain: 10.0  #並進位置ズレのゲイン
+    linear_pos_gain: 5.0  #並進位置ズレのゲイン
     linear_pos_diff_gain: 1.0
     linear_pos_integral_gain: 0.03  #並進位置ズレの積分ゲイン
 
@@ -122,8 +122,7 @@ controller_interface_node:
     defalt_injection_calculator_convergence: false
     defalt_injection_convergence: false
     defalt_seedlinghand_convergence: false
-    defalt_ballhand0_convergence: false
-    defalt_ballhand1_convergence: false
+    defalt_ballhand_convergence: false
 
     initial_pickup_state: "A"
     initial_inject_state: "B"
