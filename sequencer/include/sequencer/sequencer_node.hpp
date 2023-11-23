@@ -2,6 +2,7 @@
 #include "sequencer/visibility_control.h"
 #include <rclcpp/rclcpp.hpp>
 #include <string>
+#include <vector>
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "controller_interface_msg/msg/convergence.hpp"
@@ -38,11 +39,20 @@ private:
 
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _publisher_in_process;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr _publisher_move_node;
+    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _publisher_is_backside;
     rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _publisher_canusb;
 
     void set_in_process(const bool flag);
-    void command_canusb(const int16_t id, const uint8_t dlc, const uint8_t data[8]);
+
     void command_move_node(const std::string node);
+    void command_is_backside(const bool flag);
+    
+    void command_canusb_empty(const int16_t id, const uint8_t dlc);
+    void command_canusb_uint8(const int16_t id, const uint8_t dlc, const uint8_t data[8]);
+    
+    void command_inject_spinning(const bool flag);
+    void command_inject();
+
     void command_seedling_collect(const uint8_t num);
     void command_seedling_install(const uint8_t num);
     void command_paddy_collect(const uint8_t num);
@@ -62,12 +72,16 @@ private:
     int seedling_step = 0;
     int planting_step = 0;
     int harvesting_step = 0;
+    int inject_step = 0;
     int sequence_process = 0;
 
     const int select_algorithm;
     std::vector<std::string> seedling_order;
     std::vector<std::string> planting_order;
     std::vector<std::string> harvesting_order;
+    bool color_order[12];
+    bool install_color[2];
+    bool is_right = false;
 
     enum class SEQUENCE_MODE{
         stop,
