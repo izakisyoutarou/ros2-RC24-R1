@@ -382,15 +382,15 @@ namespace controller_interface
             msg_inject_spinning->canid = can_inject_spinning_id;
             msg_inject_spinning->candlc = 1;
 
-            //upで射出機構の停止
-            if(msg->data == "right"){
-                RCLCPP_INFO(this->get_logger(), "right");
+            //l1で射出機構の停止
+            if(msg->data == "l1"){
+                RCLCPP_INFO(this->get_logger(), "l2");
                 is_injection_mech_stop_m = true;
                 msg_inject_spinning->candata[0] = false;
                 _pub_canusb->publish(*msg_inject_spinning);
             }
-
-            if(msg->data == "left"){
+            //l2射出
+            if(msg->data == "l2"){
                 if(is_injection_convergence){
                     auto msg_inject = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                     msg_inject->canid = can_inject_id;
@@ -399,12 +399,12 @@ namespace controller_interface
                 }
             }
 
-            //downでボールの射出する位置を決める
             auto msg_injection = std::make_shared<std_msgs::msg::Bool>();
 
-            if(msg->data == "up")
+            //射出機構回転停止
+            if(msg->data == "r1")
             {
-                RCLCPP_INFO(this->get_logger(), "up");
+                RCLCPP_INFO(this->get_logger(), "r1");
                 injection_flag = false;
                 msg_injection->data = injection_flag;
                 _pub_injection->publish(*msg_injection);
@@ -412,10 +412,10 @@ namespace controller_interface
                 _pub_canusb->publish(*msg_inject_spinning);
                 is_injection_mech_stop_m = false;
             }
-
-            if(msg->data == "down")
+            //射出機構回転開始
+            if(msg->data == "r2")
             {
-                RCLCPP_INFO(this->get_logger(), "down");
+                RCLCPP_INFO(this->get_logger(), "r2");
                 injection_flag = true;
                 msg_injection->data = injection_flag;
                 _pub_injection->publish(*msg_injection);
@@ -500,11 +500,11 @@ namespace controller_interface
             //mainへボタン情報を送る代入
             if(msg->data == "a")_candata_btn[0] = a;
             if(msg->data == "b")_candata_btn[1] = b;
-            if(msg->data == "x")_candata_btn[2] = y;
-            if(msg->data == "y")_candata_btn[3] = x;
+            if(msg->data == "x")_candata_btn[2] = x;
+            if(msg->data == "y")_candata_btn[3] = y;
             if(msg->data == "rigit")_candata_btn[4] = right;
-            if(msg->data == "left")_candata_btn[5] = down;
-            if(msg->data == "down")_candata_btn[6] = left;
+            if(msg->data == "left")_candata_btn[5] = left;
+            if(msg->data == "down")_candata_btn[6] = down;
             if(msg->data == "up")_candata_btn[7] = up;
             
             for(int i=0; i<msg_btn->candlc; i++){
@@ -570,9 +570,16 @@ namespace controller_interface
         }
 
         void SmartphoneGamepad::callback_screen_pad(const std_msgs::msg::String::SharedPtr msg){
+            
+            //ボタンの処理
+            //msg_btnにリスタートする際のcanidとcandlcのパラメータを格納
+            auto msg_inject_spinning_screen = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+            msg_inject_spinning_screen->canid = can_inject_spinning_id;
+            msg_inject_spinning_screen->candlc = 1;
 
             auto msg_move_node = std::make_shared<std_msgs::msg::String>();
             auto msg_move_node_bool = std::make_shared<std_msgs::msg::Bool>();
+
             if(msg->data == "S0"){
                 msg_move_node->data = "S0";
                 pub_move_node->publish(*msg_move_node);
@@ -690,6 +697,15 @@ namespace controller_interface
                 msg_move_node_bool->data = true;
                 _pub_ball_collection->publish(*msg_move_node_bool);
             }
+            if(msg->data == "front"){
+                msg_inject_spinning_screen->candata[0] = true;
+                _pub_canusb->publish(*msg_inject_spinning_screen);
+            }
+            if(msg->data == "back"){
+                msg_move_node_bool->data = true;
+                _pub_injection->publish(*msg_move_node_bool);
+            }
+
 
         }
 
