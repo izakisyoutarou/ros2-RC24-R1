@@ -45,7 +45,8 @@ namespace controller_interface
             rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_state_num_R1;
 
             //R1_subのcontrollerから
-            rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_pad_sub;
+            rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_pad;
+            rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_gamepad;
 
             //mainボードから
             rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_main_injection_possible;
@@ -115,6 +116,7 @@ namespace controller_interface
 
             //controller_subからのcallback
             void callback_sub_pad(const std_msgs::msg::String::SharedPtr msg);
+            void callback_sub_gamepad(const std_msgs::msg::String::SharedPtr msg);
 
             //mainからのcallback
             void callback_main_injection_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
@@ -190,6 +192,9 @@ namespace controller_interface
             bool down;
             bool right;
 
+            //robotcontrol_flagはtrueのときpublishできる
+            bool robotcontrol_flag = false;
+
 
 
             //convergence用
@@ -220,12 +225,16 @@ namespace controller_interface
             const int16_t can_emergency_id;
             const int16_t can_heartbeat_id;
             const int16_t can_restart_id;
+            const int16_t can_calibrate_id;
             const int16_t can_linear_id;
             const int16_t can_angular_id;
             const int16_t can_main_button_id;
             const int16_t can_sub_button_id;
             const int16_t can_inject_id;
             const int16_t can_inject_spinning_id;
+            const int16_t can_paddy_collect_id;
+            const int16_t can_paddy_install_id;
+            const int16_t can_steer_reset_id;
 
 
             const std::string r1_pc;

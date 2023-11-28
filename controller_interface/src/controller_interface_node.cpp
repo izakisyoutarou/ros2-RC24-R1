@@ -74,12 +74,16 @@ namespace controller_interface
         can_emergency_id(get_parameter("canid.emergency").as_int()),
         can_heartbeat_id(get_parameter("canid.heartbeat").as_int()),
         can_restart_id(get_parameter("canid.restart").as_int()),
+        can_calibrate_id(get_parameter("canid.calibrate").as_int()),
         can_linear_id(get_parameter("canid.linear").as_int()),
         can_angular_id(get_parameter("canid.angular").as_int()),
         can_main_button_id(get_parameter("canid.main_digital_button").as_int()),
         can_sub_button_id(get_parameter("canid.sub_digital_button").as_int()),
         can_inject_id(get_parameter("canid.inject").as_int()),
         can_inject_spinning_id(get_parameter("canid.inject_spinning").as_int()),
+        can_paddy_collect_id(get_parameter("canid.paddy_collect").as_int()),
+        can_paddy_install_id(get_parameter("canid.paddy_install").as_int()),
+        can_steer_reset_id(get_parameter("canid.steer_reset").as_int()),
 
         //ipアドレスの取得
         r1_pc(get_parameter("ip.r1_pc").as_string()),
@@ -121,10 +125,15 @@ namespace controller_interface
             );
 
             //controller_subからsub
-            _sub_pad_sub = this->create_subscription<std_msgs::msg::String>(
+            _sub_pad = this->create_subscription<std_msgs::msg::String>(
                 "sub_pad",
                 _qos,
                 std::bind(&SmartphoneGamepad::callback_sub_pad, this, std::placeholders::_1)
+            );
+            _sub_gamepad = this->create_subscription<std_msgs::msg::String>(
+                "sub_gamepad",
+                _qos,
+                std::bind(&SmartphoneGamepad::callback_sub_gamepad, this, std::placeholders::_1)
             );
 
             //mainからsub
@@ -373,14 +382,15 @@ namespace controller_interface
 
             uint8_t _candata_btn[8];
             //base_control(手自動、緊急、リスタート)が押されたらpubする
-            //robotcontrol_flagはtrueのときpublishできる
-            bool robotcontrol_flag = false;
+
             //resertがtureをpubした後にfalseをpubする
             bool flag_restart = false;
 
             auto msg_inject_spinning = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
             msg_inject_spinning->canid = can_inject_spinning_id;
             msg_inject_spinning->candlc = 1;
+
+            
 
             //l1で射出機構の停止
             if(msg->data == "l1"){
@@ -422,18 +432,6 @@ namespace controller_interface
                 msg_inject_spinning->candata[0] = true;
                 _pub_canusb->publish(*msg_inject_spinning);
                 is_injection_mech_stop_m = false;
-            }
-
-            //r2で低速モートのonoff。トグル。
-            if(msg->data == "r2")
-            {
-                RCLCPP_INFO(this->get_logger(), "r2");
-                robotcontrol_flag = true;
-                if(is_slow_speed == true ){
-                    is_slow_speed = false;
-                }else{
-                    is_slow_speed = true;
-                }
             }
 
             //r3は足回りの手自動の切り替え。is_move_autonomousを使って、トグルになるようにしてる。R1の上物からもらう必要はない。
@@ -498,24 +496,56 @@ namespace controller_interface
             msg_base_control.is_injection_mech_stop_m = is_injection_mech_stop_m;
 
             //mainへボタン情報を送る代入
-            if(msg->data == "a")_candata_btn[0] = a;
-            if(msg->data == "b")_candata_btn[1] = b;
-            if(msg->data == "x")_candata_btn[2] = x;
-            if(msg->data == "y")_candata_btn[3] = y;
-            if(msg->data == "rigit")_candata_btn[4] = right;
-            if(msg->data == "left")_candata_btn[5] = left;
-            if(msg->data == "down")_candata_btn[6] = down;
-            if(msg->data == "up")_candata_btn[7] = up;
-            
-            for(int i=0; i<msg_btn->candlc; i++){
-                msg_btn->candata[i] = _candata_btn[i];
-            }
-
-            //どれか１つのボタンを押すとすべてのボタン情報がpublishされる
-            if( a == true ||b == true ||y == true ||x == true ||right == true ||down == true ||left == true ||up == true )
-            {
+            if(msg->data == "a"){
+                msg_btn->candata[0] = true;
+                msg_btn->canid = can_paddy_install_id;
                 _pub_canusb->publish(*msg_btn);
             }
+            if(msg->data == "b"){
+                msg_btn->candata[1] = true;
+                msg_btn->canid = can_paddy_install_id;
+                _pub_canusb->publish(*msg_btn);
+            }
+            if(msg->data == "x"){
+                msg_btn->candata[2] = true;
+                msg_btn->canid = can_paddy_collect_id;
+                _pub_canusb->publish(*msg_btn);
+            }
+            if(msg->data == "y"){
+                msg_btn->candata[3] = true;
+                msg_btn->canid = can_paddy_collect_id;
+                _pub_canusb->publish(*msg_btn);
+            }
+            if(msg->data == "rigit"){
+                msg_btn->candata[4] = true;
+                msg_btn->canid = can_inject_id;
+                _pub_canusb->publish(*msg_btn);
+            }
+            if(msg->data == "left"){
+                msg_btn->candata[5] = true;
+                msg_btn->canid = can_inject_spinning_id;
+                _pub_canusb->publish(*msg_btn);
+            }
+            if(msg->data == "down"){
+                msg_btn->candata[5] = true;
+                msg_btn->canid = can_calibrate_id;
+                _pub_canusb->publish(*msg_btn);
+            }
+            if(msg->data == "up"){
+                msg_btn->candata[5] = true;
+                msg_btn->canid = can_steer_reset_id;
+                _pub_canusb->publish(*msg_btn);
+            }
+            
+            // for(int i=0; i<msg_btn->candlc; i++){
+            //     msg_btn->candata[i] = _candata_btn[i];
+            // }
+
+            // //どれか１つのボタンを押すとすべてのボタン情報がpublishされる
+            // if( a == true ||b == true ||y == true ||x == true ||right == true ||down == true ||left == true ||up == true )
+            // {
+            //     _pub_canusb->publish(*msg_btn);
+            // }
             //l1を押すと射出情報をpublishする
 
             if(start_r1_main == true)
@@ -837,6 +867,20 @@ namespace controller_interface
                 _pub_color_ball->publish(msg_colorball_info);
             }
 
+        }
+        void SmartphoneGamepad::callback_sub_gamepad(const std_msgs::msg::String::SharedPtr msg){
+
+            //r2で低速モートのonoff。トグル。
+            if(msg->data == "x")
+            {
+                RCLCPP_INFO(this->get_logger(), "x");
+                robotcontrol_flag = true;
+                if(is_slow_speed == true ){
+                    is_slow_speed = false;
+                }else{
+                    is_slow_speed = true;
+                }
+            }
         }
 
             //コントローラからスタート地点情報をsubscribe
