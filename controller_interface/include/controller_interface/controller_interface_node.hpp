@@ -78,7 +78,6 @@ namespace controller_interface
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_seedling_collection;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_seedling_installation;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_ball_collection;
-            
 
             //gazebo_simulator用のpub
             rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr _pub_gazebo;
@@ -173,6 +172,8 @@ namespace controller_interface
             bool ballhand = false;
             bool injection_flag = false;
 
+            bool is_backside = false;
+
 
             //canusb
             bool a;
@@ -232,6 +233,8 @@ namespace controller_interface
             const int16_t can_sub_button_id;
             const int16_t can_inject_id;
             const int16_t can_inject_spinning_id;
+            const int16_t can_seedling_collect_id;
+            const int16_t can_seedling_install_id;
             const int16_t can_paddy_collect_id;
             const int16_t can_paddy_install_id;
             const int16_t can_steer_reset_id;
