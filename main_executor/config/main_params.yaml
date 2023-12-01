@@ -1,8 +1,8 @@
 launch: #起動パラメータ
   ros__parameters:
-    slcan: true
-    scan: true
-    trajectory_planner: true
+    slcan: false
+    scan: false
+    trajectory_planner: false
     
 
 /**:  #ワイルドカード(ここのパラメータは全ノードから読める: <名前に注意>)
@@ -111,11 +111,11 @@ controller_interface_node:
     
     #リスタート、緊急、足回りの手自動、上物の手自動、手動の射角、ボタンのカラー情報
     defalt_restart_flag: false
-    defalt_emergency_flag: true
-    defalt_move_autonomous_flag: true
-    defalt_injection_autonomous_flag: true
-    defalt_slow_speed_flag: true
-    defalt_color_information_flag: true
+    defalt_emergency_flag: false
+    defalt_move_autonomous_flag: false
+    defalt_injection_autonomous_flag: false
+    defalt_slow_speed_flag: false
+    defalt_color_information_flag: false
 
     #収束の初期値
     defalt_spline_convergence: false
