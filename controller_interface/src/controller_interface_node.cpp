@@ -74,12 +74,18 @@ namespace controller_interface
         can_emergency_id(get_parameter("canid.emergency").as_int()),
         can_heartbeat_id(get_parameter("canid.heartbeat").as_int()),
         can_restart_id(get_parameter("canid.restart").as_int()),
+        can_calibrate_id(get_parameter("canid.calibrate").as_int()),
         can_linear_id(get_parameter("canid.linear").as_int()),
         can_angular_id(get_parameter("canid.angular").as_int()),
         can_main_button_id(get_parameter("canid.main_digital_button").as_int()),
         can_sub_button_id(get_parameter("canid.sub_digital_button").as_int()),
         can_inject_id(get_parameter("canid.inject").as_int()),
         can_inject_spinning_id(get_parameter("canid.inject_spinning").as_int()),
+        can_seedling_collect_id(get_parameter("canid.seedling_collect").as_int()),
+        can_seedling_install_id(get_parameter("canid.seedling_install").as_int()),
+        can_paddy_collect_id(get_parameter("canid.paddy_collect").as_int()),
+        can_paddy_install_id(get_parameter("canid.paddy_install").as_int()),
+        can_steer_reset_id(get_parameter("canid.steer_reset").as_int()),
 
         //ipアドレスの取得
         r1_pc(get_parameter("ip.r1_pc").as_string()),
@@ -121,10 +127,15 @@ namespace controller_interface
             );
 
             //controller_subからsub
-            _sub_pad_sub = this->create_subscription<std_msgs::msg::String>(
+            _sub_pad = this->create_subscription<std_msgs::msg::String>(
                 "sub_pad",
                 _qos,
                 std::bind(&SmartphoneGamepad::callback_sub_pad, this, std::placeholders::_1)
+            );
+            _sub_gamepad = this->create_subscription<std_msgs::msg::String>(
+                "sub_gamepad",
+                _qos,
+                std::bind(&SmartphoneGamepad::callback_sub_gamepad, this, std::placeholders::_1)
             );
 
             //mainからsub
@@ -373,88 +384,9 @@ namespace controller_interface
 
             uint8_t _candata_btn[8];
             //base_control(手自動、緊急、リスタート)が押されたらpubする
-            //robotcontrol_flagはtrueのときpublishできる
-            bool robotcontrol_flag = false;
+
             //resertがtureをpubした後にfalseをpubする
             bool flag_restart = false;
-
-            auto msg_inject_spinning = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-            msg_inject_spinning->canid = can_inject_spinning_id;
-            msg_inject_spinning->candlc = 1;
-
-            //upで射出機構の停止
-            if(msg->data == "right"){
-                RCLCPP_INFO(this->get_logger(), "right");
-                is_injection_mech_stop_m = true;
-                msg_inject_spinning->candata[0] = false;
-                _pub_canusb->publish(*msg_inject_spinning);
-            }
-
-            if(msg->data == "left"){
-                if(is_injection_convergence){
-                    auto msg_inject = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                    msg_inject->canid = can_inject_id;
-                    msg_inject->candlc = 0;
-                    _pub_canusb->publish(*msg_inject);
-                }
-            }
-
-            //downでボールの射出する位置を決める
-            auto msg_injection = std::make_shared<std_msgs::msg::Bool>();
-
-            if(msg->data == "up")
-            {
-                RCLCPP_INFO(this->get_logger(), "up");
-                injection_flag = false;
-                msg_injection->data = injection_flag;
-                _pub_injection->publish(*msg_injection);
-                msg_inject_spinning->candata[0] = true;
-                _pub_canusb->publish(*msg_inject_spinning);
-                is_injection_mech_stop_m = false;
-            }
-
-            if(msg->data == "down")
-            {
-                RCLCPP_INFO(this->get_logger(), "down");
-                injection_flag = true;
-                msg_injection->data = injection_flag;
-                _pub_injection->publish(*msg_injection);
-                msg_inject_spinning->candata[0] = true;
-                _pub_canusb->publish(*msg_inject_spinning);
-                is_injection_mech_stop_m = false;
-            }
-
-            //r2で低速モートのonoff。トグル。
-            if(msg->data == "r2")
-            {
-                RCLCPP_INFO(this->get_logger(), "r2");
-                robotcontrol_flag = true;
-                if(is_slow_speed == true ){
-                    is_slow_speed = false;
-                }else{
-                    is_slow_speed = true;
-                }
-            }
-
-            //r3は足回りの手自動の切り替え。is_move_autonomousを使って、トグルになるようにしてる。R1の上物からもらう必要はない。
-            if(msg->data == "r3")
-            {
-                RCLCPP_INFO(this->get_logger(), "r3");
-                robotcontrol_flag = true;
-                if(is_move_autonomous == false){
-                    is_move_autonomous = true;
-                }
-                else{
-                    is_move_autonomous = false;
-                }
-            }
-
-            //l3でR1の状態確認
-            if(msg->data == "l3")
-            {
-                RCLCPP_INFO(this->get_logger(), "l3");
-                start_r1_main = true;
-            }
 
             //gは緊急。is_emergencyを使って、トグルになるようにしてる。
             if(msg->data == "g"){
@@ -497,27 +429,149 @@ namespace controller_interface
             msg_base_control.initial_state = initial_state;
             msg_base_control.is_injection_mech_stop_m = is_injection_mech_stop_m;
 
-            //mainへボタン情報を送る代入
-            if(msg->data == "a")_candata_btn[0] = a;
-            if(msg->data == "b")_candata_btn[1] = b;
-            if(msg->data == "x")_candata_btn[2] = y;
-            if(msg->data == "y")_candata_btn[3] = x;
-            if(msg->data == "rigit")_candata_btn[4] = right;
-            if(msg->data == "left")_candata_btn[5] = down;
-            if(msg->data == "down")_candata_btn[6] = left;
-            if(msg->data == "up")_candata_btn[7] = up;
-            
-            for(int i=0; i<msg_btn->candlc; i++){
-                msg_btn->candata[i] = _candata_btn[i];
+            //射出
+            if(msg->data == "r1"){
+                RCLCPP_INFO(this->get_logger(), "r1");
+                if(is_injection_convergence){
+                    auto msg_inject = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_inject->canid = can_inject_id;
+                    msg_inject->candlc = 0;
+                    _pub_canusb->publish(*msg_inject);
+                }
             }
 
-            //どれか１つのボタンを押すとすべてのボタン情報がpublishされる
-            if( a == true ||b == true ||y == true ||x == true ||right == true ||down == true ||left == true ||up == true )
+            //回転停止
+            if(msg->data == "r2"){
+                RCLCPP_INFO(this->get_logger(), "r2");
+                auto msg_inject_spinning = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                msg_inject_spinning->canid = can_inject_spinning_id;
+                msg_inject_spinning->candlc = 1;
+                msg_inject_spinning->candata[0] = false;
+                _pub_canusb->publish(*msg_inject_spinning);
+                is_injection_mech_stop_m = true;
+            }
+
+            //射出パラメータ&回転開始
+            if(msg->data == "l1"){
+                if(is_backside){
+                    RCLCPP_INFO(this->get_logger(), "l1");
+                    auto msg_injection = std::make_shared<std_msgs::msg::Bool>();
+                    msg_injection->data = true;
+                    _pub_injection->publish(*msg_injection);
+                    auto msg_inject_spinning = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_inject_spinning->canid = can_inject_spinning_id;
+                    msg_inject_spinning->candlc = 1;
+                    msg_inject_spinning->candata[0] = false;
+                    _pub_canusb->publish(*msg_inject_spinning);
+                    is_injection_mech_stop_m = false;
+                    is_backside = false;
+                }
+                else {
+                    RCLCPP_INFO(this->get_logger(), "l2");
+                    auto msg_injection = std::make_shared<std_msgs::msg::Bool>();
+                    msg_injection->data = false;
+                    _pub_injection->publish(*msg_injection);
+                    auto msg_inject_spinning = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_inject_spinning->canid = can_inject_spinning_id;
+                    msg_inject_spinning->candlc = 1;
+                    msg_inject_spinning->candata[0] = true;
+                    _pub_canusb->publish(*msg_inject_spinning);
+                    is_injection_mech_stop_m = false;
+                    is_backside = true;
+                }
+            }
+
+            if(msg->data == "l2"){
+                if(is_slow_speed) is_slow_speed = false;
+                else is_slow_speed = true;
+            }
+
+            //ステアリセット
+            if(msg->data == "up"){
+                RCLCPP_INFO(this->get_logger(), "up");
+                auto msg_steer_reset = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                msg_steer_reset->canid = can_steer_reset_id;
+                msg_steer_reset->candlc = 0;
+                _pub_canusb->publish(*msg_steer_reset);
+            }
+
+            //キャリブレーション
+            if(msg->data == "down"){
+                RCLCPP_INFO(this->get_logger(), "down");
+                auto msg_calibrate = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                msg_calibrate->canid = can_calibrate_id;
+                msg_calibrate->candlc = 0;
+                _pub_canusb->publish(*msg_calibrate);
+            }
+
+            if(msg->data == "a"){
+                if(is_ballhand_convergence){
+                    auto msg_paddy_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_paddy_install->candata[0] = true;
+                    msg_paddy_install->canid = can_paddy_install_id;
+                    _pub_canusb->publish(*msg_paddy_install);
+                }
+            }
+
+            if(msg->data == "b"){
+                if(is_ballhand_convergence){
+                    auto msg_paddy_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_paddy_install->candata[0] = false;
+                    msg_paddy_install->canid = can_paddy_install_id;
+                    _pub_canusb->publish(*msg_paddy_install);
+                }
+            }
+
+            if(msg->data == "x"){
+                if(is_ballhand_convergence){
+                    auto msg_paddy_collect = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_paddy_collect->candata[0] = true;
+                    msg_paddy_collect->canid = can_paddy_collect_id;
+                    _pub_canusb->publish(*msg_paddy_collect);
+                }
+            }
+
+            if(msg->data == "y"){
+                if(is_ballhand_convergence){
+                    auto msg_paddy_collect = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_paddy_collect->candata[0] = false;
+                    msg_paddy_collect->canid = can_paddy_collect_id;
+                    _pub_canusb->publish(*msg_paddy_collect);
+                }
+            }
+
+            //r3は足回りの手自動の切り替え。is_move_autonomousを使って、トグルになるようにしてる。R1の上物からもらう必要はない。
+            if(msg->data == "r3")
             {
-                _pub_canusb->publish(*msg_btn);
+                RCLCPP_INFO(this->get_logger(), "r3");
+                robotcontrol_flag = true;
+                if(is_move_autonomous == false) is_move_autonomous = true;
+                else is_move_autonomous = false;
             }
-            //l1を押すと射出情報をpublishする
 
+            //l3でR1の状態確認
+            if(msg->data == "l3")
+            {
+                RCLCPP_INFO(this->get_logger(), "l3");
+                start_r1_main = true;
+            }
+
+            //mainへボタン情報を送る代入
+            // if(msg->data == "a") msg_btn->candata[0] = true;
+            // if(msg->data == "b") msg_btn->candata[1] = true;
+            // if(msg->data == "x") msg_btn->candata[2] = true;
+            // if(msg->data == "y") msg_btn->candata[3] = true; 
+            // if(msg->data == "up") msg_btn->candata[4] = true;
+            // if(msg->data == "down") msg_btn->candata[5] = true;
+            // if(msg->data == "left") msg_btn->candata[6] = true;
+            // if(msg->data == "rigit") msg_btn->candata[7] = true;
+
+            // for(int i=0; i<msg_btn->candlc; i++) msg_btn->candata[i] = _candata_btn[i];
+
+            // //どれか１つのボタンを押すとすべてのボタン情報がpublishされる
+            // if( a == true ||b == true ||y == true ||x == true ||right == true ||down == true ||left == true ||up == true ) _pub_canusb->publish(*msg_btn);
+
+            //l3を押すと射出情報をpublishする
             if(start_r1_main == true)
             {
                 //c_strがポインタ型を返すためアスタリスクをつける
@@ -534,10 +588,7 @@ namespace controller_interface
 
             msg_emergency->candata[0] = is_emergency;
 
-            if(msg->data=="g")
-            {   
-                _pub_canusb->publish(*msg_emergency);
-            }
+            if(msg->data=="g") _pub_canusb->publish(*msg_emergency);
 
             if(robotcontrol_flag == true)
             {
@@ -570,9 +621,21 @@ namespace controller_interface
         }
 
         void SmartphoneGamepad::callback_screen_pad(const std_msgs::msg::String::SharedPtr msg){
+            
+            //ボタンの処理
+            //msg_btnにリスタートする際のcanidとcandlcのパラメータを格納
+            auto msg_inject_spinning_screen = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+            msg_inject_spinning_screen->canid = can_inject_spinning_id;
+            msg_inject_spinning_screen->candlc = 1;
 
             auto msg_move_node = std::make_shared<std_msgs::msg::String>();
             auto msg_move_node_bool = std::make_shared<std_msgs::msg::Bool>();
+
+            if(msg->data == "O"){
+                msg_move_node->data = "O";
+                pub_move_node->publish(*msg_move_node);
+            }
+
             if(msg->data == "S0"){
                 msg_move_node->data = "S0";
                 pub_move_node->publish(*msg_move_node);
@@ -589,6 +652,7 @@ namespace controller_interface
                 msg_move_node->data = "S3";
                 pub_move_node->publish(*msg_move_node);
             }
+
             if(msg->data == "P0"){
                 msg_move_node->data = "P0";
                 pub_move_node->publish(*msg_move_node);
@@ -621,6 +685,7 @@ namespace controller_interface
                 msg_move_node->data = "P7";
                 pub_move_node->publish(*msg_move_node);
             }
+
             if(msg->data == "H0"){
                 msg_move_node->data = "H0";
                 pub_move_node->publish(*msg_move_node);
@@ -669,14 +734,12 @@ namespace controller_interface
                 msg_move_node->data = "H11";
                 pub_move_node->publish(*msg_move_node);
             }
+
             if(msg->data == "IJ"){
                 msg_move_node->data = "IJ";
                 pub_move_node->publish(*msg_move_node);
             }
-            if(msg->data == "O"){
-                msg_move_node->data = "O";
-                pub_move_node->publish(*msg_move_node);
-            }
+
             if(msg->data == "Seedling_Collection"){
                 RCLCPP_INFO(this->get_logger(), "Seedling_Collection");
                 msg_move_node_bool->data = true;
@@ -821,6 +884,83 @@ namespace controller_interface
                 _pub_color_ball->publish(msg_colorball_info);
             }
 
+        }
+        void SmartphoneGamepad::callback_sub_gamepad(const std_msgs::msg::String::SharedPtr msg){
+
+            if(msg->data == "a")
+            {
+                if(is_seedlinghand_convergence){
+                    auto msg_seedling_collect = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_seedling_collect->candata[0] = 0;
+                    msg_seedling_collect->canid = can_seedling_collect_id;
+                    _pub_canusb->publish(*msg_seedling_collect);
+                }
+            }
+
+            if(msg->data == "b")
+            {
+                if(is_seedlinghand_convergence){
+                    auto msg_seedling_collect = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_seedling_collect->candata[0] = 1;
+                    msg_seedling_collect->canid = can_seedling_collect_id;
+                    _pub_canusb->publish(*msg_seedling_collect);
+                }
+            }
+
+            if(msg->data == "x")
+            {
+                if(is_seedlinghand_convergence){
+                    auto msg_seedling_collect = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_seedling_collect->candata[0] = 2;
+                    msg_seedling_collect->canid = can_seedling_collect_id;
+                    _pub_canusb->publish(*msg_seedling_collect);
+                }
+            }
+
+            if(msg->data == "y")
+            {
+
+            }
+
+            if(msg->data == "up")
+            {
+                if(is_seedlinghand_convergence){
+                    auto msg_seedling_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_seedling_install->candata[0] = 0;
+                    msg_seedling_install->canid = can_seedling_install_id;
+                    _pub_canusb->publish(*msg_seedling_install);
+                }
+            }
+
+            if(msg->data == "down")
+            {
+                if(is_seedlinghand_convergence){
+                    auto msg_seedling_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_seedling_install->candata[0] = 1;
+                    msg_seedling_install->canid = can_seedling_install_id;
+                    _pub_canusb->publish(*msg_seedling_install);
+                }
+            }
+
+            if(msg->data == "left")
+            {
+                if(is_seedlinghand_convergence){
+                    auto msg_seedling_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_seedling_install->candata[0] = 2;
+                    msg_seedling_install->canid = can_seedling_install_id;
+                    _pub_canusb->publish(*msg_seedling_install);
+                }
+            }
+
+            if(msg->data == "right")
+            {
+                if(is_seedlinghand_convergence){
+                    auto msg_seedling_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_seedling_install->candata[0] = 3;
+                    msg_seedling_install->canid = can_seedling_install_id;
+                    _pub_canusb->publish(*msg_seedling_install);
+                }
+            }
         }
 
             //コントローラからスタート地点情報をsubscribe
