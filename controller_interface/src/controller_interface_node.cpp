@@ -286,7 +286,7 @@ namespace controller_interface
                     //get_parametorで取得したパラメータをrc23pkgsのmsgに格納
                     msg_heartbeat->canid = can_heartbeat_id;
                     msg_heartbeat->candlc = 0;
-                    // _pub_canusb->publish(*msg_heartbeat);
+                    _pub_canusb->publish(*msg_heartbeat);
                 }
             );
 
