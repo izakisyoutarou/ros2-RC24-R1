@@ -86,6 +86,7 @@ namespace controller_interface
         can_paddy_collect_id(get_parameter("canid.paddy_collect").as_int()),
         can_paddy_install_id(get_parameter("canid.paddy_install").as_int()),
         can_steer_reset_id(get_parameter("canid.steer_reset").as_int()),
+        can_reset_id(get_parameter("canid.reset").as_int()),
 
         //ipアドレスの取得
         r1_pc(get_parameter("ip.r1_pc").as_string()),
@@ -502,6 +503,25 @@ namespace controller_interface
                 msg_calibrate->canid = can_calibrate_id;
                 msg_calibrate->candlc = 0;
                 _pub_canusb->publish(*msg_calibrate);
+            }
+
+            if(msg->data == "left"){
+                RCLCPP_INFO(this->get_logger(), "left");
+                auto msg_main_reset = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                msg_main_reset->canid = can_reset_id;
+                msg_main_reset->candlc = 1;
+                msg_main_reset->candata[0] = 0;
+                _pub_canusb->publish(*msg_main_reset);
+            }
+
+            //キャリブレーション
+            if(msg->data == "right"){
+                RCLCPP_INFO(this->get_logger(), "right");
+                auto msg_io_reset = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                msg_io_reset->canid = can_reset_id;
+                msg_io_reset->candlc = 1;
+                msg_io_reset->candata[0] = 1;
+                _pub_canusb->publish(*msg_io_reset);
             }
 
             if(msg->data == "a"){

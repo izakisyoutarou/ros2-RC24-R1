@@ -29,6 +29,7 @@ launch: #起動パラメータ
       heartbeat: 0x001
       restart: 0x002
       calibrate: 0x003
+      reset: 0x004
       #100番台(足回り)
       linear: 0x100
       angular: 0x101
