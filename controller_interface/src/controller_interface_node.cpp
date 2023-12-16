@@ -462,13 +462,12 @@ namespace controller_interface
                     auto msg_inject_spinning = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                     msg_inject_spinning->canid = can_inject_spinning_id;
                     msg_inject_spinning->candlc = 1;
-                    msg_inject_spinning->candata[0] = false;
+                    msg_inject_spinning->candata[0] = true;
                     _pub_canusb->publish(*msg_inject_spinning);
                     is_injection_mech_stop_m = false;
                     is_backside = false;
                 }
                 else {
-                    RCLCPP_INFO(this->get_logger(), "l2");
                     auto msg_injection = std::make_shared<std_msgs::msg::Bool>();
                     msg_injection->data = false;
                     _pub_injection->publish(*msg_injection);
@@ -482,6 +481,7 @@ namespace controller_interface
                 }
             }
 
+            //高速低速モードの切り替え
             if(msg->data == "l2"){
                 if(is_slow_speed) is_slow_speed = false;
                 else is_slow_speed = true;
@@ -504,7 +504,7 @@ namespace controller_interface
                 msg_calibrate->candlc = 0;
                 _pub_canusb->publish(*msg_calibrate);
             }
-
+            //IO基盤リセット
             if(msg->data == "left"){
                 RCLCPP_INFO(this->get_logger(), "left");
                 auto msg_main_reset = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
@@ -514,7 +514,7 @@ namespace controller_interface
                 _pub_canusb->publish(*msg_main_reset);
             }
 
-            //キャリブレーション
+            //mian基盤リセット
             if(msg->data == "right"){
                 RCLCPP_INFO(this->get_logger(), "right");
                 auto msg_io_reset = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
@@ -523,37 +523,41 @@ namespace controller_interface
                 msg_io_reset->candata[0] = 1;
                 _pub_canusb->publish(*msg_io_reset);
             }
-
+            //右ハンド籾の装填
             if(msg->data == "a"){
                 if(is_ballhand_convergence){
                     auto msg_paddy_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_paddy_install->candlc = 1;
                     msg_paddy_install->candata[0] = true;
                     msg_paddy_install->canid = can_paddy_install_id;
                     _pub_canusb->publish(*msg_paddy_install);
                 }
             }
-
+            //左ハンド籾の装填
             if(msg->data == "b"){
                 if(is_ballhand_convergence){
                     auto msg_paddy_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_paddy_install->candlc = 1;
                     msg_paddy_install->candata[0] = false;
                     msg_paddy_install->canid = can_paddy_install_id;
                     _pub_canusb->publish(*msg_paddy_install);
                 }
             }
-
+            //右ハンド籾の回収
             if(msg->data == "x"){
                 if(is_ballhand_convergence){
                     auto msg_paddy_collect = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_paddy_collect->candlc = 1;
                     msg_paddy_collect->candata[0] = true;
                     msg_paddy_collect->canid = can_paddy_collect_id;
                     _pub_canusb->publish(*msg_paddy_collect);
                 }
             }
-
+            //左ハンド籾の回収
             if(msg->data == "y"){
                 if(is_ballhand_convergence){
                     auto msg_paddy_collect = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_paddy_collect->candlc = 1;
                     msg_paddy_collect->candata[0] = false;
                     msg_paddy_collect->canid = can_paddy_collect_id;
                     _pub_canusb->publish(*msg_paddy_collect);
@@ -906,11 +910,12 @@ namespace controller_interface
 
         }
         void SmartphoneGamepad::callback_sub_gamepad(const std_msgs::msg::String::SharedPtr msg){
-
+            
             if(msg->data == "a")
             {
                 if(is_seedlinghand_convergence){
                     auto msg_seedling_collect = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_seedling_collect->candlc = 1;
                     msg_seedling_collect->candata[0] = 0;
                     msg_seedling_collect->canid = can_seedling_collect_id;
                     _pub_canusb->publish(*msg_seedling_collect);
@@ -921,6 +926,7 @@ namespace controller_interface
             {
                 if(is_seedlinghand_convergence){
                     auto msg_seedling_collect = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_seedling_collect->candlc = 1;
                     msg_seedling_collect->candata[0] = 1;
                     msg_seedling_collect->canid = can_seedling_collect_id;
                     _pub_canusb->publish(*msg_seedling_collect);
@@ -929,12 +935,7 @@ namespace controller_interface
 
             if(msg->data == "x")
             {
-                if(is_seedlinghand_convergence){
-                    auto msg_seedling_collect = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                    msg_seedling_collect->candata[0] = 2;
-                    msg_seedling_collect->canid = can_seedling_collect_id;
-                    _pub_canusb->publish(*msg_seedling_collect);
-                }
+
             }
 
             if(msg->data == "y")
@@ -946,6 +947,7 @@ namespace controller_interface
             {
                 if(is_seedlinghand_convergence){
                     auto msg_seedling_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_seedling_install->candlc = 1;
                     msg_seedling_install->candata[0] = 0;
                     msg_seedling_install->canid = can_seedling_install_id;
                     _pub_canusb->publish(*msg_seedling_install);
@@ -956,6 +958,7 @@ namespace controller_interface
             {
                 if(is_seedlinghand_convergence){
                     auto msg_seedling_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_seedling_install->candlc = 1;
                     msg_seedling_install->candata[0] = 1;
                     msg_seedling_install->canid = can_seedling_install_id;
                     _pub_canusb->publish(*msg_seedling_install);
@@ -966,6 +969,7 @@ namespace controller_interface
             {
                 if(is_seedlinghand_convergence){
                     auto msg_seedling_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_seedling_install->candlc = 1;
                     msg_seedling_install->candata[0] = 2;
                     msg_seedling_install->canid = can_seedling_install_id;
                     _pub_canusb->publish(*msg_seedling_install);
@@ -976,6 +980,7 @@ namespace controller_interface
             {
                 if(is_seedlinghand_convergence){
                     auto msg_seedling_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_seedling_install->candlc = 1;
                     msg_seedling_install->candata[0] = 3;
                     msg_seedling_install->canid = can_seedling_install_id;
                     _pub_canusb->publish(*msg_seedling_install);
@@ -1000,21 +1005,18 @@ namespace controller_interface
         void SmartphoneGamepad::callback_main_injection_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg)
         {
             ///mainから射出可能司令のsub。上物の収束状況。
-            RCLCPP_INFO(this->get_logger(), "can_rx_203");
             is_injection_convergence = static_cast<bool>(msg->candata[0]);
         }
 
         void SmartphoneGamepad::callback_main_Seedlinghand_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg)
         {
             ///mainから射出可能司令のsub。上物の収束状況。
-            RCLCPP_INFO(this->get_logger(), "can_rx_212");
             is_seedlinghand_convergence = static_cast<bool>(msg->candata[1]);
         }
 
         void SmartphoneGamepad::callback_main_ballhand_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg)
         {
             ///mainから射出可能司令のsub。上物の収束状況。
-            RCLCPP_INFO(this->get_logger(), "can_rx_222");
             is_ballhand_convergence = static_cast<bool>(msg->candata[2]);
         }
 
