@@ -158,7 +158,7 @@ namespace controller_interface
 
             //injection_param_calculatorからsub
             _sub_injection_calculator = this->create_subscription<std_msgs::msg::Bool>(
-                "is_injection_calculator_",
+                "calculator_convergenced_",
                 _qos,
                 std::bind(&SmartphoneGamepad::callback_injection_calculator, this, std::placeholders::_1)
             );
@@ -172,7 +172,6 @@ namespace controller_interface
             _pub_convergence = this->create_publisher<controller_interface_msg::msg::Convergence>("convergence" , _qos);
             _pub_color_ball = this->create_publisher<controller_interface_msg::msg::Colorball>("color_information", _qos);
             _pub_injection = this->create_publisher<std_msgs::msg::Bool>("is_backside", _qos);
-            _pub_coat_state = this->create_publisher<std_msgs::msg::Bool>("coat_color", _qos);
             //sprine_pid
             pub_move_node = this->create_publisher<std_msgs::msg::String>("move_node", _qos);
             //gazebo用のpub
