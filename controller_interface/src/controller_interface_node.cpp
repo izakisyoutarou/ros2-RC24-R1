@@ -121,12 +121,6 @@ namespace controller_interface
                 std::bind(&SmartphoneGamepad::callback_state_num_R1, this, std::placeholders::_1)
             );
 
-            _sub_coatstate_pad = this->create_subscription<std_msgs::msg::Bool>(
-                "coat_color",
-                _qos,
-                std::bind(&SmartphoneGamepad::callback_coatstate_pad, this, std::placeholders::_1)
-            );
-
             //controller_subからsub
             _sub_pad = this->create_subscription<std_msgs::msg::String>(
                 "sub_pad",
@@ -164,7 +158,7 @@ namespace controller_interface
 
             //injection_param_calculatorからsub
             _sub_injection_calculator = this->create_subscription<std_msgs::msg::Bool>(
-                "is_injection_calculator_convergenced",
+                "is_injection_calculator_",
                 _qos,
                 std::bind(&SmartphoneGamepad::callback_injection_calculator, this, std::placeholders::_1)
             );
@@ -775,22 +769,6 @@ namespace controller_interface
             }
 
         }
-
-        void SmartphoneGamepad::callback_coatstate_pad(const std_msgs::msg::Bool::SharedPtr msg){
-            auto msg_coatstate = std::make_shared<std_msgs::msg::Bool>();
-
-            if(msg->data == true){
-                RCLCPP_INFO(this->get_logger(), "true");
-                msg_coatstate->data = true;
-                _pub_coat_state->publish(*msg_coatstate);
-            }else if(msg->data == false){
-                RCLCPP_INFO(this->get_logger(), "false");
-                msg_coatstate->data = false;
-                _pub_coat_state->publish(*msg_coatstate);
-            }
-
-        }   
-
         void SmartphoneGamepad::callback_sub_pad(const std_msgs::msg::String::SharedPtr msg){
             auto msg_unity_sub_control = std::make_shared<std_msgs::msg::Bool>();
             int colordlc = 12;
