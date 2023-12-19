@@ -302,10 +302,10 @@ namespace controller_interface
             UpEdge upedge_l1_main;
             UpEdge upedge_l2_main;
             UpEdge upedge_l3_main;
-            UpEdge upedge_up_main;
-            UpEdge upedge_down_main;
-            UpEdge upedge_right_main;
-            UpEdge upedge_left_main;
+            UpEdge upedge_circle_main;
+            UpEdge upedge_cross_main;
+            UpEdge upedge_triangle_main;
+            UpEdge upedge_square_main;
             UpEdge upedge_axes6_main;
             UpEdge upedge_axes7_main;
             UpEdge upedge_autonomous_sub;

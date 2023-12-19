@@ -383,6 +383,46 @@ namespace controller_interface
                 msg_io_reset->candata[0] = 1;
                 _pub_canusb->publish(*msg_io_reset);
             }
+            //右ハンド籾の装填
+            if(upedge_circle_main(msg->buttons[1])){    //circle
+                if(is_ballhand_convergence){
+                    auto msg_paddy_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_paddy_install->candlc = 1;
+                    msg_paddy_install->candata[0] = true;
+                    msg_paddy_install->canid = can_paddy_install_id;
+                    _pub_canusb->publish(*msg_paddy_install);
+                }
+            }
+            //左ハンド籾の装填
+            if(upedge_cross_main(msg->buttons[0])){     //cross
+                if(is_ballhand_convergence){
+                    auto msg_paddy_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_paddy_install->candlc = 1;
+                    msg_paddy_install->candata[0] = false;
+                    msg_paddy_install->canid = can_paddy_install_id;
+                    _pub_canusb->publish(*msg_paddy_install);
+                }
+            }
+            //右ハンド籾の回収
+            if(upedge_triangle_main(msg->buttons[2])){  //triangle
+                if(is_ballhand_convergence){
+                    auto msg_paddy_collect = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_paddy_collect->candlc = 1;
+                    msg_paddy_collect->candata[0] = true;
+                    msg_paddy_collect->canid = can_paddy_collect_id;
+                    _pub_canusb->publish(*msg_paddy_collect);
+                }
+            }
+            //左ハンド籾の回収
+            if(upedge_square_main(msg->buttons[3])){    //square
+                if(is_ballhand_convergence){
+                    auto msg_paddy_collect = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    msg_paddy_collect->candlc = 1;
+                    msg_paddy_collect->candata[0] = false;
+                    msg_paddy_collect->canid = can_paddy_collect_id;
+                    _pub_canusb->publish(*msg_paddy_collect);
+                }
+            }
             if(upedge_l3_main(msg->buttons[11]))//joyL(押し込み)
             {
                 //c_strがポインタ型を返すためアスタリスクをつける
