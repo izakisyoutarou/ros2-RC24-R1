@@ -965,12 +965,6 @@ namespace controller_interface
             }
         }
 
-            //コントローラからスタート地点情報をsubscribe
-        void SmartphoneGamepad::callback_initial_state(const std_msgs::msg::String::SharedPtr msg)
-        {
-            initial_state = msg->data[0];
-        }
-
         //コントローラから回収情報をsubscribe
         void SmartphoneGamepad::callback_state_num_R1(const std_msgs::msg::String::SharedPtr msg)
         {

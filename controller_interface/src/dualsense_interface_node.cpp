@@ -457,12 +457,49 @@ namespace controller_interface
                 _pub_base_control->publish(msg_base_control);
             }
             //スティック情報
-            analog_l_x_main = msg->axes[0];
-            analog_l_y_main = msg->axes[1];
-            analog_r_x_main = msg->axes[3];
-            analog_r_y_main = msg->axes[4];
+            analog_l_x_main = msg->axes[0];     //Joy_Left_X
+            analog_l_y_main = msg->axes[1];     //Joy_Left_Y
+            analog_r_x_main = msg->axes[3];     //Joy_Right_X
+            analog_r_y_main = msg->axes[4];     //Joy_Right_X
 
         }
+
+        //コントローラから射出情報をsubsclib
+        void DualSense::callback_main_injection_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg)
+        {
+            ///mainから射出可能司令のsub。上物の収束状況。
+            is_injection_convergence = static_cast<bool>(msg->candata[0]);
+        }
+
+        void DualSense::callback_main_Seedlinghand_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg)
+        {
+            ///mainから射出可能司令のsub。上物の収束状況。
+            is_seedlinghand_convergence = static_cast<bool>(msg->candata[1]);
+        }
+
+        void DualSense::callback_main_ballhand_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg)
+        {
+            ///mainから射出可能司令のsub。上物の収束状況。
+            is_ballhand_convergence = static_cast<bool>(msg->candata[2]);
+        }
+
+        //splineからの情報をsubsclib
+        void DualSense::callback_spline(const std_msgs::msg::Bool::SharedPtr msg)
+        {
+            //spline_pidから足回り収束のsub。足回りの収束状況。
+            is_spline_convergence = msg->data;
+            
+        }
+
+        //injection_param_calculatorの情報をsubscribe
+        //この関数が2つあるのは射出機構が2つあるため
+        void DualSense::callback_injection_calculator(const std_msgs::msg::Bool::SharedPtr msg)
+        {
+            RCLCPP_INFO(this->get_logger(), "false");
+             //injection_calculatorから上モノ指令値計算収束のsub。上物の指令値の収束情報。
+            is_injection_calculator_convergence = msg->data;
+        }
+
 
 
 }
