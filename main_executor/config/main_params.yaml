@@ -122,7 +122,7 @@ controller_interface_node:
     #リスタート、緊急、足回りの手自動、上物の手自動、手動の射角、ボタンのカラー情報
     defalt_restart_flag: false
     defalt_emergency_flag: false
-    defalt_move_autonomous_flag: true
+    defalt_move_autonomous_flag: false
     defalt_injection_autonomous_flag: false
     defalt_slow_speed_flag: false
     defalt_color_information_flag: false
@@ -140,8 +140,8 @@ controller_interface_node:
 injection_interface_node:
   ros__parameters:
     tf_injection2robot: [0.0, 0.0] #射出機構のTF[x, y]
-    strage_backside: [0.0, 0.0, 0.0] #ストレージエリアの[x, y, 高さ]
-    strage_front: [0.1, 0.0, 0.0]
+    strage_backside: [12.0, 2.250, 0.0] #ストレージエリアの[x, y, 高さ]
+    strage_front: [8.0, 2.250, 0.0]
 
 rasnac_localization:
   ros__parameters:

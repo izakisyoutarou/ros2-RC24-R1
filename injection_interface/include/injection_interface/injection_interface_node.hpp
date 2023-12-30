@@ -6,10 +6,13 @@
 #include <geometry_msgs/msg/vector3.hpp>
 #include "injection_interface_msg/msg/injection_command.hpp"
 #include "utilities/two_vector.hpp"
+#include "utilities/utils.hpp"
+#include "path_msg/msg/turning.hpp"
 
 #include "injection_interface/visibility_control.h"
 
 #include <string>
+#include <cmath>
 
 namespace injection_interface{
 
@@ -36,6 +39,7 @@ private:
     rclcpp::QoS _qos = rclcpp::QoS(10);
 
     rclcpp::Publisher<injection_interface_msg::msg::InjectionCommand>::SharedPtr _pub_injection;
+    rclcpp::Publisher<path_msg::msg::Turning>::SharedPtr _pub_spin_position;
 
     //定数
     const std::vector<double> tf_injection2robot;

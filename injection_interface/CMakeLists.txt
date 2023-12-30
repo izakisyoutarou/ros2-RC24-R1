@@ -12,6 +12,7 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(injection_interface_msg REQUIRED)
+find_package(path_msg REQUIRED)
 find_package(utilities REQUIRED)
 
 add_library(injection_interface_node SHARED
@@ -29,6 +30,7 @@ ament_target_dependencies(injection_interface_node
   std_msgs
   geometry_msgs
   injection_interface_msg
+  path_msg
   utilities
 )
 
@@ -51,6 +53,7 @@ ament_export_dependencies(
   std_msgs
   geometry_msgs
   injection_interface_msg
+  path_msg
   utilities
 )
 
