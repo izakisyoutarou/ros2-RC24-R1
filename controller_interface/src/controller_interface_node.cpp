@@ -407,21 +407,8 @@ namespace controller_interface
                 is_injection_calculator_convergence = defalt_injection_calculator_convergence;
                 is_injection_convergence = defalt_injection_convergence;
                 is_seedlinghand_convergence = defalt_seedlinghand_convergence;
-                is_ballhand_convergence = defalt_ballhand_convergence;
-                
+                is_ballhand_convergence = defalt_ballhand_convergence;                
             }
-
-            //リセットボタンを押しているか確認する
-            is_reset = msg->data == "s";
-
-            //base_controlへ代入
-            msg_base_control.is_restart = is_reset;
-            msg_base_control.is_emergency = is_emergency;
-            msg_base_control.is_move_autonomous = is_move_autonomous;
-            msg_base_control.is_injection_autonomous = is_injection_autonomous;
-            msg_base_control.is_slow_speed = is_slow_speed;
-            msg_base_control.initial_state = initial_state;
-            msg_base_control.is_injection_mech_stop_m = is_injection_mech_stop_m;
 
             //射出
             if(msg->data == "r1"){
@@ -497,6 +484,7 @@ namespace controller_interface
                 msg_calibrate->candlc = 0;
                 _pub_canusb->publish(*msg_calibrate);
             }
+
             //IO基盤リセット
             if(msg->data == "left"){
                 RCLCPP_INFO(this->get_logger(), "left");
@@ -516,6 +504,7 @@ namespace controller_interface
                 msg_io_reset->candata[0] = 1;
                 _pub_canusb->publish(*msg_io_reset);
             }
+
             //右ハンド籾の装填
             if(msg->data == "a"){
                 if(is_ballhand_convergence){
@@ -526,6 +515,7 @@ namespace controller_interface
                     _pub_canusb->publish(*msg_paddy_install);
                 }
             }
+
             //左ハンド籾の装填
             if(msg->data == "b"){
                 if(is_ballhand_convergence){
@@ -536,6 +526,7 @@ namespace controller_interface
                     _pub_canusb->publish(*msg_paddy_install);
                 }
             }
+
             //右ハンド籾の回収
             if(msg->data == "x"){
                 if(is_ballhand_convergence){
@@ -546,6 +537,7 @@ namespace controller_interface
                     _pub_canusb->publish(*msg_paddy_collect);
                 }
             }
+            
             //左ハンド籾の回収
             if(msg->data == "y"){
                 if(is_ballhand_convergence){
@@ -587,6 +579,18 @@ namespace controller_interface
 
             // //どれか１つのボタンを押すとすべてのボタン情報がpublishされる
             // if( a == true ||b == true ||y == true ||x == true ||right == true ||down == true ||left == true ||up == true ) _pub_canusb->publish(*msg_btn);
+
+            //リセットボタンを押しているか確認する
+            is_reset = msg->data == "s";
+
+            //base_controlへ代入
+            msg_base_control.is_restart = is_reset;
+            msg_base_control.is_emergency = is_emergency;
+            msg_base_control.is_move_autonomous = is_move_autonomous;
+            msg_base_control.is_injection_autonomous = is_injection_autonomous;
+            msg_base_control.is_slow_speed = is_slow_speed;
+            msg_base_control.initial_state = initial_state;
+            msg_base_control.is_injection_mech_stop_m = is_injection_mech_stop_m;
 
             //l3を押すと射出情報をpublishする
             if(start_r1_main == true)
