@@ -122,7 +122,7 @@ controller_interface_node:
     #リスタート、緊急、足回りの手自動、上物の手自動、手動の射角、ボタンのカラー情報
     defalt_restart_flag: false
     defalt_emergency_flag: false
-    defalt_move_autonomous_flag: false
+    defalt_move_autonomous_flag: true
     defalt_injection_autonomous_flag: false
     defalt_slow_speed_flag: false
     defalt_color_information_flag: false
