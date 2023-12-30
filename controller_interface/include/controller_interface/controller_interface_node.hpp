@@ -195,8 +195,6 @@ namespace controller_interface
             //robotcontrol_flagはtrueのときpublishできる
             bool robotcontrol_flag = false;
 
-
-
             //convergence用
             bool is_spline_convergence;
             bool is_injection_calculator_convergence;
