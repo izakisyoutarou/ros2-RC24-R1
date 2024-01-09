@@ -20,8 +20,7 @@
 #include "send_udp.hpp"
 #include "super_command.hpp"
 
-#include "visibility_control.h"
-
+#include "my_visibility.h"
 
 namespace controller_interface
 {

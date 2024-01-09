@@ -21,7 +21,7 @@
 #include "send_udp.hpp"
 #include "super_command.hpp"
 
-#include "visibility_control.h"
+#include "my_visibility.h"
 
 
 namespace controller_interface
@@ -104,7 +104,6 @@ namespace controller_interface
             
             //controller_mainからのcallback
             void callback_dualsense_main(const sensor_msgs::msg::Joy::SharedPtr msg);
-            void callback_dualsense_sub(const sensor_msgs::msg::Joy::SharedPtr msg);
 
 
             //controller_subからのcallback
@@ -209,9 +208,6 @@ namespace controller_interface
             const bool defalt_injection_autonomous_flag;
             const bool defalt_emergency_flag;
             const bool defalt_slow_speed_flag;
-            //subcontrollerのカラー情報
-            const bool defalt_color_information_flag;
-
             const bool defalt_spline_convergence;
             const bool defalt_injection_calculator_convergence;
             const bool defalt_injection_convergence;
@@ -306,8 +302,10 @@ namespace controller_interface
             UpEdge upedge_cross_main;
             UpEdge upedge_triangle_main;
             UpEdge upedge_square_main;
-            UpEdge upedge_axes6_main;
-            UpEdge upedge_axes7_main;
+            UpEdge upedge_axes6_main_right;
+            UpEdge upedge_axes6_main_left;
+            UpEdge upedge_axes7_main_up;
+            UpEdge upedge_axes7_main_down;
             UpEdge upedge_autonomous_sub;
             UpEdge upedge_emergency_sub;
             UpEdge upedge_restart_sub;

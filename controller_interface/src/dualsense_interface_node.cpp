@@ -11,7 +11,8 @@ namespace controller_interface
     using std::string;
 
     DualSense::DualSense(const rclcpp::NodeOptions &options) : DualSense("", options){}
-    DualSense::DualSense(const std::string &name_space, const rclcpp::NodeOptions &options): rclcpp::Node("controller_interface_node", name_space, options),
+    DualSense::DualSense(const std::string &name_space, const rclcpp::NodeOptions &options)
+        : rclcpp::Node("controller_interface_node", name_space, options),
         //足回り
         high_limit_linear(DBL_MAX,
         get_parameter("high_linear_max_vel").as_double(),
@@ -33,11 +34,13 @@ namespace controller_interface
         defalt_restart_flag(get_parameter("defalt_restart_flag").as_bool()),
         defalt_emergency_flag(get_parameter("defalt_emergency_flag").as_bool()),
         defalt_move_autonomous_flag(get_parameter("defalt_move_autonomous_flag").as_bool()),
-        defalt_injection_autonomous_flag(get_parameter("defalt_injection_autonomous_flag_controller").as_bool()),
+        defalt_injection_autonomous_flag(get_parameter("defalt_injection_autonomous_flag").as_bool()),
         defalt_slow_speed_flag(get_parameter("defalt_slow_speed_flag").as_bool()),
         defalt_spline_convergence(get_parameter("defalt_spline_convergence").as_bool()),
         defalt_injection_calculator_convergence(get_parameter("defalt_injection_calculator_convergence").as_bool()),
         defalt_injection_convergence(get_parameter("defalt_injection_convergence").as_bool()),
+        defalt_seedlinghand_convergence(get_parameter("defalt_seedlinghand_convergence").as_bool()),
+        defalt_ballhand_convergence(get_parameter("defalt_ballhand_convergence").as_bool()),
 
         udp_port_state(get_parameter("port.robot_state").as_int()),
         //canid
@@ -69,15 +72,9 @@ namespace controller_interface
 
             //controllerからsub
             _sub_dualsense_main = this->create_subscription<sensor_msgs::msg::Joy>(
-                "dualsense_main/joy",
+                "/joy",
                 _qos,
                 std::bind(&DualSense::callback_dualsense_main, this, std::placeholders::_1)
-            );
-
-            _sub_dualsense_sub = this->create_subscription<sensor_msgs::msg::Joy>(
-                "dualsense_sub/joy",
-                _qos,
-                std::bind(&DualSense::callback_dualsense_sub, this, std::placeholders::_1)
             );
             //mainからsub
             _sub_main_injection_possible = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
@@ -243,11 +240,6 @@ namespace controller_interface
             //button:  0:cross  1:circle  2:triangle  3:square  4:L1  5:R1  6:L2  7:R2  8:create  9:option  10:ps  11:joyL  12:joyR
             //axes:  0:joyL_x  1:joyL_y  2:L2  3:joyR_x  4:joyR_y  5:R2  6:Left(1),Right(-1)  7:Up(1),Down(-1)
             
-            if(upedge_restart_main(msg->buttons[10])){  //PSボタン
-                if(!move_node_lock){
-                    move_node_lock = true;
-                }
-            }
             //button[12](joyR(押し込み))は足回りの手自動の切り替え。is_move_autonomousを使って、トグルになるようにしてる。ERの上物からもらう必要はない。
             if(upedge_r3_main(msg->buttons[12]))//joyR(押し込み)
             {
@@ -268,6 +260,9 @@ namespace controller_interface
             //button[9](option)はリスタート。緊急と手自動のboolをfalseにしてリセットしている。
             if(upedge_restart_main(msg->buttons[9]))//option
             {
+                if(!move_node_lock){
+                    move_node_lock = true;
+                }
                 robotcontrol_flag = true;
                 flag_restart = true;
                 is_emergency = false;
@@ -349,7 +344,7 @@ namespace controller_interface
                 }
             }
             //ステアリセット
-            if(msg->axes[7] == 1){   //UP
+            if(upedge_axes7_main_up(msg->axes[7] == 1)){   //UP
                 RCLCPP_INFO(this->get_logger(), "up");
                 auto msg_steer_reset = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                 msg_steer_reset->canid = can_steer_reset_id;
@@ -358,7 +353,7 @@ namespace controller_interface
             }
 
             //キャリブレーション
-            if(msg->axes[7] == -1){     //down
+            if(upedge_axes7_main_down(msg->axes[7] == -1)){     //down
                 RCLCPP_INFO(this->get_logger(), "down");
                 auto msg_calibrate = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                 msg_calibrate->canid = can_calibrate_id;
@@ -366,7 +361,7 @@ namespace controller_interface
                 _pub_canusb->publish(*msg_calibrate);
             }
             //main基板リセット
-            if(msg->axes[6] == -1){     //Right     
+            if(upedge_axes6_main_right(msg->axes[6] == -1)){     //Right     
                 RCLCPP_INFO(this->get_logger(), "right");
                 auto msg_main_reset = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                 msg_main_reset->canid = can_reset_id;
@@ -375,7 +370,7 @@ namespace controller_interface
                 _pub_canusb->publish(*msg_main_reset);
             }
             //IO基板リセット
-            if(msg->axes[6] == 1){      //Left
+            if(upedge_axes6_main_left(msg->axes[6] == 1)){      //Left
                 RCLCPP_INFO(this->get_logger(), "left");
                 auto msg_io_reset = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                 msg_io_reset->canid = can_reset_id;
@@ -385,6 +380,7 @@ namespace controller_interface
             }
             //右ハンド籾の装填
             if(upedge_circle_main(msg->buttons[1])){    //circle
+                RCLCPP_INFO(this->get_logger(), "circle");
                 if(is_ballhand_convergence){
                     auto msg_paddy_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                     msg_paddy_install->candlc = 1;
@@ -395,6 +391,7 @@ namespace controller_interface
             }
             //左ハンド籾の装填
             if(upedge_cross_main(msg->buttons[0])){     //cross
+                RCLCPP_INFO(this->get_logger(), "cross");
                 if(is_ballhand_convergence){
                     auto msg_paddy_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                     msg_paddy_install->candlc = 1;
@@ -405,6 +402,7 @@ namespace controller_interface
             }
             //右ハンド籾の回収
             if(upedge_triangle_main(msg->buttons[2])){  //triangle
+                RCLCPP_INFO(this->get_logger(), "triangle");
                 if(is_ballhand_convergence){
                     auto msg_paddy_collect = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                     msg_paddy_collect->candlc = 1;
@@ -415,6 +413,7 @@ namespace controller_interface
             }
             //左ハンド籾の回収
             if(upedge_square_main(msg->buttons[3])){    //square
+                RCLCPP_INFO(this->get_logger(), "square");
                 if(is_ballhand_convergence){
                     auto msg_paddy_collect = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                     msg_paddy_collect->candlc = 1;
@@ -438,9 +437,6 @@ namespace controller_interface
             }
             if(emergency_lock)//create
             {
-                _pub_canusb->publish(*msg_emergency);
-            }
-            if(emergency_lock){
                 _pub_canusb->publish(*msg_emergency);
             }
             if(restart_lock)
