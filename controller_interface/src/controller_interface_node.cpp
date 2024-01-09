@@ -121,12 +121,6 @@ namespace controller_interface
                 std::bind(&SmartphoneGamepad::callback_state_num_R1, this, std::placeholders::_1)
             );
 
-            _sub_coatstate_pad = this->create_subscription<std_msgs::msg::Bool>(
-                "coat_color",
-                _qos,
-                std::bind(&SmartphoneGamepad::callback_coatstate_pad, this, std::placeholders::_1)
-            );
-
             //controller_subからsub
             _sub_pad = this->create_subscription<std_msgs::msg::String>(
                 "sub_pad",
@@ -164,7 +158,7 @@ namespace controller_interface
 
             //injection_param_calculatorからsub
             _sub_injection_calculator = this->create_subscription<std_msgs::msg::Bool>(
-                "is_injection_calculator_convergenced",
+                "calculator_convergenced_",
                 _qos,
                 std::bind(&SmartphoneGamepad::callback_injection_calculator, this, std::placeholders::_1)
             );
@@ -178,7 +172,6 @@ namespace controller_interface
             _pub_convergence = this->create_publisher<controller_interface_msg::msg::Convergence>("convergence" , _qos);
             _pub_color_ball = this->create_publisher<controller_interface_msg::msg::Colorball>("color_information", _qos);
             _pub_injection = this->create_publisher<std_msgs::msg::Bool>("is_backside", _qos);
-            _pub_coat_state = this->create_publisher<std_msgs::msg::Bool>("coat_color", _qos);
             //sprine_pid
             pub_move_node = this->create_publisher<std_msgs::msg::String>("move_node", _qos);
             //gazebo用のpub
@@ -414,21 +407,8 @@ namespace controller_interface
                 is_injection_calculator_convergence = defalt_injection_calculator_convergence;
                 is_injection_convergence = defalt_injection_convergence;
                 is_seedlinghand_convergence = defalt_seedlinghand_convergence;
-                is_ballhand_convergence = defalt_ballhand_convergence;
-                
+                is_ballhand_convergence = defalt_ballhand_convergence;                
             }
-
-            //リセットボタンを押しているか確認する
-            is_reset = msg->data == "s";
-
-            //base_controlへ代入
-            msg_base_control.is_restart = is_reset;
-            msg_base_control.is_emergency = is_emergency;
-            msg_base_control.is_move_autonomous = is_move_autonomous;
-            msg_base_control.is_injection_autonomous = is_injection_autonomous;
-            msg_base_control.is_slow_speed = is_slow_speed;
-            msg_base_control.initial_state = initial_state;
-            msg_base_control.is_injection_mech_stop_m = is_injection_mech_stop_m;
 
             //射出
             if(msg->data == "r1"){
@@ -504,6 +484,7 @@ namespace controller_interface
                 msg_calibrate->candlc = 0;
                 _pub_canusb->publish(*msg_calibrate);
             }
+
             //IO基盤リセット
             if(msg->data == "left"){
                 RCLCPP_INFO(this->get_logger(), "left");
@@ -523,6 +504,7 @@ namespace controller_interface
                 msg_io_reset->candata[0] = 1;
                 _pub_canusb->publish(*msg_io_reset);
             }
+
             //右ハンド籾の装填
             if(msg->data == "a"){
                 if(is_ballhand_convergence){
@@ -533,6 +515,7 @@ namespace controller_interface
                     _pub_canusb->publish(*msg_paddy_install);
                 }
             }
+
             //左ハンド籾の装填
             if(msg->data == "b"){
                 if(is_ballhand_convergence){
@@ -543,6 +526,7 @@ namespace controller_interface
                     _pub_canusb->publish(*msg_paddy_install);
                 }
             }
+
             //右ハンド籾の回収
             if(msg->data == "x"){
                 if(is_ballhand_convergence){
@@ -553,6 +537,7 @@ namespace controller_interface
                     _pub_canusb->publish(*msg_paddy_collect);
                 }
             }
+            
             //左ハンド籾の回収
             if(msg->data == "y"){
                 if(is_ballhand_convergence){
@@ -594,6 +579,18 @@ namespace controller_interface
 
             // //どれか１つのボタンを押すとすべてのボタン情報がpublishされる
             // if( a == true ||b == true ||y == true ||x == true ||right == true ||down == true ||left == true ||up == true ) _pub_canusb->publish(*msg_btn);
+
+            //リセットボタンを押しているか確認する
+            is_reset = msg->data == "s";
+
+            //base_controlへ代入
+            msg_base_control.is_restart = is_reset;
+            msg_base_control.is_emergency = is_emergency;
+            msg_base_control.is_move_autonomous = is_move_autonomous;
+            msg_base_control.is_injection_autonomous = is_injection_autonomous;
+            msg_base_control.is_slow_speed = is_slow_speed;
+            msg_base_control.initial_state = initial_state;
+            msg_base_control.is_injection_mech_stop_m = is_injection_mech_stop_m;
 
             //l3を押すと射出情報をpublishする
             if(start_r1_main == true)
@@ -779,22 +776,6 @@ namespace controller_interface
             }
 
         }
-
-        void SmartphoneGamepad::callback_coatstate_pad(const std_msgs::msg::Bool::SharedPtr msg){
-            auto msg_coatstate = std::make_shared<std_msgs::msg::Bool>();
-
-            if(msg->data == true){
-                RCLCPP_INFO(this->get_logger(), "true");
-                msg_coatstate->data = true;
-                _pub_coat_state->publish(*msg_coatstate);
-            }else if(msg->data == false){
-                RCLCPP_INFO(this->get_logger(), "false");
-                msg_coatstate->data = false;
-                _pub_coat_state->publish(*msg_coatstate);
-            }
-
-        }   
-
         void SmartphoneGamepad::callback_sub_pad(const std_msgs::msg::String::SharedPtr msg){
             auto msg_unity_sub_control = std::make_shared<std_msgs::msg::Bool>();
             int colordlc = 12;

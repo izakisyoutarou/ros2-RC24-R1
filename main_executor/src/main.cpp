@@ -8,6 +8,7 @@
 #include "sequencer/sequencer_node.hpp"
 #include "socketcan_interface/socketcan_interface_node.hpp"
 #include "spline_pid/spline_pid_node.hpp"
+#include "spline_pid/spin_turn_node.hpp"
 #include "logger_converter/logger_converter_node.hpp"
 
 int main(int argc, char * argv[]){
@@ -25,6 +26,7 @@ int main(int argc, char * argv[]){
     auto sequencer_node = std::make_shared<sequencer::Sequencer>(nodes_option);
     auto socketcan_node = std::make_shared<socketcan_interface::SocketcanInterface>(nodes_option);
     auto spline_pid_node = std::make_shared<spline_pid::SplinePid>(nodes_option);
+    auto spin_turn_node = std::make_shared<spline_pid::SpinTurn>(nodes_option);
     auto logger_converter_node = std::make_shared<logger_converter::LoggerConverter>(nodes_option);
     
     exec.add_node(controller_node);
@@ -34,6 +36,7 @@ int main(int argc, char * argv[]){
     exec.add_node(sequencer_node);
     exec.add_node(socketcan_node);
     exec.add_node(spline_pid_node);
+    exec.add_node(spin_turn_node);
     exec.add_node(logger_converter_node);
 
     exec.spin();

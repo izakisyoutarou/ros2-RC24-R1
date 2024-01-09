@@ -3,7 +3,6 @@ launch: #起動パラメータ
     slcan: true
     scan: true
     trajectory_planner: true
-    
 
 /**:  #ワイルドカード(ここのパラメータは全ノードから読める: <名前に注意>)
   ros__parameters:
@@ -83,6 +82,16 @@ spline_pid_node:
     linear_pos_tolerance: 0.03  #並進到達位置の許容誤差[m]
     angular_pos_tolerance: 3.0  #回転到達位置の許容誤差[deg]
 
+spin_turn_node:
+  ros__parameters:
+    interval_ms: 20     #サイクル周期[ms]
+
+    angular_planner_gain: 1.0 #回転速度計画機ゲイン
+    angular_pos_gain: 2.3 #回転位置ズレのゲイン
+    angular_pos_integral_gain: 0.03  #回転位置ズレの積分ゲイン
+
+    angular_pos_tolerance: 3.0  #回転到達位置の許容誤差[deg]
+
 spline_trajectories_node:
   ros__parameters:
     resolution: 0.01  #起動点の分解能[m]
@@ -131,8 +140,8 @@ controller_interface_node:
 injection_interface_node:
   ros__parameters:
     tf_injection2robot: [0.0, 0.0] #射出機構のTF[x, y]
-    strage_backside: [0.0, 0.0, 0.0] #ストレージエリアの[x, y, 高さ]
-    strage_front: [0.1, 0.0, 0.0]
+    strage_backside: [12.0, 2.250, 0.0] #ストレージエリアの[x, y, 高さ]
+    strage_front: [8.0, 2.250, 0.0]
 
 rasnac_localization:
   ros__parameters:

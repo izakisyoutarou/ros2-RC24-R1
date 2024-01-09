@@ -2,7 +2,6 @@
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <fstream>
 
-
 using namespace std;
 using namespace utils;
 
@@ -40,6 +39,7 @@ namespace injection_interface{
             );
 
             _pub_injection = this->create_publisher<injection_interface_msg::msg::InjectionCommand>("injection_command", 10);
+            _pub_spin_position = this->create_publisher<path_msg::msg::Turning>("spin_position", 10);
 
             const auto initial_pose = this->get_parameter("initial_pose").as_double_array();
             if(court_color_ == "blue"){
@@ -56,6 +56,7 @@ namespace injection_interface{
 
         void InjectionInterface::_callback_aim_in_storage(const std_msgs::msg::Bool::SharedPtr msg){
             auto injection_command = std::make_shared<injection_interface_msg::msg::InjectionCommand>();
+            auto injection_angle = std::make_shared<path_msg::msg::Turning>();
             last_target = msg;
 
             geometry_msgs::msg::Vector3 robot_pose;
@@ -67,16 +68,30 @@ namespace injection_interface{
             // RCLCPP_INFO(this->get_logger(), "x:%lf  y: %lf  直径: %lf  高さ: %lf",target_pos.x,target_pos.y,pole_diameter,pole_height);
 
             if(msg->data){
-                target_pos.x = strage_backside[0];
-                target_pos.y = strage_backside[1];
-                target_height = strage_backside[2];
-                target_input = true;
+                if(court_color_ == "blue"){
+                    target_pos.x = strage_backside[0];
+                    target_pos.y = strage_backside[1];
+                    target_height = strage_backside[2];
+                    target_input = true;
+                }else if(court_color_ == "red"){
+                    target_pos.x = strage_backside[0];
+                    target_pos.y = -strage_backside[1];
+                    target_height = strage_backside[2];
+                    target_input = true;
+                }
             }
             else{
-                target_pos.x = strage_front[0];
-                target_pos.y = strage_front[1];
-                target_height = strage_front[2];
-                target_input = true;
+                if(court_color_ == "blue"){
+                    target_pos.x = strage_front[0];
+                    target_pos.y = strage_front[1];
+                    target_height = strage_front[2];
+                    target_input = true;
+                }else if(court_color_ == "red"){
+                    target_pos.x = strage_front[0];
+                    target_pos.y = -strage_front[1];
+                    target_height = strage_front[2];
+                    target_input = true;
+                }
             }
 
             if(!target_input){
@@ -106,6 +121,10 @@ namespace injection_interface{
             injection_command->height = target_height;
 
             _pub_injection->publish(*injection_command);
+
+            injection_angle->angle_pos = atan2(target_pos.y - robot_pose.y, target_pos.x - robot_pose.x) - self_pose.z;
+            _pub_spin_position->publish(*injection_angle);
+
         }
 
         void InjectionInterface::_callback_is_move_tracking(const std_msgs::msg::Bool::SharedPtr msg){
