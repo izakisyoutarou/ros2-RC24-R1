@@ -288,7 +288,7 @@ namespace controller_interface
 
             _pub_state_communication_timer = create_wall_timer(
                 std::chrono::milliseconds(base_state_communication_ms),
-                [this]{
+                [this] {
                     auto msg_base_state_communication = std::make_shared<std_msgs::msg::Empty>();
                     _pub_base_state_communication->publish(*msg_base_state_communication);
                 }
