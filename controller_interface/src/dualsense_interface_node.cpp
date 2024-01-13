@@ -205,7 +205,7 @@ namespace controller_interface
 
             //上物と足回り手動周期(60hz)
             _move_injection_heteronomy = this->create_wall_timer(
-                std::chrono::milliseconds(this->get_parameter("move_injection_heteronomy_ms").as_int()),
+                std::chrono::milliseconds(this->get_parameter("interval_ms").as_int()),
                 std::bind(&DualSense::callback_move_injection_heteronomy, this) 
             );
 
