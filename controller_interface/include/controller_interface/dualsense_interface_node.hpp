@@ -93,11 +93,15 @@ namespace controller_interface
             //sprine_pid
             rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_move_node;
 
+            //gazebo
+            rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr _pub_cmd_vel;
+
             //timer
             rclcpp::TimerBase::SharedPtr _pub_heartbeat;
             rclcpp::TimerBase::SharedPtr _pub_timer_convergence;
             rclcpp::TimerBase::SharedPtr _socket_timer;
             rclcpp::TimerBase::SharedPtr _start_timer;
+            rclcpp::TimerBase::SharedPtr _move_injection_heteronomy;
 
             //QoS
             rclcpp::QoS _qos = rclcpp::QoS(10);
@@ -131,6 +135,8 @@ namespace controller_interface
 
 
             void _recv_joy_main(const unsigned char data[16]);
+            //上物と足回り手動のtimerによる周期関数
+            void callback_move_injection_heteronomy();
 
             //メッセージ型の宣言
             controller_interface_msg::msg::BaseControl msg_base_control;

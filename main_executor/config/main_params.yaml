@@ -102,6 +102,7 @@ controller_interface_node:
     angular_max_acc: 180.0
     angular_max_dec: 180.0
     
+    move_injection_heteronomy_ms: 6 #上物と足回り手動の周期[ms]
     heartbeat_ms: 100 #ハートビート周期[ms]
     convergence_ms: 100 #収束周期[ms]
 

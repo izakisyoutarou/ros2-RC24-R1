@@ -116,6 +116,8 @@ namespace controller_interface
             _pub_color_ball = this->create_publisher<controller_interface_msg::msg::Colorball>("color_information", _qos);
             _pub_injection = this->create_publisher<std_msgs::msg::Bool>("is_backside", _qos);
 
+            _pub_cmd_vel = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel",_qos);
+
             auto msg_base_control = std::make_shared<controller_interface_msg::msg::BaseControl>();
             //get_parametorで取得したパラメータをrc23pkgsのmsgに格納
             msg_base_control->is_restart = defalt_restart_flag;
@@ -200,6 +202,13 @@ namespace controller_interface
                     }
                 }
             );
+
+            //上物と足回り手動周期(60hz)
+            _move_injection_heteronomy = this->create_wall_timer(
+                std::chrono::milliseconds(this->get_parameter("move_injection_heteronomy_ms").as_int()),
+                std::bind(&DualSense::callback_move_injection_heteronomy, this) 
+            );
+
             //計画機
             slow_velPlanner_linear_x.limit(slow_limit_linear);
             slow_velPlanner_linear_y.limit(slow_limit_linear);
@@ -241,15 +250,15 @@ namespace controller_interface
             //axes:  0:joyL_x  1:joyL_y  2:L2  3:joyR_x  4:joyR_y  5:R2  6:Left(1),Right(-1)  7:Up(1),Down(-1)
             
             //button[12](joyR(押し込み))は足回りの手自動の切り替え。is_move_autonomousを使って、トグルになるようにしてる。ERの上物からもらう必要はない。
-            if(upedge_r3_main(msg->buttons[12]))//joyR(押し込み)
-            {
-                robotcontrol_flag = true;
-                if(is_move_autonomous == false){
-                    is_move_autonomous = true;
-                }else{
-                    is_move_autonomous = false;
-                }
-            }
+            // if(upedge_r3_main(msg->buttons[12]))//joyR(押し込み)
+            // {
+            //     robotcontrol_flag = true;
+            //     if(is_move_autonomous == false){
+            //         is_move_autonomous = true;
+            //     }else{
+            //         is_move_autonomous = false;
+            //     }
+            // }
             //button[8](create)は緊急。is_emergencyを使って、トグルになるようにしてる。
             if(upedge_emergency_main(msg->buttons[8]))//create
             {
@@ -280,7 +289,7 @@ namespace controller_interface
 
             msg_base_control.is_restart = is_reset;
             msg_base_control.is_emergency = is_emergency;
-            msg_base_control.is_move_autonomous = is_move_autonomous;
+            msg_base_control.is_move_autonomous = defalt_move_autonomous_flag;
             msg_base_control.is_injection_autonomous = is_injection_autonomous;
             msg_base_control.is_slow_speed = is_slow_speed;
             msg_base_control.initial_state = initial_state;
@@ -458,7 +467,45 @@ namespace controller_interface
             analog_r_x_main = msg->axes[3];     //Joy_Right_X
             analog_r_y_main = msg->axes[4];     //Joy_Right_X
 
+        }void DualSense::callback_move_injection_heteronomy()
+        {
+            auto msg_linear = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+            msg_linear->canid = can_linear_id;
+            msg_linear->candlc = 8;
+
+            auto msg_angular = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+            msg_angular->canid = can_angular_id;
+            msg_angular->candlc = 4;
+
+            auto msg_gazebo = std::make_shared<geometry_msgs::msg::Twist>();
+
+            uint8_t _candata_joy[8];
+
+            slow_velPlanner_linear_x.vel(static_cast<double>(analog_l_y_main));//unityとロボットにおける。xとyが違うので逆にしている。
+            slow_velPlanner_linear_y.vel(static_cast<double>(analog_l_x_main));
+            velPlanner_angular_z.vel(static_cast<double>(analog_r_x_main));
+
+            slow_velPlanner_linear_x.cycle();
+            slow_velPlanner_linear_y.cycle();
+            velPlanner_angular_z.cycle();
+
+            float_to_bytes(_candata_joy, static_cast<float>(slow_velPlanner_linear_x.vel()) * slow_manual_linear_max_vel);
+            float_to_bytes(_candata_joy+4, static_cast<float>(slow_velPlanner_linear_y.vel()) * slow_manual_linear_max_vel);
+            for(int i=0; i<msg_linear->candlc; i++) msg_linear->candata[i] = _candata_joy[i];
+
+            float_to_bytes(_candata_joy, static_cast<float>(velPlanner_angular_z.vel()) * manual_angular_max_vel);
+            for(int i=0; i<msg_angular->candlc; i++) msg_angular->candata[i] = _candata_joy[i];
+
+            _pub_canusb->publish(*msg_linear);
+            _pub_canusb->publish(*msg_angular);
+
+            msg_gazebo->linear.x = slow_velPlanner_linear_x.vel();
+            msg_gazebo->linear.y = slow_velPlanner_linear_y.vel();
+            msg_gazebo->angular.z = velPlanner_angular_z.vel();
+            _pub_cmd_vel->publish(*msg_gazebo);
         }
+
+
 
         //コントローラから射出情報をsubsclib
         void DualSense::callback_main_injection_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg)
@@ -495,7 +542,4 @@ namespace controller_interface
              //injection_calculatorから上モノ指令値計算収束のsub。上物の指令値の収束情報。
             is_injection_calculator_convergence = msg->data;
         }
-
-
-
 }
