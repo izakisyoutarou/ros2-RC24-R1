@@ -152,7 +152,7 @@ namespace controller_interface
             bool is_move_autonomous = false;
             bool is_injection_autonomous = false;
             bool is_slow_speed = false;
-            bool is_injection_mech_stop_m = false;
+            bool is_injection_mech_stop_m = true;
             std::string initial_state = "";
 
             //unityにsubscrib
