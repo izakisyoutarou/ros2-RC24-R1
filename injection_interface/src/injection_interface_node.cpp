@@ -123,6 +123,7 @@ namespace injection_interface{
             _pub_injection->publish(*injection_command);
 
             injection_angle->angle_pos = atan2(target_pos.y - robot_pose.y, target_pos.x - robot_pose.x) - self_pose.z;
+            injection_angle->accurate_convergence = true;
             _pub_spin_position->publish(*injection_angle);
 
         }

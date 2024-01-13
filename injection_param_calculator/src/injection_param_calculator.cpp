@@ -57,7 +57,7 @@ namespace injection_param_calculator
 
         if (isConvergenced)
         {
-            RCLCPP_INFO(get_logger(), "計算が収束しました");
+            RCLCPP_INFO(get_logger(), "計算が収束しました:%f",velocity);
             _pub_can->publish(*msg_injection);
         }
     }

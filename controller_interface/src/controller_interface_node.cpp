@@ -407,7 +407,7 @@ namespace controller_interface
                 robotcontrol_flag = true;
                 flag_restart = true;
                 is_emergency = false;
-                is_injection_mech_stop_m = false;
+                is_injection_mech_stop_m = true;
                 is_move_autonomous = defalt_move_autonomous_flag;
                 is_injection_autonomous = defalt_injection_autonomous_flag;
                 is_slow_speed = defalt_slow_speed_flag;
@@ -423,7 +423,7 @@ namespace controller_interface
             //射出
             if(msg->data == "r1"){
                 RCLCPP_INFO(this->get_logger(), "r1");
-                if(is_injection_convergence){
+                if(is_injection_convergence && !is_injection_mech_stop_m){
                     auto msg_inject = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                     msg_inject->canid = can_inject_id;
                     msg_inject->candlc = 0;
@@ -440,12 +440,12 @@ namespace controller_interface
                 msg_inject_spinning->candata[0] = false;
                 _pub_canusb->publish(*msg_inject_spinning);
                 is_injection_mech_stop_m = true;
+                is_move_autonomous = false;
             }
 
             //射出パラメータ&回転開始
             if(msg->data == "l1"){
                 if(is_backside){
-                    RCLCPP_INFO(this->get_logger(), "l1");
                     auto msg_injection = std::make_shared<std_msgs::msg::Bool>();
                     msg_injection->data = true;
                     _pub_injection->publish(*msg_injection);
@@ -454,7 +454,6 @@ namespace controller_interface
                     msg_inject_spinning->candlc = 1;
                     msg_inject_spinning->candata[0] = true;
                     _pub_canusb->publish(*msg_inject_spinning);
-                    is_injection_mech_stop_m = false;
                     is_backside = false;
                 }
                 else {
@@ -466,9 +465,11 @@ namespace controller_interface
                     msg_inject_spinning->candlc = 1;
                     msg_inject_spinning->candata[0] = true;
                     _pub_canusb->publish(*msg_inject_spinning);
-                    is_injection_mech_stop_m = false;
                     is_backside = true;
                 }
+                RCLCPP_INFO(this->get_logger(), "l1");
+                is_move_autonomous = true;
+                is_injection_mech_stop_m = false;
             }
 
             //高速低速モードの切り替え
@@ -1078,10 +1079,10 @@ namespace controller_interface
                     slow_velPlanner_linear_y.cycle();
                     velPlanner_angular_z.cycle();
                     //floatからバイト(メモリ)に変換
-                    float_to_bytes(_candata_joy, static_cast<float>(-slow_velPlanner_linear_x.vel()) * slow_manual_linear_max_vel);
-                    float_to_bytes(_candata_joy+4, static_cast<float>(-slow_velPlanner_linear_y.vel()) * slow_manual_linear_max_vel);
+                    float_to_bytes(_candata_joy, static_cast<float>(slow_velPlanner_linear_x.vel()) * slow_manual_linear_max_vel);
+                    float_to_bytes(_candata_joy+4, static_cast<float>(slow_velPlanner_linear_y.vel()) * slow_manual_linear_max_vel);
                     for(int i=0; i<msg_linear->candlc; i++) msg_linear->candata[i] = _candata_joy[i];
-                    float_to_bytes(_candata_joy, static_cast<float>(-velPlanner_angular_z.vel()) * manual_angular_max_vel);
+                    float_to_bytes(_candata_joy, static_cast<float>(velPlanner_angular_z.vel()) * manual_angular_max_vel);
                     for(int i=0; i<msg_angular->candlc; i++) msg_angular->candata[i] = _candata_joy[i];
                     
                     //msg_gazeboに速度計画機の値を格納
@@ -1104,10 +1105,10 @@ namespace controller_interface
                     high_velPlanner_linear_y.cycle();
                     velPlanner_angular_z.cycle();
 
-                    float_to_bytes(_candata_joy, static_cast<float>(-high_velPlanner_linear_x.vel()) * high_manual_linear_max_vel);
-                    float_to_bytes(_candata_joy+4, static_cast<float>(-high_velPlanner_linear_y.vel()) * high_manual_linear_max_vel);
+                    float_to_bytes(_candata_joy, static_cast<float>(high_velPlanner_linear_x.vel()) * high_manual_linear_max_vel);
+                    float_to_bytes(_candata_joy+4, static_cast<float>(high_velPlanner_linear_y.vel()) * high_manual_linear_max_vel);
                     for(int i=0; i<msg_linear->candlc; i++) msg_linear->candata[i] = _candata_joy[i];
-                    float_to_bytes(_candata_joy, static_cast<float>(-velPlanner_angular_z.vel()) * manual_angular_max_vel);
+                    float_to_bytes(_candata_joy, static_cast<float>(velPlanner_angular_z.vel()) * manual_angular_max_vel);
                     for(int i=0; i<msg_angular->candlc; i++) msg_angular->candata[i] = _candata_joy[i];
                     
                     msg_gazebo->linear.x = high_velPlanner_linear_x.vel();
