@@ -40,7 +40,7 @@ namespace controller_interface
 
         private:
             rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr _sub_dualsense_main;
-            //ER_subのcontrollerから
+            //R1_subのcontrollerから
             rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr _sub_dualsense_sub;
 
             //mainボードから
@@ -101,7 +101,7 @@ namespace controller_interface
             rclcpp::TimerBase::SharedPtr _pub_timer_convergence;
             rclcpp::TimerBase::SharedPtr _socket_timer;
             rclcpp::TimerBase::SharedPtr _start_timer;
-            rclcpp::TimerBase::SharedPtr _move_injection_heteronomy;
+            rclcpp::TimerBase::SharedPtr Joystick_timer;
 
             //QoS
             rclcpp::QoS _qos = rclcpp::QoS(10);
@@ -133,10 +133,8 @@ namespace controller_interface
             void callback_collecting_ball(const std_msgs::msg::String::SharedPtr msg);
             void _recv_callback();
 
-
-            void _recv_joy_main(const unsigned char data[16]);
             //上物と足回り手動のtimerによる周期関数
-            void callback_move_injection_heteronomy();
+            void callback_Joystick();
 
             //メッセージ型の宣言
             controller_interface_msg::msg::BaseControl msg_base_control;

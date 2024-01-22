@@ -1,6 +1,9 @@
 #include "controller_interface/dualsense_interface_node.hpp"
 #include <sys/time.h>
 #include <sys/types.h>
+#include <chrono>
+#include <iostream>
+#include <future>
 
 using namespace utils;
 
@@ -175,7 +178,7 @@ namespace controller_interface
                 std::chrono::milliseconds(convergence_ms),
                 [this] {
                     auto msg_convergence = std::make_shared<controller_interface_msg::msg::Convergence>();
-                    //get_parametorで取得したパラメータをrc23pkgsのmsgに格納
+                    //get_parametorで取得したパラメータをrc24pkgsのmsgに格納
                     msg_convergence->spline_convergence = is_spline_convergence;
                     msg_convergence->injection_calculator = is_injection_calculator_convergence;
                     msg_convergence->injection = is_injection_convergence;
@@ -203,10 +206,9 @@ namespace controller_interface
                 }
             );
 
-            //上物と足回り手動周期(60hz)
-            _move_injection_heteronomy = this->create_wall_timer(
+            Joystick_timer = this->create_wall_timer(
                 std::chrono::milliseconds(this->get_parameter("interval_ms").as_int()),
-                std::bind(&DualSense::callback_move_injection_heteronomy, this) 
+                std::bind(&DualSense::callback_Joystick, this) 
             );
 
             //計画機
@@ -467,7 +469,7 @@ namespace controller_interface
             analog_r_x_main = msg->axes[3];     //Joy_Right_X
             analog_r_y_main = msg->axes[4];     //Joy_Right_X
 
-        }void DualSense::callback_move_injection_heteronomy()
+        }void DualSense::callback_Joystick()
         {
             auto msg_linear = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
             msg_linear->canid = can_linear_id;
