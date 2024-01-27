@@ -100,6 +100,7 @@ namespace controller_interface
             //収束の状態を確認するための周期
             const auto heartbeat_ms = this->get_parameter("heartbeat_ms").as_int();
             const auto convergence_ms = this->get_parameter("convergence_ms").as_int();
+            const auto base_state_communication_ms = this->get_parameter("base_state_communication_ms").as_int();
 
             //hppファイルでオブジェクト化したpublisherとsubscriberの設定
             //controller_mainからsub
@@ -188,6 +189,7 @@ namespace controller_interface
             _pub_con_injection = this->create_publisher<std_msgs::msg::Bool>("injection_convergence_unity", _qos);
             _pub_con_seedlinghand = this->create_publisher<std_msgs::msg::Bool>("seedlinghand_convergence_unity", _qos);
             _pub_con_ballhand = this->create_publisher<std_msgs::msg::Bool>("ballhand_convergence_unity", _qos);
+            _pub_base_state_communication = this->create_publisher<std_msgs::msg::Empty>("state_communication_unity", _qos);
 
             //ボールと苗の回収&設置
             _pub_seedling_collection = this->create_publisher<std_msgs::msg::Bool>("Seedling_Collection", _qos);
@@ -281,6 +283,14 @@ namespace controller_interface
                     msg_heartbeat->canid = can_heartbeat_id;
                     msg_heartbeat->candlc = 0;
                     _pub_canusb->publish(*msg_heartbeat);
+                }
+            );
+
+            _pub_state_communication_timer = create_wall_timer(
+                std::chrono::milliseconds(base_state_communication_ms),
+                [this] {
+                    auto msg_base_state_communication = std::make_shared<std_msgs::msg::Empty>();
+                    _pub_base_state_communication->publish(*msg_base_state_communication);
                 }
             );
 

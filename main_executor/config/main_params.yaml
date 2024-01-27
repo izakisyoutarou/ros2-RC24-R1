@@ -118,6 +118,8 @@ controller_interface_node:
     #60hzでスティックの値を送る(60hz = 6ms)
     interval_ms: 6
 
+    base_state_communication_ms: 100
+
     start_ms: 3000
     
     #リスタート、緊急、足回りの手自動、上物の手自動、手動の射角、ボタンのカラー情報
