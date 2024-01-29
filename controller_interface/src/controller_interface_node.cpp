@@ -375,8 +375,9 @@ namespace controller_interface
                 robotcontrol_flag = true;
                 is_emergency = true;                
             }
-
-            //リスタート
+            
+            //sはリスタート。緊急と手自動のboolをfalseにしてリセットしている。
+            //msgがsだったときのみ以下の変数にパラメータが代入される
             if(msg->data == "s")
             {
                 RCLCPP_INFO(this->get_logger(), "s");
@@ -430,18 +431,18 @@ namespace controller_interface
                     msg_inject_spinning->candlc = 1;
                     msg_inject_spinning->candata[0] = true;
                     _pub_canusb->publish(*msg_inject_spinning);
-                    is_backside = false;
+                    is_backside = true;
                 }
                 else {
                     auto msg_injection = std::make_shared<std_msgs::msg::Bool>();
-                    msg_injection->data = false;
+                    msg_injection->data = true;
                     _pub_injection->publish(*msg_injection);
                     auto msg_inject_spinning = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                     msg_inject_spinning->canid = can_inject_spinning_id;
                     msg_inject_spinning->candlc = 1;
-                    msg_inject_spinning->candata[0] = true;
+                    msg_inject_spinning->candata[0] = false;
                     _pub_canusb->publish(*msg_inject_spinning);
-                    is_backside = true;
+                    is_backside = false;
                 }
                 RCLCPP_INFO(this->get_logger(), "l1");
                 is_move_autonomous = true;
@@ -894,7 +895,7 @@ namespace controller_interface
                 }
             }
 
-            if(msg->data == "down")
+             if(msg->data == "right")
             {
                 if(is_seedlinghand_convergence){
                     auto msg_seedling_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
@@ -905,7 +906,7 @@ namespace controller_interface
                 }
             }
 
-            if(msg->data == "left")
+            if(msg->data == "down")
             {
                 if(is_seedlinghand_convergence){
                     auto msg_seedling_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
@@ -916,7 +917,7 @@ namespace controller_interface
                 }
             }
 
-            if(msg->data == "right")
+            if(msg->data == "left")
             {
                 if(is_seedlinghand_convergence){
                     auto msg_seedling_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
@@ -926,6 +927,7 @@ namespace controller_interface
                     _pub_canusb->publish(*msg_seedling_install);
                 }
             }
+
         }
 
             //コントローラからスタート地点情報をsubscribe
