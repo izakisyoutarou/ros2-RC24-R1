@@ -17,9 +17,6 @@
 #include "socket_udp.hpp"
 #include "trapezoidal_velocity_planner.hpp"
 
-#include "send_udp.hpp"
-#include "super_command.hpp"
-
 #include "my_visibility.h"
 
 namespace controller_interface
@@ -58,10 +55,13 @@ namespace controller_interface
 
             //injection_param_calculatorから
             rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_injection_calculator;
+
             //sequencerから
             rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_injection_strange;
-
             rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_collection_ball;
+
+            //sequenserへ
+            rclcpp::Publisher<std_msgs::msg::String>::SharedPtr _pub_initial_sequense;
 
             //CanUsbへ
             rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb;
@@ -87,6 +87,7 @@ namespace controller_interface
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_base_emergency;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_move_auto;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_base_injection;
+            rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr _pub_base_state_communication;
             
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_spline;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_colcurator;
@@ -102,6 +103,7 @@ namespace controller_interface
             rclcpp::TimerBase::SharedPtr _pub_timer_convergence;
             rclcpp::TimerBase::SharedPtr _socket_timer;
             rclcpp::TimerBase::SharedPtr _start_timer;
+            rclcpp::TimerBase::SharedPtr _pub_state_communication_timer;
 
             //QoS
             rclcpp::QoS _qos = rclcpp::QoS(10);
@@ -109,7 +111,6 @@ namespace controller_interface
             //controller_mainからのcallback
             void callback_main_pad(const std_msgs::msg::String::SharedPtr msg);
             void callback_screen_pad(const std_msgs::msg::String::SharedPtr msg);
-            void callback_state_num_R1(const std_msgs::msg::String::SharedPtr msg);
 
             //controller_subからのcallback
             void callback_sub_pad(const std_msgs::msg::String::SharedPtr msg);
@@ -151,7 +152,7 @@ namespace controller_interface
             bool is_move_autonomous = false;
             bool is_injection_autonomous = false;
             bool is_slow_speed = false;
-            bool is_injection_mech_stop_m = false;
+            bool is_injection_mech_stop_m = true;
             std::string initial_state = "";
 
             //unityにsubscrib
@@ -193,8 +194,6 @@ namespace controller_interface
 
             //robotcontrol_flagはtrueのときpublishできる
             bool robotcontrol_flag = false;
-
-
 
             //convergence用
             bool is_spline_convergence;
@@ -265,9 +264,6 @@ namespace controller_interface
 
             VelPlanner velPlanner_angular_z;
             const VelPlannerLimit limit_angular;
-
-            send_udp send;
-            super_command command;
 
             RecvUDP joy_main;
     };

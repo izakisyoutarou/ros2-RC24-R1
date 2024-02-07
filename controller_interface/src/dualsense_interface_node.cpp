@@ -187,24 +187,24 @@ namespace controller_interface
                     _pub_convergence->publish(*msg_convergence);
                 }
             );
-            //一定周期で処理をしている。この場合は3000ms間隔で処理をしている
-            _start_timer = this->create_wall_timer(
-                std::chrono::milliseconds(this->get_parameter("start_ms").as_int()),
-                [this] {
-                    if(start_flag)
-                    {
-                        const string initial_inject_state_with_null = initial_inject_state + '\0';
-                        //c_strがポインタを返すためアスタリスクをつける
-                        const char* char_ptr2 = initial_inject_state_with_null.c_str();
-                        //reinterpret_castでポインタ型の変換
-                        //char_ptr2をconst unsigned charに置き換える
-                        const unsigned char* inject = reinterpret_cast<const unsigned char*>(char_ptr2);
-                        //commandクラスのudp通信で一番最初に回収するデータをコントローラーに送り、コントローラ側で処理が行われる
-                        command.state_num_R1(inject, r1_pc,udp_port_state);
-                        start_flag = false;
-                    }
-                }
-            );
+            // //一定周期で処理をしている。この場合は3000ms間隔で処理をしている
+            // _start_timer = this->create_wall_timer(
+            //     std::chrono::milliseconds(this->get_parameter("start_ms").as_int()),
+            //     [this] {
+            //         if(start_flag)
+            //         {
+            //             const string initial_inject_state_with_null = initial_inject_state + '\0';
+            //             //c_strがポインタを返すためアスタリスクをつける
+            //             const char* char_ptr2 = initial_inject_state_with_null.c_str();
+            //             //reinterpret_castでポインタ型の変換
+            //             //char_ptr2をconst unsigned charに置き換える
+            //             const unsigned char* inject = reinterpret_cast<const unsigned char*>(char_ptr2);
+            //             //commandクラスのudp通信で一番最初に回収するデータをコントローラーに送り、コントローラ側で処理が行われる
+            //             command.state_num_R1(inject, r1_pc,udp_port_state);
+            //             start_flag = false;
+            //         }
+            //     }
+            // );
 
             Joystick_timer = this->create_wall_timer(
                 std::chrono::milliseconds(this->get_parameter("interval_ms").as_int()),
@@ -433,19 +433,19 @@ namespace controller_interface
                     _pub_canusb->publish(*msg_paddy_collect);
                 }
             }
-            if(upedge_l3_main(msg->buttons[11]))//joyL(押し込み)
-            {
-                //c_strがポインタ型を返すためアスタリスクをつける
-                const char* char_ptr = initial_pickup_state.c_str();
-                //reinterpret_castでポインタ型の変換
-                //char_ptr1をconst unsigned charに置き換える
-                const unsigned char* pickup = reinterpret_cast<const unsigned char*>(char_ptr);
-                //commandクラスのudp通信で一番最初に回収するデータをコントローラーに送り、コントローラ側で処理が行われる
-                command.state_num_R1(pickup, r1_pc,udp_port_state);
-                //同じ処理が連続で起きないようにfalseでもとの状態に戻す
-                start_flag = true;
-                move_node_flag = true;
-            }
+            // if(upedge_l3_main(msg->buttons[11]))//joyL(押し込み)
+            // {
+            //     //c_strがポインタ型を返すためアスタリスクをつける
+            //     const char* char_ptr = initial_pickup_state.c_str();
+            //     //reinterpret_castでポインタ型の変換
+            //     //char_ptr1をconst unsigned charに置き換える
+            //     const unsigned char* pickup = reinterpret_cast<const unsigned char*>(char_ptr);
+            //     //commandクラスのudp通信で一番最初に回収するデータをコントローラーに送り、コントローラ側で処理が行われる
+            //     command.state_num_R1(pickup, r1_pc,udp_port_state);
+            //     //同じ処理が連続で起きないようにfalseでもとの状態に戻す
+            //     start_flag = true;
+            //     move_node_flag = true;
+            // }
             if(emergency_lock)//create
             {
                 _pub_canusb->publish(*msg_emergency);

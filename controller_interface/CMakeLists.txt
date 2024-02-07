@@ -28,8 +28,6 @@ find_package(socketcan_interface_msg REQUIRED)
 add_library(controller_interface_node
   src/dualsense_interface_node.cpp
   src/controller_interface_node.cpp
-  src/send_udp.cpp
-  src/super_command.cpp
 )
 
 target_compile_definitions(controller_interface_node

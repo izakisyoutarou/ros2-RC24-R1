@@ -18,8 +18,6 @@
 #include "socket_udp.hpp"
 #include "trapezoidal_velocity_planner.hpp"
 
-#include "send_udp.hpp"
-#include "super_command.hpp"
 
 #include "my_visibility.h"
 
@@ -327,6 +325,5 @@ namespace controller_interface
             UpEdge upedge_axes6_sub;
             UpEdge upedge_axes7_sub;
 
-            super_command command;
     };
 }

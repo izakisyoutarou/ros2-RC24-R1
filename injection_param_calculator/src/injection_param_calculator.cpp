@@ -14,7 +14,7 @@ namespace injection_param_calculator
           velocity_lim_max(get_parameter("velocity_lim_max").as_double()),                          // 最大初速度[m/s]
           injection_angle(get_parameter("injection_angle").as_double()),                            // 射出角度[deg]
           max_loop(get_parameter("max_loop").as_int()),                                             // ニュートン法のループ制限回数
-          can_inject_vel_id(get_parameter("canid.inject_vel").as_int())    
+          can_inject_vel_id(get_parameter("canid.inject_vel").as_int())
         {
             _sub_injection_command = this->create_subscription<injection_interface_msg::msg::InjectionCommand>(
                 "injection_command", _qos,
@@ -57,7 +57,7 @@ namespace injection_param_calculator
 
         if (isConvergenced)
         {
-            RCLCPP_INFO(get_logger(), "計算が収束しました");
+            RCLCPP_INFO(get_logger(), "計算が収束しました:%f",velocity);
             _pub_can->publish(*msg_injection);
         }
     }
