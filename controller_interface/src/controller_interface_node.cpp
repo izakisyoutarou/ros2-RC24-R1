@@ -14,7 +14,6 @@ namespace controller_interface
     //下記2文は共有ライブラリを書くのに必要なプログラム
     SmartphoneGamepad::SmartphoneGamepad(const rclcpp::NodeOptions &options) : SmartphoneGamepad("", options) {}
     SmartphoneGamepad::SmartphoneGamepad(const std::string &name_space, const rclcpp::NodeOptions &options): rclcpp::Node("controller_interface_node", name_space, options),
-        
         //mainexecutorのyamlで設定したパラメータを設定している。
         //この場合はhigh_limit_linearクラスにDEL_MAX=poslimit,vel,acc,decのパラメータを引数として持たせている。
         //as_doubleは引用先のパラメータの型を示している。
@@ -32,7 +31,7 @@ namespace controller_interface
         dtor(get_parameter("angular_max_acc").as_double()),
         dtor(get_parameter("angular_max_dec").as_double()) ),
 
-        joy_main(get_parameter("port.joy_main").as_int()),
+        recvudp(get_parameter("port.joy_main").as_int()),
 
         //high_linear_max_velの型をdoubleからfloatにstatic_castを用いて変換している
         //数値を保存するだけならfloatの方がdoubleより処理が速いため
@@ -320,10 +319,9 @@ namespace controller_interface
 
             //一定周期で処理をしている。この場合は50ms間隔で処理をしている
             //コントローラのデータを一定周期で届いているか確認する
-            //UDP通信特有の書き方？
             _socket_timer = this->create_wall_timer(
                 std::chrono::milliseconds(this->get_parameter("interval_ms").as_int()),
-                [this] { _recv_callback(); }
+                [this] {_recv_callback();}
             );
 
             //一定周期で処理をしている。この場合は3000ms間隔で処理をしている
@@ -371,7 +369,6 @@ namespace controller_interface
 
             //緊急停止
             if(msg->data == "g"){
-                RCLCPP_INFO(this->get_logger(), "g");
                 robotcontrol_flag = true;
                 is_emergency = true;                
             }
@@ -380,7 +377,6 @@ namespace controller_interface
             //msgがsだったときのみ以下の変数にパラメータが代入される
             if(msg->data == "s")
             {
-                RCLCPP_INFO(this->get_logger(), "s");
                 robotcontrol_flag = true;
                 flag_restart = true;
                 is_emergency = false;
@@ -399,7 +395,6 @@ namespace controller_interface
 
             //射出
             if(msg->data == "r1"){
-                RCLCPP_INFO(this->get_logger(), "r1");
                 if(is_injection_convergence && !is_injection_mech_stop_m){
                     auto msg_inject = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                     msg_inject->canid = can_inject_id;
@@ -410,7 +405,6 @@ namespace controller_interface
 
             //回転停止
             if(msg->data == "r2"){
-                RCLCPP_INFO(this->get_logger(), "r2");
                 auto msg_inject_spinning = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                 msg_inject_spinning->canid = can_inject_spinning_id;
                 msg_inject_spinning->candlc = 1;
@@ -444,7 +438,6 @@ namespace controller_interface
                     _pub_canusb->publish(*msg_inject_spinning);
                     is_backside = false;
                 }
-                RCLCPP_INFO(this->get_logger(), "l1");
                 is_move_autonomous = true;
                 is_injection_mech_stop_m = false;
             }
@@ -457,7 +450,6 @@ namespace controller_interface
 
             //ステアリセット
             if(msg->data == "up"){
-                RCLCPP_INFO(this->get_logger(), "up");
                 auto msg_steer_reset = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                 msg_steer_reset->canid = can_steer_reset_id;
                 msg_steer_reset->candlc = 0;
@@ -466,7 +458,6 @@ namespace controller_interface
 
             //キャリブレーション
             if(msg->data == "down"){
-                RCLCPP_INFO(this->get_logger(), "down");
                 auto msg_calibrate = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                 msg_calibrate->canid = can_calibrate_id;
                 msg_calibrate->candlc = 0;
@@ -475,7 +466,6 @@ namespace controller_interface
 
             //IO基盤リセット
             if(msg->data == "left"){
-                RCLCPP_INFO(this->get_logger(), "left");
                 auto msg_main_reset = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                 msg_main_reset->canid = can_reset_id;
                 msg_main_reset->candlc = 1;
@@ -485,7 +475,6 @@ namespace controller_interface
 
             //mian基盤リセット
             if(msg->data == "right"){
-                RCLCPP_INFO(this->get_logger(), "right");
                 auto msg_io_reset = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                 msg_io_reset->canid = can_reset_id;
                 msg_io_reset->candlc = 1;
@@ -540,7 +529,6 @@ namespace controller_interface
             //r3は足回りの手自動の切り替え。is_move_autonomousを使って、トグルになるようにしてる。R1の上物からもらう必要はない。
             if(msg->data == "r3")
             {
-                RCLCPP_INFO(this->get_logger(), "r3");
                 robotcontrol_flag = true;
                 if(is_move_autonomous == false) is_move_autonomous = true;
                 else is_move_autonomous = false;
@@ -549,7 +537,6 @@ namespace controller_interface
             //l3を押すと射出情報をpublishする
             if(msg->data == "l3")
             {
-                RCLCPP_INFO(this->get_logger(), "l3");
                 auto initial_sequense_pickup = std::make_shared<std_msgs::msg::String>();
                 initial_sequense_pickup->data = initial_pickup_state;
                 _pub_initial_sequense->publish(*initial_sequense_pickup);
@@ -612,117 +599,36 @@ namespace controller_interface
             auto msg_move_node = std::make_shared<std_msgs::msg::String>();
             auto msg_move_node_bool = std::make_shared<std_msgs::msg::Bool>();
 
-            if(msg->data == "O"){
-                msg_move_node->data = "O";
-                pub_move_node->publish(*msg_move_node);
-            }
+            if(msg->data == "O") msg_move_node->data = "O";
+            else if(msg->data == "S0") msg_move_node->data = "S0";
+            else if(msg->data == "S1") msg_move_node->data = "S1";
+            else if(msg->data == "S2") msg_move_node->data = "S2";
+            else if(msg->data == "S3") msg_move_node->data = "S3";
+            else if(msg->data == "P0") msg_move_node->data = "P0";
+            else if(msg->data == "P1") msg_move_node->data = "P1";
+            else if(msg->data == "P2") msg_move_node->data = "P2";
+            else if(msg->data == "P3") msg_move_node->data = "P3";
+            else if(msg->data == "P4") msg_move_node->data = "P4";
+            else if(msg->data == "P5") msg_move_node->data = "P5";
+            else if(msg->data == "P6") msg_move_node->data = "P6";
+            else if(msg->data == "P7") msg_move_node->data = "P7";
+            else if(msg->data == "H0") msg_move_node->data = "H0";
+            else if(msg->data == "H1") msg_move_node->data = "H1";
+            else if(msg->data == "H2") msg_move_node->data = "H2";
+            else if(msg->data == "H3") msg_move_node->data = "H3";
+            else if(msg->data == "H4") msg_move_node->data = "H4";
+            else if(msg->data == "H5") msg_move_node->data = "H5";
+            else if(msg->data == "H6") msg_move_node->data = "H6";
+            else if(msg->data == "H7") msg_move_node->data = "H7";
+            else if(msg->data == "H8") msg_move_node->data = "H8";
+            else if(msg->data == "H9") msg_move_node->data = "H9";
+            else if(msg->data == "H10") msg_move_node->data = "H10";
+            else if(msg->data == "H11") msg_move_node->data = "H11";
+            else if(msg->data == "IJ") msg_move_node->data = "IJ";
 
-            if(msg->data == "S0"){
-                msg_move_node->data = "S0";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "S1"){
-                msg_move_node->data = "S1";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "S2"){
-                msg_move_node->data = "S2";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "S3"){
-                msg_move_node->data = "S3";
-                pub_move_node->publish(*msg_move_node);
-            }
-
-            if(msg->data == "P0"){
-                msg_move_node->data = "P0";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "P1"){
-                msg_move_node->data = "P1";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "P2"){
-                msg_move_node->data = "P2";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "P3"){
-                msg_move_node->data = "P3";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "P4"){
-                msg_move_node->data = "P4";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "P5"){
-                msg_move_node->data = "P5";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "P6"){
-                msg_move_node->data = "P6";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "P7"){
-                msg_move_node->data = "P7";
-                pub_move_node->publish(*msg_move_node);
-            }
-
-            if(msg->data == "H0"){
-                msg_move_node->data = "H0";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "H1"){
-                msg_move_node->data = "H1";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "H2"){
-                msg_move_node->data = "H2";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "H3"){
-                msg_move_node->data = "H3";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "H4"){
-                msg_move_node->data = "H4";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "H5"){
-                msg_move_node->data = "H5";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "H6"){
-                msg_move_node->data = "H6";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "H7"){
-                msg_move_node->data = "H7";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "H8"){
-                msg_move_node->data = "H8";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "H9"){
-                msg_move_node->data = "H9";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "H10"){
-                msg_move_node->data = "H10";
-                pub_move_node->publish(*msg_move_node);
-            }
-            if(msg->data == "H11"){
-                msg_move_node->data = "H11";
-                pub_move_node->publish(*msg_move_node);
-            }
-
-            if(msg->data == "IJ"){
-                msg_move_node->data = "IJ";
-                pub_move_node->publish(*msg_move_node);
-            }
+            pub_move_node->publish(*msg_move_node);
 
             if(msg->data == "Seedling_Collection"){
-                RCLCPP_INFO(this->get_logger(), "Seedling_Collection");
                 msg_move_node_bool->data = true;
                 _pub_seedling_collection->publish(*msg_move_node_bool);
             }
@@ -742,13 +648,11 @@ namespace controller_interface
             bool color_data[12];
 
             if(msg->data == "A_red"){
-                RCLCPP_INFO(this->get_logger(), "color_red_A");
                 color_data[0] = true;
                 msg_colorball_info.color_info[0] = color_data[0];
             }
             if(msg->data == "A_purple"){
                 color_data[0] = false;
-                RCLCPP_INFO(this->get_logger(), "color_purple_A");
                 msg_colorball_info.color_info[0] = color_data[0];
             }
             if(msg->data == "B_red"){
@@ -845,7 +749,6 @@ namespace controller_interface
             // }
             
             if(msg->data == "Btn_info_msg"){
-                RCLCPP_INFO(this->get_logger(), "color_info_all");
                 _pub_color_ball->publish(msg_colorball_info);
             }
 
@@ -967,7 +870,6 @@ namespace controller_interface
         //この関数が2つあるのは射出機構が2つあるため
         void SmartphoneGamepad::callback_injection_calculator(const std_msgs::msg::Bool::SharedPtr msg)
         {
-            RCLCPP_INFO(this->get_logger(), "false");
              //injection_calculatorから上モノ指令値計算収束のsub。上物の指令値の収束情報。
             is_injection_calculator_convergence = msg->data;
         }
@@ -975,13 +877,25 @@ namespace controller_interface
         //スティックの値をUDP通信でsubscribしている
         void SmartphoneGamepad::_recv_callback()
         {
-            if(joy_main.is_recved())
-            {
+            // if(joy_main.is_recved())
+            // {
+            //     //メモリの使用量を減らすためunsignedを使う
+            //     unsigned char data[16];
+            //     //sizeof関数でdataのメモリを取得
+            //     _recv_joy_main(joy_main.data(data, sizeof(data)));
+            // }
+            msg joy_msg;
+            if(recvudp.is_recved()){
                 //メモリの使用量を減らすためunsignedを使う
                 unsigned char data[16];
                 //sizeof関数でdataのメモリを取得
-                _recv_joy_main(joy_main.data(data, sizeof(data)));
+                stick._recv_joy_main(recvudp.data(data, sizeof(data)),can_linear_id,can_angular_id,is_move_autonomous,is_slow_speed,
+                        high_manual_linear_max_vel,slow_manual_linear_max_vel,manual_angular_max_vel);
             }
+            stick.recv();
+            _pub_canusb->publish(joy_msg.msg_angular);
+            _pub_canusb->publish(joy_msg.msg_linear);
+            _pub_gazebo->publish(*joy_msg.msg_gazebo);
 
         }
 
@@ -1032,9 +946,6 @@ namespace controller_interface
                     msg_gazebo->linear.x = slow_velPlanner_linear_x.vel();
                     msg_gazebo->linear.y = slow_velPlanner_linear_y.vel();
                     msg_gazebo->angular.z = velPlanner_angular_z.vel();
-                    // RCLCPP_INFO(this->get_logger(), "%f",-slow_velPlanner_linear_y.vel());
-                    // RCLCPP_INFO(this->get_logger(), "%f",-slow_velPlanner_linear_x.vel());
-                    // RCLCPP_INFO(this->get_logger(),"%f",-velPlanner_angular_z.vel());
                     
                 }
                 //高速モードのとき
@@ -1057,9 +968,6 @@ namespace controller_interface
                     msg_gazebo->linear.x = high_velPlanner_linear_x.vel();
                     msg_gazebo->linear.y = high_velPlanner_linear_y.vel();
                     msg_gazebo->angular.z = velPlanner_angular_z.vel();
-                    // RCLCPP_INFO(this->get_logger(), "y:%f",high_velPlanner_linear_y.vel());
-                    // RCLCPP_INFO(this->get_logger(), "x:%f",high_velPlanner_linear_x.vel());
-                    // RCLCPP_INFO(this->get_logger(),"z:%f",velPlanner_angular_z.vel());
                 }
                 _pub_canusb->publish(*msg_linear);
                 _pub_canusb->publish(*msg_angular);
