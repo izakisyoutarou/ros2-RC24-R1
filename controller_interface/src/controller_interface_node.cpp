@@ -506,24 +506,47 @@ namespace controller_interface
 
             //左ハンド籾の装填
             if(msg->data == "b"){
-                if(is_ballhand_convergence){
-                    auto msg_paddy_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                    msg_paddy_install->candlc = 1;
-                    msg_paddy_install->candata[0] = false;
-                    msg_paddy_install->canid = can_paddy_install_id;
-                    _pub_canusb->publish(*msg_paddy_install);
-                }
+                // if(is_ballhand_convergence){
+                //     auto msg_paddy_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                //     msg_paddy_install->candlc = 1;
+                //     msg_paddy_install->candata[0] = false;
+                //     msg_paddy_install->canid = can_paddy_install_id;
+                //     _pub_canusb->publish(*msg_paddy_install);
+                // }
+                is_backside = false;
+                is_move_autonomous = true;
+                is_injection_mech_stop_m = false;
+                auto msg_injection = std::make_shared<std_msgs::msg::Bool>();
+                msg_injection->data = false;
+                _pub_injection->publish(*msg_injection);
+                auto msg_inject_spinning = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                msg_inject_spinning->canid = can_inject_spinning_id;
+                msg_inject_spinning->candlc = 1;
+                msg_inject_spinning->candata[0] = true;
+                _pub_canusb->publish(*msg_inject_spinning);
             }
 
             //右ハンド籾の回収
             if(msg->data == "x"){
-                if(is_ballhand_convergence){
-                    auto msg_paddy_collect = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                    msg_paddy_collect->candlc = 1;
-                    msg_paddy_collect->candata[0] = true;
-                    msg_paddy_collect->canid = can_paddy_collect_id;
-                    _pub_canusb->publish(*msg_paddy_collect);
-                }
+                // if(is_ballhand_convergence){
+                //     auto msg_paddy_collect = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                //     msg_paddy_collect->candlc = 1;
+                //     msg_paddy_collect->candata[0] = true;
+                //     msg_paddy_collect->canid = can_paddy_collect_id;
+                //     _pub_canusb->publish(*msg_paddy_collect);
+                // }
+                is_backside = true;
+                is_move_autonomous = true;
+                is_injection_mech_stop_m = false;
+                auto msg_injection = std::make_shared<std_msgs::msg::Bool>();
+                msg_injection->data = true;
+                _pub_injection->publish(*msg_injection);
+                auto msg_inject_spinning = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                msg_inject_spinning->canid = can_inject_spinning_id;
+                msg_inject_spinning->candlc = 1;
+                msg_inject_spinning->candata[0] = true;
+                _pub_canusb->publish(*msg_inject_spinning);
+
             }
             
             //左ハンド籾の回収
