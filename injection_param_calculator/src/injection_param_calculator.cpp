@@ -1,6 +1,7 @@
 #include "injection_param_calculator/injection_param_calculator.hpp"
 #include "utilities/utils.hpp"
 #include "utilities/can_utils.hpp"
+#include <cmath>
 
 namespace injection_param_calculator
 {
@@ -21,11 +22,15 @@ namespace injection_param_calculator
                 std::bind(&InjectionParamCalculator::callback_injection,this,std::placeholders::_1)
             );
 
-            // _sub_is_convergence = this->create_subscription<controller_interface_msg::msg::Convergence>(
-            //     "convergence",
-            //     _qos,
-            //     std::bind(&InjectionParamCalculator::callback_is_convergence,this,std::placeholders::_1)
-            // );
+            _sub_air_resistance = this->create_subscription<std_msgs::msg::Float64>(
+                "param", _qos,
+                std::bind(&InjectionParamCalculator::callback_sub_air_resistance,this,std::placeholders::_1)
+            );
+
+            _sub_vel_gain = this->create_subscription<std_msgs::msg::Float64>(
+                "gain", _qos,
+                std::bind(&InjectionParamCalculator::callback_sub_vel_gain,this,std::placeholders::_1)
+            );
 
             _pub_can = this->create_publisher<socketcan_interface_msg::msg::SocketcanIF>("can_tx", _qos);
             _pub_isConvergenced = this->create_publisher<std_msgs::msg::Bool>("calculator_convergenced_", _qos);
@@ -38,7 +43,6 @@ namespace injection_param_calculator
         msg_injection->canid = can_inject_vel_id;        
         msg_injection->candlc = 8;
 
-
         auto msg_isConvergenced = std::make_shared<std_msgs::msg::Bool>();
         bool isConvergenced = false;
         injection_command.distance = msg->distance;
@@ -49,7 +53,7 @@ namespace injection_param_calculator
         msg_isConvergenced->data = isConvergenced;
         
         uint8_t _candata[4];
-        float_to_bytes(_candata, static_cast<float>(velocity));
+        float_to_bytes(_candata, static_cast<float>(velocity*vel_gain));
         for (int i = 0; i < msg_injection->candlc; i++)msg_injection->candata[i] = _candata[i];
 
         //送信
@@ -57,15 +61,10 @@ namespace injection_param_calculator
 
         if (isConvergenced)
         {
-            RCLCPP_INFO(get_logger(), "計算が収束しました:%f",velocity);
+            RCLCPP_INFO(get_logger(), "計算が収束しました:%f",velocity*vel_gain);
             _pub_can->publish(*msg_injection);
         }
     }
-
-    // void InjectionParamCalculator::callback_is_convergence(const controller_interface_msg::msg::Convergence::SharedPtr msg)
-    // {
-    //     is_convergence = msg->spline_convergence;
-    // }
 
     bool InjectionParamCalculator::calculateVelocity()
     {
@@ -102,15 +101,30 @@ namespace injection_param_calculator
         double m = mass;
         double g = gravitational_accelerastion;
         double k = air_resistance;
-        double y0 = foundation_hight;
+        double omega = std::sqrt(m*g/k);
         double angle = utils::dtor(injection_angle);
+        double T = m/(k*omega)*std::atan(v0*std::sin(angle)/omega);
+        double X = m/k*std::log(k*v0*std::cos(angle)/m*T+1);
+        double y0 = 0.0;
         double x = injection_command.distance;
         double y = injection_command.height;
-        return -m / k * log(cos(atan(v0 * sin(angle) * sqrt(k / (m * g)))) * cosh(1 / (v0 * sin(angle)) * sqrt(m * g / k) * (exp(k * x / m) - 1) - atan(v0 * sin(angle) * sqrt(k / (m * g))))) + y0 - y;
+        return -m/k*std::log(std::cosh(k*omega/m*(std::exp(k*(x-X)/m)-1)*m/(k*v0*std::cos(angle)))*std::cos(std::atan(v0*std::sin(angle)/omega)))+y0 -y;
     }
 
     double InjectionParamCalculator::diff(double v0)
     {
         return (f(v0 + eps) - f(v0 - eps)) / (2.0 * eps);
+    }
+
+    void InjectionParamCalculator::callback_sub_air_resistance(const std_msgs::msg::Float64::SharedPtr msg)
+    {
+        air_resistance = msg->data;
+        RCLCPP_INFO(get_logger(), "air:%f",air_resistance);
+    }
+
+    void InjectionParamCalculator::callback_sub_vel_gain(const std_msgs::msg::Float64::SharedPtr msg)
+    {
+        vel_gain = msg->data;
+        RCLCPP_INFO(get_logger(), "gain:%f",vel_gain);
     }
 }
