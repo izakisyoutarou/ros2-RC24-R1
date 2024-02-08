@@ -122,9 +122,13 @@ namespace injection_interface{
 
             _pub_injection->publish(*injection_command);
 
-            injection_angle->angle_pos = atan2(target_pos.y - robot_pose.y, target_pos.x - robot_pose.x) - self_pose.z;
+            float self_z = self_pose.z;
+
+            injection_angle->angle_pos = atan2(target_pos.y - self_pose.y , target_pos.x - self_pose.x) - area(self_z, -f_pi, f_pi);
+            // RCLCPP_INFO(this->get_logger(), "%f-%f=%f",atan2(self_pose.y - target_pos.y, target_pos.x - self_pose.x), self_pose.z,injection_angle->angle_pos);
             injection_angle->accurate_convergence = true;
             _pub_spin_position->publish(*injection_angle);
+
 
         }
 
