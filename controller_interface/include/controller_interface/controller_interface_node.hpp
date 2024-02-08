@@ -17,9 +17,6 @@
 #include "socket_udp.hpp"
 #include "trapezoidal_velocity_planner.hpp"
 
-#include "send_udp.hpp"
-#include "super_command.hpp"
-
 #include "visibility_control.h"
 
 
@@ -59,10 +56,13 @@ namespace controller_interface
 
             //injection_param_calculatorから
             rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_injection_calculator;
+
             //sequencerから
             rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_injection_strange;
-
             rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_collection_ball;
+
+            //sequenserへ
+            rclcpp::Publisher<std_msgs::msg::String>::SharedPtr _pub_initial_sequense;
 
             //CanUsbへ
             rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb;
@@ -112,7 +112,6 @@ namespace controller_interface
             //controller_mainからのcallback
             void callback_main_pad(const std_msgs::msg::String::SharedPtr msg);
             void callback_screen_pad(const std_msgs::msg::String::SharedPtr msg);
-            void callback_state_num_R1(const std_msgs::msg::String::SharedPtr msg);
 
             //controller_subからのcallback
             void callback_sub_pad(const std_msgs::msg::String::SharedPtr msg);
@@ -266,9 +265,6 @@ namespace controller_interface
 
             VelPlanner velPlanner_angular_z;
             const VelPlannerLimit limit_angular;
-
-            send_udp send;
-            super_command command;
 
             RecvUDP joy_main;
     };
