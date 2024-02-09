@@ -1,10 +1,13 @@
 #include <rclcpp/rclcpp.hpp>
+#include "injection_param_calculator/my_visibility.h"
+
 #include <std_msgs/msg/bool.hpp>
 #include <std_msgs/msg/float64.hpp>
-#include "socketcan_interface_msg/msg/socketcan_if.hpp"
+
 #include "controller_interface_msg/msg/convergence.hpp"
 #include "injection_interface_msg/msg/injection_command.hpp"
-#include "injection_param_calculator/my_visibility.h"
+#include "socketcan_interface_msg/msg/socketcan_if.hpp"
+
 
 namespace injection_param_calculator
 {
@@ -19,20 +22,18 @@ namespace injection_param_calculator
 
     private:
         rclcpp::Subscription<injection_interface_msg::msg::InjectionCommand>::SharedPtr _sub_injection_command;
-        rclcpp::QoS _qos = rclcpp::QoS(10);
-        rclcpp::Subscription<controller_interface_msg::msg::Convergence>::SharedPtr _sub_is_convergence; // convergence == 収束
+        rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr _sub_air_resistance;
+        rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr _sub_vel_gain;
 
         rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_can;
         rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_isConvergenced;
 
-        rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr _sub_air_resistance;
-        rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr _sub_vel_gain;
+        rclcpp::QoS _qos = rclcpp::QoS(10);
 
         void callback_injection(const injection_interface_msg::msg::InjectionCommand::SharedPtr msg);
         void callback_sub_air_resistance(const std_msgs::msg::Float64::SharedPtr msg);
         void callback_sub_vel_gain(const std_msgs::msg::Float64::SharedPtr msg);
-        void callback_is_convergence(const controller_interface_msg::msg::Convergence::SharedPtr msg);
-        // void callback_sub_pad(const controller_interface_msg::msg::Pad::SharedPtr msg);
+
         bool calculateVelocity();
         double f(double v0);
         double diff(double v0);
