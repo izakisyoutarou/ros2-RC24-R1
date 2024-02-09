@@ -244,8 +244,8 @@ namespace controller_interface
             //resertがtureをpubした後にfalseをpubする
             bool flag_restart = false;
             bool move_node_flag = false;
-            bool emergency_lock;
-            bool restart_lock;
+            bool emergency_lock = false;
+            bool restart_lock = false;
 
             //dualsenseのボタン配列メモ
             //button:  0:cross  1:circle  2:triangle  3:square  4:L1  5:R1  6:L2  7:R2  8:create  9:option  10:ps  11:joyL  12:joyR
@@ -372,8 +372,8 @@ namespace controller_interface
                 _pub_canusb->publish(*msg_calibrate);
             }
             //main基板リセット
-            if(upedge_axes6_main_right(msg->axes[6] == -1)){     //Right     
-                RCLCPP_INFO(this->get_logger(), "right");
+            if(upedge_axes6_main_left(msg->axes[6] == 1)){     //left     
+                RCLCPP_INFO(this->get_logger(), "left");
                 auto msg_main_reset = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                 msg_main_reset->canid = can_reset_id;
                 msg_main_reset->candlc = 1;
@@ -381,8 +381,8 @@ namespace controller_interface
                 _pub_canusb->publish(*msg_main_reset);
             }
             //IO基板リセット
-            if(upedge_axes6_main_left(msg->axes[6] == 1)){      //Left
-                RCLCPP_INFO(this->get_logger(), "left");
+            if(upedge_axes6_main_right(msg->axes[6] == -1)){      //right
+                RCLCPP_INFO(this->get_logger(), "right");
                 auto msg_io_reset = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                 msg_io_reset->canid = can_reset_id;
                 msg_io_reset->candlc = 1;
