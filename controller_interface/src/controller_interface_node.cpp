@@ -164,6 +164,8 @@ namespace controller_interface
             _pub_convergence = this->create_publisher<controller_interface_msg::msg::Convergence>("convergence" , _qos);
             _pub_color_ball = this->create_publisher<controller_interface_msg::msg::Colorball>("color_information", _qos);
             _pub_injection = this->create_publisher<std_msgs::msg::Bool>("is_backside", _qos);
+            _pub_backspin_injection = this->create_publisher<std_msgs::msg::Empty>("backspin", _qos);
+
             //sprine_pid
             pub_move_node = this->create_publisher<std_msgs::msg::String>("move_node", _qos);
             //gazebo用のpub
@@ -418,7 +420,8 @@ namespace controller_interface
             if(msg->data == "l1"){
                 RCLCPP_INFO(this->get_logger(), "l1");
                 if(move_node.at(0) == 'H'){
-                    //injectionで入れる
+                    auto msg_backspin_injection = std::make_shared<std_msgs::msg::Empty>();
+                     _pub_backspin_injection->publish(*msg_backspin_injection);
                     is_backside = true;
                 }
                 else if(move_node.at(0) == 'I'){
@@ -606,7 +609,7 @@ namespace controller_interface
         }
 
         void SmartphoneGamepad::callback_screen_pad(const std_msgs::msg::String::SharedPtr msg){
-            if(msg->data.length() <= 3 && is_move_autonomous){
+            if(msg->data.length() <= 3){
                     move_node = msg->data;
                     auto msg_move_node = std::make_shared<std_msgs::msg::String>();
                     msg_move_node->data = msg->data;
@@ -632,7 +635,7 @@ namespace controller_interface
                         }
                         else if(msg->data.find("purple") != -1) {
                             msg_colorball_info.color_info[i] = false;
-                            color_data[i] = true;
+                            color_data[i] = false;
                         }
                         break;
                     }

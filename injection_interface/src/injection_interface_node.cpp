@@ -50,6 +50,12 @@ namespace injection_interface{
                 std::bind(&InjectionInterface::_callback_backspin_vel, this, std::placeholders::_1)
             );
 
+            _sub_backspin = this->create_subscription<std_msgs::msg::Empty>(
+                "backspin",
+                _qos,
+                std::bind(&InjectionInterface::_callback_backspin, this, std::placeholders::_1)
+            );
+
             _sub_move_node = this->create_subscription<std_msgs::msg::String>(
                 "move_node",
                 _qos,
@@ -153,6 +159,7 @@ namespace injection_interface{
             injection_command->height = target_height;
             _pub_injection->publish(*injection_command);
 
+            command_injection_turn();
 
         }
 
@@ -174,11 +181,13 @@ namespace injection_interface{
         }
 
         void InjectionInterface::_callback_backspin_vel(const std_msgs::msg::Int16MultiArray::SharedPtr msg){
-            int16_t backspin_vel[3] = {0, 0, 0};
-            backspin_vel[0] = msg->data[0];
-            backspin_vel[1] = msg->data[1];
-            backspin_vel[2] = msg->data[2];
-            command_backspin(backspin_vel);
+            vel[0] = msg->data[0];
+            vel[1] = msg->data[1];
+            vel[2] = msg->data[2];
+        }
+
+        void InjectionInterface::_callback_backspin(const std_msgs::msg::Empty::SharedPtr msg){
+            command_backspin();
         }
 
         void InjectionInterface::_callback_move_node(const std_msgs::msg::String::SharedPtr msg){
@@ -202,7 +211,7 @@ namespace injection_interface{
             _pub_spin_position->publish(*injection_angle);
         }
 
-        void InjectionInterface::command_backspin(int16_t vel[3]){
+        void InjectionInterface::command_backspin(){
             uint8_t _candata[8];
             auto msg_backspin_vel = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
             msg_backspin_vel->canid = can_backspin_vel_id;
@@ -212,7 +221,6 @@ namespace injection_interface{
             short_to_bytes(_candata+4, static_cast<short>(vel[2]));
             for(int i=0; i<msg_backspin_vel->candlc; i++) msg_backspin_vel->candata[i] = _candata[i];
             _pub_canusb->publish(*msg_backspin_vel);
-
         }
 
 }  // namespace injection_interface
