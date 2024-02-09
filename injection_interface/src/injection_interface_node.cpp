@@ -1,6 +1,7 @@
 #include "injection_interface/injection_interface_node.hpp"
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <fstream>
+#include <iostream>
 
 #include "utilities/can_utils.hpp"
 
@@ -63,7 +64,23 @@ namespace injection_interface{
                 self_pose.y = -1.0*initial_pose[1];
                 self_pose.z = initial_pose[2];
             }
-            
+
+            std::ifstream ifs(ament_index_cpp::get_package_share_directory("main_executor") + "/config/injection_interface/injection_vel.cfg");
+            std::string str;
+            while(getline(ifs, str)){
+                std::string token;
+                std::istringstream stream(str);
+                int count = 0;
+                Vel vel;
+                while(getline(stream, token, ' ')){
+                    if(count==0) vel.name = token;
+                    else if(count==1) vel.vel[0] = std::stoi(token);
+                    else if(count==2) vel.vel[1] = std::stoi(token);
+                    else if(count==3) vel.vel[2] = std::stoi(token);
+                    count++;
+                }
+                vel_list.push_back(vel);
+            }
         }
 
         void InjectionInterface::_callback_is_backside(const std_msgs::msg::Bool::SharedPtr msg){

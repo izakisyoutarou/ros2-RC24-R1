@@ -54,6 +54,13 @@ private:
 
     const int16_t can_backspin_vel_id;
 
+    struct Vel{
+        std::string name;
+        short vel[3];
+    };
+
+    std::vector<Vel> vel_list;
+
     //定数
     const std::vector<double> tf_injection2robot;
     const std::vector<double> strage_backside;
