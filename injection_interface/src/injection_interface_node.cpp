@@ -50,6 +50,12 @@ namespace injection_interface{
                 std::bind(&InjectionInterface::_callback_backspin_vel, this, std::placeholders::_1)
             );
 
+            _sub_move_node = this->create_subscription<std_msgs::msg::String>(
+                "move_node",
+                _qos,
+                std::bind(&InjectionInterface::_callback_move_node, this, std::placeholders::_1)
+            );
+
             _pub_injection = this->create_publisher<injection_interface_msg::msg::InjectionCommand>("injection_command", 10);
             _pub_spin_position = this->create_publisher<path_msg::msg::Turning>("spin_position", 10);
             _pub_canusb = this->create_publisher<socketcan_interface_msg::msg::SocketcanIF>("can_tx", _qos);
@@ -85,7 +91,7 @@ namespace injection_interface{
 
         void InjectionInterface::_callback_is_backside(const std_msgs::msg::Bool::SharedPtr msg){
            
-            TwoVector target_pos;
+
             double target_height;
             bool target_input = false;
             last_target = msg;
@@ -147,12 +153,7 @@ namespace injection_interface{
             injection_command->height = target_height;
             _pub_injection->publish(*injection_command);
 
-            float self_z = self_pose.z;
 
-            auto injection_angle = std::make_shared<path_msg::msg::Turning>();
-            injection_angle->angle_pos = atan2(target_pos.y - self_pose.y , target_pos.x - self_pose.x) - area(self_z, -f_pi, f_pi);
-            injection_angle->accurate_convergence = true;
-            _pub_spin_position->publish(*injection_angle);
         }
 
         void InjectionInterface::_callback_is_move_tracking(const std_msgs::msg::Bool::SharedPtr msg){
@@ -178,7 +179,27 @@ namespace injection_interface{
             backspin_vel[1] = msg->data[1];
             backspin_vel[2] = msg->data[2];
             command_backspin(backspin_vel);
-            RCLCPP_INFO(this->get_logger(), "%d, %d, %d", backspin_vel[0], backspin_vel[1], backspin_vel[2]);
+        }
+
+        void InjectionInterface::_callback_move_node(const std_msgs::msg::String::SharedPtr msg){
+            if(msg->data.at(0) == 'H'){
+                for(int i = 0; i <= vel_list.size(); i++){
+                    if(vel_list[i].name == msg->data){
+                        vel[0] = vel_list[i].vel[0];
+                        vel[1] = vel_list[i].vel[1];
+                        vel[2] = vel_list[i].vel[2];
+                        break;
+                    }
+                }    
+            }
+        }
+
+        void InjectionInterface::command_injection_turn(){
+            float self_z = self_pose.z;
+            auto injection_angle = std::make_shared<path_msg::msg::Turning>();
+            injection_angle->angle_pos = atan2(target_pos.y - self_pose.y , target_pos.x - self_pose.x) - area(self_z, -f_pi, f_pi);
+            injection_angle->accurate_convergence = true;
+            _pub_spin_position->publish(*injection_angle);
         }
 
         void InjectionInterface::command_backspin(int16_t vel[3]){
@@ -191,6 +212,7 @@ namespace injection_interface{
             short_to_bytes(_candata+4, static_cast<short>(vel[2]));
             for(int i=0; i<msg_backspin_vel->candlc; i++) msg_backspin_vel->candata[i] = _candata[i];
             _pub_canusb->publish(*msg_backspin_vel);
+
         }
 
 }  // namespace injection_interface
