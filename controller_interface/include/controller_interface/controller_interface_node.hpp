@@ -7,7 +7,6 @@
 #include "controller_interface_msg/msg/base_control.hpp"
 #include "controller_interface_msg/msg/convergence.hpp"
 #include "controller_interface_msg/msg/colorball.hpp"
-#include "controller_interface/Gamepad_stick.hpp"
 #include "controller_interface/Gamepad_btn.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "std_msgs/msg/bool.hpp"
@@ -35,7 +34,7 @@ namespace controller_interface
             
             CONTROLLER_INTERFACE_PUBLIC
             explicit SmartphoneGamepad(const std::string& name_space, const rclcpp::NodeOptions& options = rclcpp::NodeOptions());
-
+        private:
             //R1_mainのcontrollerから
             rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_main_pad;
             rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_screen_pad;
@@ -267,17 +266,11 @@ namespace controller_interface
             VelPlanner velPlanner_angular_z;
             const VelPlannerLimit limit_angular;
 
-            RecvUDP joy_main;
-            Gamepadstick stick;
+
             Gamepadbtn btn;
+            RecvUDP joy_main;
 
-            msg joy_msg;
-            
-            // //構造体のオブジェクト化
-            // Variable variable;
-            // Sub_variable sub_variable;
 
-        private:
             
     };
 }
