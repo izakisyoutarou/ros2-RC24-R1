@@ -128,7 +128,7 @@ namespace controller_interface
 
             //mainからsub
             _sub_main_injection_possible = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
-                "can_rx_203",
+                "can_rx_204",
                 _qos,
                 std::bind(&SmartphoneGamepad::callback_main_injection_possible, this, std::placeholders::_1)
             );
