@@ -267,5 +267,9 @@ namespace controller_interface
             const VelPlannerLimit limit_angular;
 
             RecvUDP joy_main;
+
+            bool color_data[12] = {false, false, false, false, false, false, false, false, false, false, false, false};
+            char head_english[12] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'};
+            std::string move_node;
     };
 }

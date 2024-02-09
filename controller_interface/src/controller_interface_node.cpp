@@ -422,29 +422,22 @@ namespace controller_interface
 
             //射出パラメータ&回転開始
             if(msg->data == "l1"){
-                if(is_backside){
-                    auto msg_injection = std::make_shared<std_msgs::msg::Bool>();
-                    msg_injection->data = true;
-                    _pub_injection->publish(*msg_injection);
-                    auto msg_inject_spinning = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                    msg_inject_spinning->canid = can_inject_spinning_id;
-                    msg_inject_spinning->candlc = 1;
-                    msg_inject_spinning->candata[0] = true;
-                    _pub_canusb->publish(*msg_inject_spinning);
+                RCLCPP_INFO(this->get_logger(), "l1");
+                if(move_node.at(0) == "H"){
+                    //injectionで入れる
                     is_backside = true;
                 }
-                else {
+                else if(move_node.at(0) == "I"){
                     auto msg_injection = std::make_shared<std_msgs::msg::Bool>();
-                    msg_injection->data = true;
+                    msg_injection->data = false;
                     _pub_injection->publish(*msg_injection);
-                    auto msg_inject_spinning = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                    msg_inject_spinning->canid = can_inject_spinning_id;
-                    msg_inject_spinning->candlc = 1;
-                    msg_inject_spinning->candata[0] = false;
-                    _pub_canusb->publish(*msg_inject_spinning);
                     is_backside = false;
                 }
-                RCLCPP_INFO(this->get_logger(), "l1");
+                auto msg_inject_spinning = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                msg_inject_spinning->canid = can_inject_spinning_id;
+                msg_inject_spinning->candlc = 1;
+                msg_inject_spinning->candata[0] = true;
+                _pub_canusb->publish(*msg_inject_spinning);
                 is_move_autonomous = true;
                 is_injection_mech_stop_m = false;
             }
@@ -574,7 +567,7 @@ namespace controller_interface
             {
                 RCLCPP_INFO(this->get_logger(), "l3");
                 auto initial_sequense_pickup = std::make_shared<std_msgs::msg::String>();
-                initial_sequense_pickup->data = initial_pickup_state;
+                iniStial_sequense_pickup->data = initial_pickup_state;
                 _pub_initial_sequense->publish(*initial_sequense_pickup);
             }
 
@@ -626,6 +619,7 @@ namespace controller_interface
 
         void SmartphoneGamepad::callback_screen_pad(const std_msgs::msg::String::SharedPtr msg){
             if(msg->data.length() <= 3 && is_move_autonomous){
+                    move_node = msg->data;
                     auto msg_move_node = std::make_shared<std_msgs::msg::String>();
                     msg_move_node->data = msg->data;
                     pub_move_node->publish(*msg_move_node);
@@ -640,118 +634,19 @@ namespace controller_interface
         }
 
         void SmartphoneGamepad::callback_sub_pad(const std_msgs::msg::String::SharedPtr msg){
-            // bool color_data[12];
-
-            // if(msg->data == "A_red"){
-            //     RCLCPP_INFO(this->get_logger(), "color_red_A");
-            //     color_data[0] = true;
-            //     msg_colorball_info.color_info[0] = color_data[0];
-            // }
-            // if(msg->data == "A_purple"){
-            //     color_data[0] = false;
-            //     RCLCPP_INFO(this->get_logger(), "color_purple_A");
-            //     msg_colorball_info.color_info[0] = color_data[0];
-            // }
-            // if(msg->data == "B_red"){
-            //     color_data[1] = true;
-            //     msg_colorball_info.color_info[1] = color_data[1];                
-            // }
-            // if(msg->data == "B_purple"){
-            //     color_data[1] = false;
-            //     msg_colorball_info.color_info[1] = color_data[1];
-            // }
-            // if(msg->data == "C_red"){
-            //     color_data[2] = true;
-            //     msg_colorball_info.color_info[2] = color_data[2];
-            // }
-            // if(msg->data == "C_purple"){
-            //     color_data[2] = false;
-            //     msg_colorball_info.color_info[2] = color_data[2];
-            // }
-            // if(msg->data == "D_red"){
-            //     color_data[3] = true;
-            //     msg_colorball_info.color_info[3] = color_data[3];
-            // }
-            // if(msg->data == "D_purple"){
-            //     color_data[3] = false;
-            //     msg_colorball_info.color_info[3] = color_data[3];
-            // }
-            // if(msg->data == "E_red"){
-            //     color_data[4] = true;
-            //     msg_colorball_info.color_info[4] = color_data[4];
-            // }
-            // if(msg->data == "E_purple"){
-            //     color_data[4] = false;
-            //     msg_colorball_info.color_info[4] = color_data[4];
-            // }
-            // if(msg->data == "F_red"){
-            //     color_data[5] = true;
-            //     msg_colorball_info.color_info[5] = color_data[5];
-            // }
-            // if(msg->data == "F_purple"){
-            //     color_data[5] = false;
-            //     msg_colorball_info.color_info[5] = color_data[5];
-            // }
-            // if(msg->data == "G_red"){
-            //     color_data[6] = true;
-            //     msg_colorball_info.color_info[6] = color_data[6];
-            // }
-            // if(msg->data == "G_purple"){
-            //     color_data[6] = false;
-            //     msg_colorball_info.color_info[6] = color_data[6];
-            // }
-            // if(msg->data == "H_red"){
-            //     color_data[7] = true;
-            //     msg_colorball_info.color_info[7] = color_data[7];
-            // }
-            // if(msg->data == "H_purple"){
-            //     color_data[7] = false;
-            //     msg_colorball_info.color_info[7] = color_data[7];
-            // }
-            // if(msg->data == "I_red"){
-            //     color_data[8] = true;
-            //     msg_colorball_info.color_info[8] = color_data[8];
-            // }
-            // if(msg->data == "I_purple"){
-            //     color_data[8] = false;
-            //     msg_colorball_info.color_info[8] = color_data[8];
-            // }
-            // if(msg->data == "J_red"){
-            //     color_data[9] = true;
-            //     msg_colorball_info.color_info[9] = color_data[9];
-            // }
-            // if(msg->data == "J_purple"){
-            //     color_data[9] = false;
-            //     msg_colorball_info.color_info[9] = color_data[9];
-            // }
-            // if(msg->data == "K_red"){
-            //     color_data[10] = true;
-            //     msg_colorball_info.color_info[10] = color_data[10];
-            // }
-            // if(msg->data == "K_purple"){
-            //     color_data[10] = false;
-            //     msg_colorball_info.color_info[10] = color_data[10];
-            // }
-            // if(msg->data == "L_red"){
-            //     color_data[11] = true;
-            //     msg_colorball_info.color_info[11] = color_data[11];
-            // }
-            // if(msg->data == "L_purple"){
-            //     color_data[11] = false;
-            //     msg_colorball_info.color_info[11] = color_data[11];
-            // }
-
-            // for(int k=0; k<colordlc;k++){
-            //     msg_colorball_info.color_info[k] = color_data[k];
-            // }
-
-            char head_english[13] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'};
             if(msg->data == "Btn_info_msg") _pub_color_ball->publish(msg_colorball_info);
             else {
                 for(int i = 0; i < 12; i++){
                     if(msg->data.at(0) == head_english[i]){
-                        if(msg->data.find("red")) msg_colorball_info.color_info[i] = true;
-                        else if(msg->data.find("purple")) msg_colorball_info.color_info[i] = false;
+                        if(msg->data.find("red") != -1) {
+                            msg_colorball_info.color_info[i] = true;
+                            color_data[i] = true;
+                        }
+                        else if(msg->data.find("purple") != -1) {
+                            msg_colorball_info.color_info[i] = false;
+                            color_data[i] = true;
+                        }
+                        break;
                     }
                 }
             }
