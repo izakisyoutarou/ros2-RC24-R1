@@ -9,15 +9,17 @@ namespace injection_interface{
     InjectionInterface::InjectionInterface(const rclcpp::NodeOptions &options) : InjectionInterface("", options) {}
     InjectionInterface::InjectionInterface(const std::string &name_space, const rclcpp::NodeOptions &options)
         : rclcpp::Node("injection_interface_node", name_space, options),
+        
         tf_injection2robot(get_parameter("tf_injection2robot").as_double_array()),
         strage_backside(get_parameter("strage_backside").as_double_array()),
         strage_front(get_parameter("strage_front").as_double_array()),
         court_color_(get_parameter("court_color").as_string())
+        
         {
-            _sub_aim_in_storage = this->create_subscription<std_msgs::msg::Bool>(
+            _sub_is_backside = this->create_subscription<std_msgs::msg::Bool>(
                 "is_backside",
                 _qos,
-                std::bind(&InjectionInterface::_callback_aim_in_storage, this, std::placeholders::_1)
+                std::bind(&InjectionInterface::_callback_is_backside, this, std::placeholders::_1)
             );
 
             _sub_is_move_tracking = this->create_subscription<std_msgs::msg::Bool>(
@@ -54,18 +56,12 @@ namespace injection_interface{
             
         }
 
-        void InjectionInterface::_callback_aim_in_storage(const std_msgs::msg::Bool::SharedPtr msg){
-            auto injection_command = std::make_shared<injection_interface_msg::msg::InjectionCommand>();
-            auto injection_angle = std::make_shared<path_msg::msg::Turning>();
-            last_target = msg;
-
-            geometry_msgs::msg::Vector3 robot_pose;
-            TwoVector injection_pos;
+        void InjectionInterface::_callback_is_backside(const std_msgs::msg::Bool::SharedPtr msg){
+           
             TwoVector target_pos;
             double target_height;
             bool target_input = false;
-
-            // RCLCPP_INFO(this->get_logger(), "x:%lf  y: %lf  直径: %lf  高さ: %lf",target_pos.x,target_pos.y,pole_diameter,pole_height);
+            last_target = msg;
 
             if(msg->data){
                 if(court_color_ == "blue"){
@@ -95,9 +91,11 @@ namespace injection_interface{
             }
 
             if(!target_input){
-                RCLCPP_INFO(this->get_logger(), "射出するポール情報の入力ができませんでした");
+                RCLCPP_INFO(this->get_logger(), "射出位置の入力ができませんでした");
                 return;
             }
+
+            geometry_msgs::msg::Vector3 robot_pose;
 
             if(is_move_tracking){
                 is_correction_required = true;
@@ -109,6 +107,7 @@ namespace injection_interface{
             }
 
             //ロボットの本体座標と射出機構のずれを補正した数字
+            TwoVector injection_pos;
             injection_pos.x = robot_pose.x + tf_injection2robot[0]*cos(robot_pose.z) - tf_injection2robot[1]*sin(robot_pose.z);
             injection_pos.y = robot_pose.y + tf_injection2robot[0]*sin(robot_pose.z) + tf_injection2robot[1]*cos(robot_pose.z);
 
@@ -116,24 +115,22 @@ namespace injection_interface{
 
             TwoVector diff = target_pos - injection_pos;
 
+            auto injection_command = std::make_shared<injection_interface_msg::msg::InjectionCommand>();
             injection_command->distance = diff.length();
-            // injection_command->direction = diff.angle() - self_pose.z;
             injection_command->height = target_height;
-
             _pub_injection->publish(*injection_command);
 
-            injection_angle->angle_pos = atan2(target_pos.y - robot_pose.y, target_pos.x - robot_pose.x) - self_pose.z;
+            float self_z = self_pose.z;
+
+            auto injection_angle = std::make_shared<path_msg::msg::Turning>();
+            injection_angle->angle_pos = atan2(target_pos.y - self_pose.y , target_pos.x - self_pose.x) - area(self_z, -f_pi, f_pi);
             injection_angle->accurate_convergence = true;
             _pub_spin_position->publish(*injection_angle);
-
         }
 
         void InjectionInterface::_callback_is_move_tracking(const std_msgs::msg::Bool::SharedPtr msg){
             is_move_tracking = msg->data;
-            //足回り追従が終わっており、
-            if(is_correction_required && !msg->data){
-                _callback_aim_in_storage(last_target);
-            }
+            if(is_correction_required && !msg->data) _callback_is_backside(last_target);
         }
 
         void InjectionInterface::_callback_self_pose(const geometry_msgs::msg::Vector3::SharedPtr msg){
