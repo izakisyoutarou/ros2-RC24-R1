@@ -1,17 +1,6 @@
 #include "controller_interface/Gamepad_stick.hpp"
 
-// void Gamepadstick::recv(){
-
-//     if(recvudp.is_recved())
-//     {
-//         //メモリの使用量を減らすためunsignedを使う
-//         unsigned char data[16];
-//         //sizeof関数でdataのメモリを取得
-//         _recv_joy_main(recvudp.data(data, sizeof(data)),can_linear_id,can_angular_id,is_move_autonomous,is_slow_speed,
-//                         high_manual_linear_max_vel,slow_manual_linear_max_vel,manual_angular_max_vel);
-//     }
-// }
-
+Gamepadstick::Gamepadstick(){}
 
 msg Gamepadstick::_recv_joy_main(const unsigned char data[16],const int16_t can_linear_id,const int16_t can_angular_id,bool is_move_autonomous,bool is_slow_speed,
                             const float high_manual_linear_max_vel,const float slow_manual_linear_max_vel,const float manual_angular_max_vel){
@@ -33,7 +22,7 @@ msg Gamepadstick::_recv_joy_main(const unsigned char data[16],const int16_t can_
 
         msg joy_msg;
 
-        bool flag_move_autonomous = false;
+        
         
         uint8_t _candata_joy[8];
         //手動モードのとき

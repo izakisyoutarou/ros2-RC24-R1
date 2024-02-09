@@ -146,7 +146,7 @@ namespace controller_interface
             std_msgs::msg::Bool msg_unity_control;
             std_msgs::msg::Bool msg_unity_sub_control;
             std_msgs::msg::String msg_unity_initial_state;
-
+            std_msgs::msg::String msg_move_node;
 
             //base_control用
             bool is_reset = false;
@@ -267,9 +267,15 @@ namespace controller_interface
             VelPlanner velPlanner_angular_z;
             const VelPlannerLimit limit_angular;
 
-            RecvUDP recvudp;
+            RecvUDP joy_main;
             Gamepadstick stick;
             Gamepadbtn btn;
+
+            msg joy_msg;
+            
+            // //構造体のオブジェクト化
+            // Variable variable;
+            // Sub_variable sub_variable;
 
         private:
             
