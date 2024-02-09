@@ -14,6 +14,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(injection_interface_msg REQUIRED)
 find_package(path_msg REQUIRED)
 find_package(utilities REQUIRED)
+find_package(socketcan_interface_msg REQUIRED)
 
 add_library(injection_interface_node SHARED
   src/injection_interface_node.cpp
@@ -32,6 +33,7 @@ ament_target_dependencies(injection_interface_node
   injection_interface_msg
   path_msg
   utilities
+  socketcan_interface_msg
 )
 
 target_include_directories(injection_interface_node
@@ -55,6 +57,7 @@ ament_export_dependencies(
   injection_interface_msg
   path_msg
   utilities
+  socketcan_interface_msg
 )
 
 install(

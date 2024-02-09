@@ -2,6 +2,8 @@
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <fstream>
 
+#include "utilities/can_utils.hpp"
+
 using namespace std;
 using namespace utils;
 
@@ -13,7 +15,8 @@ namespace injection_interface{
         tf_injection2robot(get_parameter("tf_injection2robot").as_double_array()),
         strage_backside(get_parameter("strage_backside").as_double_array()),
         strage_front(get_parameter("strage_front").as_double_array()),
-        court_color_(get_parameter("court_color").as_string())
+        court_color_(get_parameter("court_color").as_string()),
+        can_backspin_vel_id(get_parameter("canid.backspin_vel").as_int())
         
         {
             _sub_is_backside = this->create_subscription<std_msgs::msg::Bool>(
@@ -40,8 +43,15 @@ namespace injection_interface{
                 std::bind(&InjectionInterface::_callback_move_target_pose, this, std::placeholders::_1)
             );
 
+            _sub_backspin_vel = this->create_subscription<std_msgs::msg::Int16MultiArray>(
+                "backspin_vel",
+                _qos,
+                std::bind(&InjectionInterface::_callback_backspin_vel, this, std::placeholders::_1)
+            );
+
             _pub_injection = this->create_publisher<injection_interface_msg::msg::InjectionCommand>("injection_command", 10);
             _pub_spin_position = this->create_publisher<path_msg::msg::Turning>("spin_position", 10);
+            _pub_canusb = this->create_publisher<socketcan_interface_msg::msg::SocketcanIF>("can_tx", _qos);
 
             const auto initial_pose = this->get_parameter("initial_pose").as_double_array();
             if(court_color_ == "blue"){
@@ -144,4 +154,26 @@ namespace injection_interface{
             move_target_pose.y = msg->y;
             move_target_pose.z = msg->z;
         }
+
+        void InjectionInterface::_callback_backspin_vel(const std_msgs::msg::Int16MultiArray::SharedPtr msg){
+            int16_t backspin_vel[3] = {0, 0, 0};
+            backspin_vel[0] = msg->data[0];
+            backspin_vel[1] = msg->data[1];
+            backspin_vel[2] = msg->data[2];
+            command_backspin(backspin_vel);
+            RCLCPP_INFO(this->get_logger(), "%d, %d, %d", backspin_vel[0], backspin_vel[1], backspin_vel[2]);
+        }
+
+        void InjectionInterface::command_backspin(int16_t vel[3]){
+            uint8_t _candata[8];
+            auto msg_backspin_vel = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+            msg_backspin_vel->canid = can_backspin_vel_id;
+            msg_backspin_vel->candlc = 6;
+            short_to_bytes(_candata, static_cast<short>(vel[0]));
+            short_to_bytes(_candata+2, static_cast<short>(vel[1]));
+            short_to_bytes(_candata+4, static_cast<short>(vel[2]));
+            for(int i=0; i<msg_backspin_vel->candlc; i++) msg_backspin_vel->candata[i] = _candata[i];
+            _pub_canusb->publish(*msg_backspin_vel);
+        }
+
 }  // namespace injection_interface
