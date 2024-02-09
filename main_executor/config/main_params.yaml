@@ -119,7 +119,7 @@ controller_interface_node:
     #60hzでスティックの値を送る(60hz = 6ms)
     interval_ms: 6
 
-    base_state_communication_ms: 100
+    base_state_communication_ms: 50
 
     start_ms: 3000
     

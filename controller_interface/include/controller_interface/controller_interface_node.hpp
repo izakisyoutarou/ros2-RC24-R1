@@ -7,8 +7,6 @@
 #include "controller_interface_msg/msg/base_control.hpp"
 #include "controller_interface_msg/msg/convergence.hpp"
 #include "controller_interface_msg/msg/colorball.hpp"
-#include "controller_interface/Gamepad_stick.hpp"
-#include "controller_interface/Gamepad_btn.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/string.hpp"
@@ -148,7 +146,7 @@ namespace controller_interface
             std_msgs::msg::Bool msg_unity_control;
             std_msgs::msg::Bool msg_unity_sub_control;
             std_msgs::msg::String msg_unity_initial_state;
-
+            std_msgs::msg::String msg_move_node;
 
             //base_control用
             bool is_reset = false;
@@ -273,9 +271,6 @@ namespace controller_interface
             char head_english[12] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'};
             std::string move_node;
             RecvUDP joy_main;
-            // RecvUDP recvudp;
-            // Gamepadstick stick;
-            // Gamepadbtn btn;
 
 
             

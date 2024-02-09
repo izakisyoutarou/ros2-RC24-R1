@@ -14,6 +14,7 @@ namespace controller_interface
     //下記2文は共有ライブラリを書くのに必要なプログラム
     SmartphoneGamepad::SmartphoneGamepad(const rclcpp::NodeOptions &options) : SmartphoneGamepad("", options) {}
     SmartphoneGamepad::SmartphoneGamepad(const std::string &name_space, const rclcpp::NodeOptions &options): rclcpp::Node("controller_interface_node", name_space, options),
+        
         //mainexecutorのyamlで設定したパラメータを設定している。
         //この場合はhigh_limit_linearクラスにDEL_MAX=poslimit,vel,acc,decのパラメータを引数として持たせている。
         //as_doubleは引用先のパラメータの型を示している。
@@ -39,17 +40,17 @@ namespace controller_interface
         slow_manual_linear_max_vel(static_cast<float>(get_parameter("slow_linear_max_vel").as_double())),
         manual_angular_max_vel(dtor(static_cast<float>(get_parameter("angular_max_vel").as_double()))),
 
-        //リスタートのパラメータ取得
+        //リスタート
         defalt_restart_flag(get_parameter("defalt_restart_flag").as_bool()),
-        //緊急停止のパラメータを取得
+        //緊急停止
         defalt_emergency_flag(get_parameter("defalt_emergency_flag").as_bool()),
-        //自動化のパラメータを取得
+        //自動化
         defalt_move_autonomous_flag(get_parameter("defalt_move_autonomous_flag").as_bool()),
-        //自動射出パラメータを取得
+        //自動射出
         defalt_injection_autonomous_flag(get_parameter("defalt_injection_autonomous_flag").as_bool()),
-        //低速モードのパラメータを取得
+        //低速モード
         defalt_slow_speed_flag(get_parameter("defalt_slow_speed_flag").as_bool()),
-        //ボールの色情報を取得
+        //ボール
         defalt_color_information_flag(get_parameter("defalt_color_information_flag").as_bool()),
 
         //収束の確認
@@ -321,12 +322,12 @@ namespace controller_interface
 
             //一定周期で処理をしている。この場合は50ms間隔で処理をしている
             //コントローラのデータを一定周期で届いているか確認する
+            //UDP通信特有の書き方？
             _socket_timer = this->create_wall_timer(
                 std::chrono::milliseconds(this->get_parameter("interval_ms").as_int()),
-                [this] {_recv_callback();}
+                [this] { _recv_callback(); }
             );
 
-            //一定周期で処理をしている。この場合は3000ms間隔で処理をしている
             _start_timer = this->create_wall_timer(
                 std::chrono::milliseconds(this->get_parameter("start_ms").as_int()),
                 [this] {
@@ -371,6 +372,7 @@ namespace controller_interface
 
             //緊急停止
             if(msg->data == "g"){
+                RCLCPP_INFO(this->get_logger(), "g");
                 robotcontrol_flag = true;
                 is_emergency = true;                
             }
@@ -379,6 +381,7 @@ namespace controller_interface
             //msgがsだったときのみ以下の変数にパラメータが代入される
             if(msg->data == "s")
             {
+                RCLCPP_INFO(this->get_logger(), "s");
                 robotcontrol_flag = true;
                 flag_restart = true;
                 is_emergency = false;
@@ -397,6 +400,7 @@ namespace controller_interface
 
             //射出
             if(msg->data == "r1"){
+                RCLCPP_INFO(this->get_logger(), "r1");
                 if(is_injection_convergence && !is_injection_mech_stop_m){
                     auto msg_inject = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                     msg_inject->canid = can_inject_id;
@@ -407,6 +411,7 @@ namespace controller_interface
 
             //回転停止
             if(msg->data == "r2"){
+                RCLCPP_INFO(this->get_logger(), "r2");
                 auto msg_inject_spinning = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                 msg_inject_spinning->canid = can_inject_spinning_id;
                 msg_inject_spinning->candlc = 1;
@@ -447,6 +452,7 @@ namespace controller_interface
 
             //ステアリセット
             if(msg->data == "up"){
+                RCLCPP_INFO(this->get_logger(), "up");
                 auto msg_steer_reset = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                 msg_steer_reset->canid = can_steer_reset_id;
                 msg_steer_reset->candlc = 0;
@@ -455,6 +461,7 @@ namespace controller_interface
 
             //キャリブレーション
             if(msg->data == "down"){
+                RCLCPP_INFO(this->get_logger(), "down");
                 auto msg_calibrate = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                 msg_calibrate->canid = can_calibrate_id;
                 msg_calibrate->candlc = 0;
@@ -463,6 +470,7 @@ namespace controller_interface
 
             //IO基盤リセット
             if(msg->data == "left"){
+                RCLCPP_INFO(this->get_logger(), "left");
                 auto msg_main_reset = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                 msg_main_reset->canid = can_reset_id;
                 msg_main_reset->candlc = 1;
@@ -472,6 +480,7 @@ namespace controller_interface
 
             //mian基盤リセット
             if(msg->data == "right"){
+                RCLCPP_INFO(this->get_logger(), "right");
                 auto msg_io_reset = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                 msg_io_reset->canid = can_reset_id;
                 msg_io_reset->candlc = 1;
@@ -549,6 +558,7 @@ namespace controller_interface
             //r3は足回りの手自動の切り替え。is_move_autonomousを使って、トグルになるようにしてる。R1の上物からもらう必要はない。
             if(msg->data == "r3")
             {
+                RCLCPP_INFO(this->get_logger(), "r3");
                 robotcontrol_flag = true;
                 if(is_move_autonomous == false) is_move_autonomous = true;
                 else is_move_autonomous = false;
@@ -557,6 +567,7 @@ namespace controller_interface
             //l3を押すと射出情報をpublishする
             if(msg->data == "l3")
             {
+                RCLCPP_INFO(this->get_logger(), "l3");
                 auto initial_sequense_pickup = std::make_shared<std_msgs::msg::String>();
                 initial_sequense_pickup->data = initial_pickup_state;
                 _pub_initial_sequense->publish(*initial_sequense_pickup);
@@ -723,7 +734,7 @@ namespace controller_interface
 
         }
 
-            //コントローラからスタート地点情報をsubscribe
+        //コントローラからスタート地点情報をsubscribe
         void SmartphoneGamepad::callback_initial_state(const std_msgs::msg::String::SharedPtr msg)
         {
             initial_state = msg->data[0];
@@ -760,6 +771,7 @@ namespace controller_interface
         //この関数が2つあるのは射出機構が2つあるため
         void SmartphoneGamepad::callback_injection_calculator(const std_msgs::msg::Bool::SharedPtr msg)
         {
+            RCLCPP_INFO(this->get_logger(), "false");
              //injection_calculatorから上モノ指令値計算収束のsub。上物の指令値の収束情報。
             is_injection_calculator_convergence = msg->data;
         }
@@ -774,18 +786,6 @@ namespace controller_interface
                 //sizeof関数でdataのメモリを取得
                 _recv_joy_main(joy_main.data(data, sizeof(data)));
             }
-            // msg joy_msg;
-            // if(recvudp.is_recved()){
-            //     //メモリの使用量を減らすためunsignedを使う
-            //     unsigned char data[16];
-            //     //sizeof関数でdataのメモリを取得
-            //     stick._recv_joy_main(recvudp.data(data, sizeof(data)),can_linear_id,can_angular_id,is_move_autonomous,is_slow_speed,
-            //             high_manual_linear_max_vel,slow_manual_linear_max_vel,manual_angular_max_vel);
-            // }
-            // stick.recv();
-            // _pub_canusb->publish(joy_msg.msg_angular);
-            // _pub_canusb->publish(joy_msg.msg_linear);
-            // _pub_gazebo->publish(*joy_msg.msg_gazebo);
 
         }
 
@@ -836,6 +836,9 @@ namespace controller_interface
                     msg_gazebo->linear.x = slow_velPlanner_linear_x.vel();
                     msg_gazebo->linear.y = slow_velPlanner_linear_y.vel();
                     msg_gazebo->angular.z = velPlanner_angular_z.vel();
+                    // RCLCPP_INFO(this->get_logger(), "%f",-slow_velPlanner_linear_y.vel());
+                    // RCLCPP_INFO(this->get_logger(), "%f",-slow_velPlanner_linear_x.vel());
+                    // RCLCPP_INFO(this->get_logger(),"%f",-velPlanner_angular_z.vel());
                     
                 }
                 //高速モードのとき
@@ -858,11 +861,13 @@ namespace controller_interface
                     msg_gazebo->linear.x = high_velPlanner_linear_x.vel();
                     msg_gazebo->linear.y = high_velPlanner_linear_y.vel();
                     msg_gazebo->angular.z = velPlanner_angular_z.vel();
+                    // RCLCPP_INFO(this->get_logger(), "y:%f",high_velPlanner_linear_y.vel());
+                    // RCLCPP_INFO(this->get_logger(), "x:%f",high_velPlanner_linear_x.vel());
+                    // RCLCPP_INFO(this->get_logger(),"z:%f",velPlanner_angular_z.vel());
                 }
                 _pub_canusb->publish(*msg_linear);
                 _pub_canusb->publish(*msg_angular);
                 _pub_gazebo->publish(*msg_gazebo);
             }
         }
-
 }
