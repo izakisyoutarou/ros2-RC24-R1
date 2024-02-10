@@ -401,12 +401,12 @@ namespace controller_interface
             //射出
             if(msg->data == "r1"){
                 RCLCPP_INFO(this->get_logger(), "r1");
-                if(is_injection_convergence && !is_injection_mech_stop_m){
+                // if(is_injection_convergence /*&& !is_injection_mech_stop_m*/){
                     auto msg_inject = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                     msg_inject->canid = can_inject_id;
                     msg_inject->candlc = 0;
                     _pub_canusb->publish(*msg_inject);
-                }
+                // }
             }
 
             //回転停止
