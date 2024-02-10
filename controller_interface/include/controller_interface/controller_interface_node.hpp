@@ -72,6 +72,7 @@ namespace controller_interface
             rclcpp::Publisher<controller_interface_msg::msg::Convergence>::SharedPtr _pub_convergence;
             rclcpp::Publisher<controller_interface_msg::msg::Colorball>::SharedPtr _pub_color_ball;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_injection;
+            rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr _pub_backspin_injection;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_coat_state;
 
             //ボールと苗の回収&設置
@@ -145,7 +146,7 @@ namespace controller_interface
             std_msgs::msg::Bool msg_unity_control;
             std_msgs::msg::Bool msg_unity_sub_control;
             std_msgs::msg::String msg_unity_initial_state;
-
+            std_msgs::msg::String msg_move_node;
 
             //base_control用
             bool is_reset = false;
@@ -153,7 +154,7 @@ namespace controller_interface
             bool is_move_autonomous = false;
             bool is_injection_autonomous = false;
             bool is_slow_speed = false;
-            bool is_injection_mech_stop_m = true;
+            bool is_injection_mech_stop_m = false;
             std::string initial_state = "";
 
             //unityにsubscrib
@@ -266,6 +267,12 @@ namespace controller_interface
             VelPlanner velPlanner_angular_z;
             const VelPlannerLimit limit_angular;
 
+            bool color_data[12] = {false, false, false, false, false, false, false, false, false, false, false, false};
+            char head_english[12] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'};
+            std::string move_node;
             RecvUDP joy_main;
+
+
+            
     };
 }

@@ -42,7 +42,8 @@ launch: #起動パラメータ
       inject_spinning: 0x200
       inject: 0x201
       inject_vel: 0x202
-      inject_convergence: 0x203
+      backspin_vel: 0x203
+      inject_convergence: 0x204
       #苗
       seedling_collect: 0x210
       seedling_install: 0x211
@@ -118,7 +119,7 @@ controller_interface_node:
     #60hzでスティックの値を送る(60hz = 6ms)
     interval_ms: 6
 
-    base_state_communication_ms: 100
+    base_state_communication_ms: 50
 
     start_ms: 3000
     
