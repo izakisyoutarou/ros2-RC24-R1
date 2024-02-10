@@ -385,7 +385,7 @@ namespace controller_interface
                 robotcontrol_flag = true;
                 flag_restart = true;
                 is_emergency = false;
-                is_injection_mech_stop_m = true;
+                is_injection_mech_stop_m = false;
                 is_move_autonomous = defalt_move_autonomous_flag;
                 is_injection_autonomous = defalt_injection_autonomous_flag;
                 is_slow_speed = defalt_slow_speed_flag;
@@ -424,17 +424,17 @@ namespace controller_interface
             //射出パラメータ&回転開始
             if(msg->data == "l1"){
                 RCLCPP_INFO(this->get_logger(), "l1");
-                if(move_node.at(0) == 'H'){
-                    auto msg_backspin_injection = std::make_shared<std_msgs::msg::Empty>();
-                     _pub_backspin_injection->publish(*msg_backspin_injection);
-                    is_backside = true;
-                }
-                else if(move_node.at(0) == 'I'){
-                    auto msg_injection = std::make_shared<std_msgs::msg::Bool>();
-                    msg_injection->data = false;
-                    _pub_injection->publish(*msg_injection);
-                    is_backside = false;
-                }
+                // if(move_node.at(0) == 'H'){
+                //     auto msg_backspin_injection = std::make_shared<std_msgs::msg::Empty>();
+                //      _pub_backspin_injection->publish(*msg_backspin_injection);
+                //     is_backside = true;
+                // }
+                // else if(move_node.at(0) == 'I'){
+                //     auto msg_injection = std::make_shared<std_msgs::msg::Bool>();
+                //     msg_injection->data = false;
+                //     _pub_injection->publish(*msg_injection);
+                //     is_backside = false;
+                // }
                 auto msg_inject_spinning = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                 msg_inject_spinning->canid = can_inject_spinning_id;
                 msg_inject_spinning->candlc = 1;
