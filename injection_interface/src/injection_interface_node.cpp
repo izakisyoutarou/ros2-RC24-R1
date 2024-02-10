@@ -181,12 +181,22 @@ namespace injection_interface{
         }
 
         void InjectionInterface::_callback_backspin_vel(const std_msgs::msg::Int16MultiArray::SharedPtr msg){
-            vel[0] = msg->data[0];
-            vel[1] = msg->data[1];
-            vel[2] = msg->data[2];
+                if(court_color_ == "blue"){
+                    target_pos.x = strage_backside[0];
+                    target_pos.y = strage_backside[1];
+                }else if(court_color_ == "red"){
+                    target_pos.x = strage_backside[0];
+                    target_pos.y = -strage_backside[1];
+                }
+                vel[0] = msg->data[0];
+                vel[1] = msg->data[1];
+                vel[2] = msg->data[2];
+                command_injection_turn();
+                command_backspin();
         }
 
         void InjectionInterface::_callback_backspin(const std_msgs::msg::Empty::SharedPtr msg){
+            command_injection_turn();
             command_backspin();
         }
 
