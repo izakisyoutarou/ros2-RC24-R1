@@ -11,6 +11,7 @@
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/empty.hpp"
+#include "controller_interface/Gamebtn.hpp"
 //他のpkg
 #include "utilities/can_utils.hpp"
 #include "utilities/utils.hpp"
@@ -53,7 +54,6 @@ namespace controller_interface
             //spline_pidから
             rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_spline;
 
-
             //injection_param_calculatorから
             rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_injection_calculator;
 
@@ -82,20 +82,6 @@ namespace controller_interface
             //gazebo_simulator用のpub
             rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr _pub_gazebo;
 
-            //main_controlerからのsubscriber
-            rclcpp::Publisher<std_msgs::msg::String>::SharedPtr _pub_initial_state;
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_base_restart;
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_base_emergency;
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_move_auto;
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_base_injection;
-            rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr _pub_base_state_communication;
-            
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_spline;
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_colcurator;
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_injection;
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_seedlinghand;
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_ballhand;
-
             //sprine_pid
             rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_move_node;
 
@@ -105,6 +91,11 @@ namespace controller_interface
             rclcpp::TimerBase::SharedPtr _socket_timer;
             rclcpp::TimerBase::SharedPtr _start_timer;
             rclcpp::TimerBase::SharedPtr _pub_state_communication_timer;
+
+
+
+            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_inject_info;
+
 
             //QoS
             rclcpp::QoS _qos = rclcpp::QoS(10);
@@ -135,6 +126,9 @@ namespace controller_interface
             void callback_injection_strage(const std_msgs::msg::String::SharedPtr msg);
             void callback_collecting_ball(const std_msgs::msg::String::SharedPtr msg);
             void _recv_callback();
+
+            //setup
+            void base_control_setup();
 
 
             void _recv_joy_main(const unsigned char data[16]);
@@ -270,6 +264,8 @@ namespace controller_interface
             char head_english[12] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'};
             std::string move_node;
             RecvUDP joy_main;
+
+            Gamebtn gamebtn;
 
 
             
