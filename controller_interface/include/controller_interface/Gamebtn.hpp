@@ -29,6 +29,16 @@ class Gamebtn{
         void paddy_collect_right(rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_injection,int16_t can_inject_spinning_id,rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb);
         void paddy_collect_left(bool is_ballhand_convergence,int16_t can_paddy_collect_id,rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb);
         void initial_sequense(std::string initial_pickup_state,rclcpp::Publisher<std_msgs::msg::String>::SharedPtr _pub_initial_sequense);
+
+
+        void seedling_collect_debug(int16_t can_seedling_collect_id,rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb);
+        void seedling_collect_debug_1(int16_t can_seedling_collect_id,rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb);
+
+        void seedling_install_debug(int16_t can_seedling_install_id,rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb);
+        void seedling_install_debug_1(int16_t can_seedling_install_id,rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb);
+        void seedling_install_debug_2(int16_t can_seedling_install_id,rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb);
+        void seedling_install_debug_3(int16_t can_seedling_install_id,rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb);
+
     private:
         // rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb;
         // rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_inject_info;

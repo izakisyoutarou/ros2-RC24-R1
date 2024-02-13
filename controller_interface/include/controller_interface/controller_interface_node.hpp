@@ -102,13 +102,13 @@ namespace controller_interface
             rclcpp::QoS _qos = rclcpp::QoS(10);
             
             //controller_mainからのcallback
-            void callback_main_pad(const std_msgs::msg::String::SharedPtr msg);
-            void callback_screen_pad(const std_msgs::msg::String::SharedPtr msg);
+            void callback_mainpad(const std_msgs::msg::String::SharedPtr msg);
+            void callback_screen_mainpad(const std_msgs::msg::String::SharedPtr msg);
 
             //controller_subからのcallback
-            void callback_sub_pad(const std_msgs::msg::String::SharedPtr msg);
-            void callback_sub_gamepad(const std_msgs::msg::String::SharedPtr msg);
-
+            void callback_subpad(const std_msgs::msg::String::SharedPtr msg);
+            void callback_screen_subpad(const std_msgs::msg::String::SharedPtr msg);
+            
             //mainからのcallback
             void callback_main_injection_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
             void callback_main_Seedlinghand_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);

@@ -105,25 +105,25 @@ namespace controller_interface
             _sub_main_pad = this->create_subscription<std_msgs::msg::String>(
                 "main_pad",
                 _qos,
-                std::bind(&SmartphoneGamepad::callback_main_pad, this, std::placeholders::_1)
+                std::bind(&SmartphoneGamepad::callback_mainpad, this, std::placeholders::_1)
             );
 
             _sub_screen_pad = this->create_subscription<std_msgs::msg::String>(
                 "SCRN_info",
                 _qos,
-                std::bind(&SmartphoneGamepad::callback_screen_pad, this, std::placeholders::_1)
+                std::bind(&SmartphoneGamepad::callback_screen_mainpad, this, std::placeholders::_1)
             );
 
             //controller_subからsub
             _sub_pad = this->create_subscription<std_msgs::msg::String>(
                 "sub_pad",
                 _qos,
-                std::bind(&SmartphoneGamepad::callback_sub_pad, this, std::placeholders::_1)
+                std::bind(&SmartphoneGamepad::callback_screen_subpad, this, std::placeholders::_1)
             );
             _sub_gamepad = this->create_subscription<std_msgs::msg::String>(
                 "sub_gamepad",
                 _qos,
-                std::bind(&SmartphoneGamepad::callback_sub_gamepad, this, std::placeholders::_1)
+                std::bind(&SmartphoneGamepad::callback_subpad, this, std::placeholders::_1)
             );
 
             //mainからsub
@@ -255,7 +255,7 @@ namespace controller_interface
             velPlanner_angular_z.limit(limit_angular);
         }
 
-        void SmartphoneGamepad::callback_main_pad(const std_msgs::msg::String::SharedPtr msg)
+        void SmartphoneGamepad::callback_mainpad(const std_msgs::msg::String::SharedPtr msg)
         {
             //リスタート
             auto msg_restart = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
@@ -435,7 +435,7 @@ namespace controller_interface
             }
         }
 
-        void SmartphoneGamepad::callback_screen_pad(const std_msgs::msg::String::SharedPtr msg){
+        void SmartphoneGamepad::callback_screen_mainpad(const std_msgs::msg::String::SharedPtr msg){
             if(msg->data.length() <= 3){
                     move_node = msg->data;
                     auto msg_move_node = std::make_shared<std_msgs::msg::String>();
@@ -451,7 +451,7 @@ namespace controller_interface
             }
         }
 
-        void SmartphoneGamepad::callback_sub_pad(const std_msgs::msg::String::SharedPtr msg){
+        void SmartphoneGamepad::callback_screen_subpad(const std_msgs::msg::String::SharedPtr msg){
             if(msg->data == "Btn_info_msg") _pub_color_ball->publish(msg_colorball_info);
             else {
                 for(int i = 0; i < 12; i++){
@@ -470,27 +470,19 @@ namespace controller_interface
             }
         }
 
-        void SmartphoneGamepad::callback_sub_gamepad(const std_msgs::msg::String::SharedPtr msg){
+        void SmartphoneGamepad::callback_subpad(const std_msgs::msg::String::SharedPtr msg){
             
             if(msg->data == "a")
             {
                 if(is_seedlinghand_convergence){
-                    auto msg_seedling_collect = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                    msg_seedling_collect->candlc = 1;
-                    msg_seedling_collect->candata[0] = 0;
-                    msg_seedling_collect->canid = can_seedling_collect_id;
-                    _pub_canusb->publish(*msg_seedling_collect);
+                    gamebtn.seedling_collect_debug(can_seedling_collect_id,_pub_canusb);
                 }
             }
 
             if(msg->data == "b")
             {
                 if(is_seedlinghand_convergence){
-                    auto msg_seedling_collect = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                    msg_seedling_collect->candlc = 1;
-                    msg_seedling_collect->candata[0] = 1;
-                    msg_seedling_collect->canid = can_seedling_collect_id;
-                    _pub_canusb->publish(*msg_seedling_collect);
+                    gamebtn.seedling_collect_debug_1(can_seedling_collect_id,_pub_canusb);
                 }
             }
 
@@ -507,44 +499,28 @@ namespace controller_interface
             if(msg->data == "up")
             {
                 if(is_seedlinghand_convergence){
-                    auto msg_seedling_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                    msg_seedling_install->candlc = 1;
-                    msg_seedling_install->candata[0] = 0;
-                    msg_seedling_install->canid = can_seedling_install_id;
-                    _pub_canusb->publish(*msg_seedling_install);
+                    gamebtn.seedling_install_debug(can_seedling_install_id,_pub_canusb);
                 }
             }
 
              if(msg->data == "right")
             {
                 if(is_seedlinghand_convergence){
-                    auto msg_seedling_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                    msg_seedling_install->candlc = 1;
-                    msg_seedling_install->candata[0] = 1;
-                    msg_seedling_install->canid = can_seedling_install_id;
-                    _pub_canusb->publish(*msg_seedling_install);
+                    gamebtn.seedling_install_debug_1(can_seedling_install_id,_pub_canusb);
                 }
             }
 
             if(msg->data == "down")
             {
                 if(is_seedlinghand_convergence){
-                    auto msg_seedling_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                    msg_seedling_install->candlc = 1;
-                    msg_seedling_install->candata[0] = 2;
-                    msg_seedling_install->canid = can_seedling_install_id;
-                    _pub_canusb->publish(*msg_seedling_install);
+                    gamebtn.seedling_install_debug_2(can_seedling_install_id,_pub_canusb);
                 }
             }
 
             if(msg->data == "left")
             {
                 if(is_seedlinghand_convergence){
-                    auto msg_seedling_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                    msg_seedling_install->candlc = 1;
-                    msg_seedling_install->candata[0] = 3;
-                    msg_seedling_install->canid = can_seedling_install_id;
-                    _pub_canusb->publish(*msg_seedling_install);
+                    gamebtn.seedling_install_debug_3(can_seedling_install_id,_pub_canusb);
                 }
             }
 

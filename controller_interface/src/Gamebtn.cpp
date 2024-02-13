@@ -122,3 +122,51 @@ void Gamebtn::initial_sequense(std::string initial_pickup_state,rclcpp::Publishe
     initial_sequense_pickup->data = initial_pickup_state;
     _pub_initial_sequense->publish(*initial_sequense_pickup);
 }
+
+void Gamebtn::seedling_collect_debug(int16_t can_seedling_collect_id,rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
+    auto msg_seedling_collect = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+    msg_seedling_collect->candlc = 1;
+    msg_seedling_collect->candata[0] = 0;
+    msg_seedling_collect->canid = can_seedling_collect_id;
+    _pub_canusb->publish(*msg_seedling_collect);
+}
+
+void Gamebtn::seedling_collect_debug_1(int16_t can_seedling_collect_id,rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
+    auto msg_seedling_collect = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+    msg_seedling_collect->candlc = 1;
+    msg_seedling_collect->candata[0] = 1;
+    msg_seedling_collect->canid = can_seedling_collect_id;
+    _pub_canusb->publish(*msg_seedling_collect);
+}
+
+void Gamebtn::seedling_install_debug(int16_t can_seedling_install_id,rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
+    auto msg_seedling_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+    msg_seedling_install->candlc = 1;
+    msg_seedling_install->candata[0] = 0;
+    msg_seedling_install->canid = can_seedling_install_id;
+    _pub_canusb->publish(*msg_seedling_install);
+}
+
+void Gamebtn::seedling_install_debug_1(int16_t can_seedling_install_id,rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
+    auto msg_seedling_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+    msg_seedling_install->candlc = 1;
+    msg_seedling_install->candata[0] = 1;
+    msg_seedling_install->canid = can_seedling_install_id;
+    _pub_canusb->publish(*msg_seedling_install);
+}
+
+void Gamebtn::seedling_install_debug_2(int16_t can_seedling_install_id,rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
+    auto msg_seedling_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+    msg_seedling_install->candlc = 1;
+    msg_seedling_install->candata[0] = 2;
+    msg_seedling_install->canid = can_seedling_install_id;
+    _pub_canusb->publish(*msg_seedling_install);
+}
+
+void Gamebtn::seedling_install_debug_3(int16_t can_seedling_install_id,rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
+    auto msg_seedling_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+    msg_seedling_install->candlc = 1;
+    msg_seedling_install->candata[0] = 3;
+    msg_seedling_install->canid = can_seedling_install_id;
+    _pub_canusb->publish(*msg_seedling_install);
+}
