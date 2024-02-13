@@ -1,8 +1,8 @@
 launch: #起動パラメータ
   ros__parameters:
-    slcan: false
-    scan: false
-    trajectory_planner: false
+    slcan: true
+    scan: true
+    trajectory_planner: true
 
 /**:  #ワイルドカード(ここのパラメータは全ノードから読める: <名前に注意>)
   ros__parameters:
@@ -42,7 +42,8 @@ launch: #起動パラメータ
       inject_spinning: 0x200
       inject: 0x201
       inject_vel: 0x202
-      inject_convergence: 0x203
+      backspin_vel: 0x203
+      inject_convergence: 0x204
       #苗
       seedling_collect: 0x210
       seedling_install: 0x211
@@ -150,10 +151,10 @@ rasnac_localization:
   ros__parameters:
     plot_mode: true            #実機のときはfalse
     laser_weight: 0.8          #lidarの重み->値を大きくするとlidarが優先される
-    odom_weight_liner: 3.0e-5     #値が大きくなると共分散が小さくなる
+    odom_weight_liner: 4.0e-5     #値が大きくなると共分散が小さくなる
     odom_weight_angler: 2.0e-6
-    voxel_size: 0.03
-    trial_num: 50
+    voxel_size: 0.04
+    trial_num: 40
     inlier_dist_threshold: 0.017
     inlier_length_threshold: 0.5 #インライアのしきい値
     second_ransac: true         #2回ransacするか

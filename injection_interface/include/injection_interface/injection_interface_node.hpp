@@ -3,12 +3,16 @@
 #include <rclcpp/rclcpp.hpp>
 #include "injection_interface/visibility_control.h"
 
-#include <std_msgs/msg/string.hpp>
 #include <std_msgs/msg/bool.hpp>
+#include <std_msgs/msg/empty.hpp>
+#include <std_msgs/msg/int16.hpp>
+#include <std_msgs/msg/string.hpp>
+#include <std_msgs/msg/int16_multi_array.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 
 #include "injection_interface_msg/msg/injection_command.hpp"
 #include "path_msg/msg/turning.hpp"
+#include "socketcan_interface_msg/msg/socketcan_if.hpp"
 
 #include "utilities/two_vector.hpp"
 #include "utilities/utils.hpp"
@@ -33,16 +37,39 @@ private:
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_is_move_tracking;
     rclcpp::Subscription<geometry_msgs::msg::Vector3>::SharedPtr _sub_self_pose;
     rclcpp::Subscription<geometry_msgs::msg::Vector3>::SharedPtr _sub_move_target_pose;
+    rclcpp::Subscription<std_msgs::msg::Int16MultiArray>::SharedPtr _sub_backspin_vel;
+    rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr _sub_backspin;
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_move_node;
 
     void _callback_is_backside(const std_msgs::msg::Bool::SharedPtr msg);
     void _callback_is_move_tracking(const std_msgs::msg::Bool::SharedPtr msg);
     void _callback_self_pose(const geometry_msgs::msg::Vector3::SharedPtr msg);
     void _callback_move_target_pose(const geometry_msgs::msg::Vector3::SharedPtr msg);
-
+    void _callback_backspin_vel(const std_msgs::msg::Int16MultiArray::SharedPtr msg);
+    void _callback_backspin(const std_msgs::msg::Empty::SharedPtr msg);
+    void _callback_move_node(const std_msgs::msg::String::SharedPtr msg);
+    
+    rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb;
     rclcpp::Publisher<injection_interface_msg::msg::InjectionCommand>::SharedPtr _pub_injection;
     rclcpp::Publisher<path_msg::msg::Turning>::SharedPtr _pub_spin_position;
 
+    void command_injection_turn();
+    void command_backspin();
+
     rclcpp::QoS _qos = rclcpp::QoS(10);
+
+    const int16_t can_backspin_vel_id;
+
+    int16_t vel[3];
+
+    struct Vel{
+        std::string name;
+        short vel[3];
+    };
+
+    std::vector<Vel> vel_list;
+
+    TwoVector target_pos;
 
     //定数
     const std::vector<double> tf_injection2robot;

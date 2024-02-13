@@ -72,6 +72,7 @@ namespace controller_interface
             rclcpp::Publisher<controller_interface_msg::msg::Convergence>::SharedPtr _pub_convergence;
             rclcpp::Publisher<controller_interface_msg::msg::Colorball>::SharedPtr _pub_color_ball;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_injection;
+            rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr _pub_backspin_injection;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_coat_state;
 
             //ボールと苗の回収&設置
@@ -147,7 +148,7 @@ namespace controller_interface
             bool is_move_autonomous = false;
             bool is_injection_autonomous = false;
             bool is_slow_speed = false;
-            bool is_injection_mech_stop_m = true;
+            bool is_injection_mech_stop_m = false;
             std::string initial_state = "";
 
             //unityにsubscrib

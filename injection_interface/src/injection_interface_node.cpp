@@ -1,6 +1,9 @@
 #include "injection_interface/injection_interface_node.hpp"
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <fstream>
+#include <iostream>
+
+#include "utilities/can_utils.hpp"
 
 using namespace std;
 using namespace utils;
@@ -13,7 +16,8 @@ namespace injection_interface{
         tf_injection2robot(get_parameter("tf_injection2robot").as_double_array()),
         strage_backside(get_parameter("strage_backside").as_double_array()),
         strage_front(get_parameter("strage_front").as_double_array()),
-        court_color_(get_parameter("court_color").as_string())
+        court_color_(get_parameter("court_color").as_string()),
+        can_backspin_vel_id(get_parameter("canid.backspin_vel").as_int())
         
         {
             _sub_is_backside = this->create_subscription<std_msgs::msg::Bool>(
@@ -40,8 +44,27 @@ namespace injection_interface{
                 std::bind(&InjectionInterface::_callback_move_target_pose, this, std::placeholders::_1)
             );
 
+            _sub_backspin_vel = this->create_subscription<std_msgs::msg::Int16MultiArray>(
+                "backspin_vel",
+                _qos,
+                std::bind(&InjectionInterface::_callback_backspin_vel, this, std::placeholders::_1)
+            );
+
+            _sub_backspin = this->create_subscription<std_msgs::msg::Empty>(
+                "backspin",
+                _qos,
+                std::bind(&InjectionInterface::_callback_backspin, this, std::placeholders::_1)
+            );
+
+            _sub_move_node = this->create_subscription<std_msgs::msg::String>(
+                "move_node",
+                _qos,
+                std::bind(&InjectionInterface::_callback_move_node, this, std::placeholders::_1)
+            );
+
             _pub_injection = this->create_publisher<injection_interface_msg::msg::InjectionCommand>("injection_command", 10);
             _pub_spin_position = this->create_publisher<path_msg::msg::Turning>("spin_position", 10);
+            _pub_canusb = this->create_publisher<socketcan_interface_msg::msg::SocketcanIF>("can_tx", _qos);
 
             const auto initial_pose = this->get_parameter("initial_pose").as_double_array();
             if(court_color_ == "blue"){
@@ -50,15 +73,31 @@ namespace injection_interface{
                 self_pose.z = initial_pose[2];
             }else if(court_color_ == "red"){
                 self_pose.x = initial_pose[0];
-                self_pose.y = -1.0*initial_pose[1];
+                self_pose.y = -initial_pose[1];
                 self_pose.z = initial_pose[2];
             }
-            
+
+            std::ifstream ifs(ament_index_cpp::get_package_share_directory("main_executor") + "/config/injection_interface/injection_vel.cfg");
+            std::string str;
+            while(getline(ifs, str)){
+                std::string token;
+                std::istringstream stream(str);
+                int count = 0;
+                Vel vel;
+                while(getline(stream, token, ' ')){
+                    if(count==0) vel.name = token;
+                    else if(count==1) vel.vel[0] = std::stoi(token);
+                    else if(count==2) vel.vel[1] = std::stoi(token);
+                    else if(count==3) vel.vel[2] = std::stoi(token);
+                    count++;
+                }
+                vel_list.push_back(vel);
+            }
         }
 
         void InjectionInterface::_callback_is_backside(const std_msgs::msg::Bool::SharedPtr msg){
            
-            TwoVector target_pos;
+
             double target_height;
             bool target_input = false;
             last_target = msg;
@@ -120,12 +159,8 @@ namespace injection_interface{
             injection_command->height = target_height;
             _pub_injection->publish(*injection_command);
 
-            float self_z = self_pose.z;
+            command_injection_turn();
 
-            auto injection_angle = std::make_shared<path_msg::msg::Turning>();
-            injection_angle->angle_pos = atan2(target_pos.y - self_pose.y , target_pos.x - self_pose.x) - area(self_z, -f_pi, f_pi);
-            injection_angle->accurate_convergence = true;
-            _pub_spin_position->publish(*injection_angle);
         }
 
         void InjectionInterface::_callback_is_move_tracking(const std_msgs::msg::Bool::SharedPtr msg){
@@ -144,4 +179,58 @@ namespace injection_interface{
             move_target_pose.y = msg->y;
             move_target_pose.z = msg->z;
         }
+
+        void InjectionInterface::_callback_backspin_vel(const std_msgs::msg::Int16MultiArray::SharedPtr msg){
+                if(court_color_ == "blue"){
+                    target_pos.x = strage_backside[0];
+                    target_pos.y = strage_backside[1];
+                }else if(court_color_ == "red"){
+                    target_pos.x = strage_backside[0];
+                    target_pos.y = -strage_backside[1];
+                }
+                vel[0] = msg->data[0];
+                vel[1] = msg->data[1];
+                vel[2] = msg->data[2];
+                command_injection_turn();
+                command_backspin();
+        }
+
+        void InjectionInterface::_callback_backspin(const std_msgs::msg::Empty::SharedPtr msg){
+            command_injection_turn();
+            command_backspin();
+        }
+
+        void InjectionInterface::_callback_move_node(const std_msgs::msg::String::SharedPtr msg){
+            if(msg->data.at(0) == 'H'){
+                for(int i = 0; i <= vel_list.size(); i++){
+                    if(vel_list[i].name == msg->data){
+                        vel[0] = vel_list[i].vel[0];
+                        vel[1] = vel_list[i].vel[1];
+                        vel[2] = vel_list[i].vel[2];
+                        break;
+                    }
+                }    
+            }
+        }
+
+        void InjectionInterface::command_injection_turn(){
+            float self_z = self_pose.z;
+            auto injection_angle = std::make_shared<path_msg::msg::Turning>();
+            injection_angle->angle_pos = atan2(target_pos.y - self_pose.y , target_pos.x - self_pose.x) - area(self_z, -f_pi, f_pi);
+            injection_angle->accurate_convergence = true;
+            _pub_spin_position->publish(*injection_angle);
+        }
+
+        void InjectionInterface::command_backspin(){
+            uint8_t _candata[8];
+            auto msg_backspin_vel = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+            msg_backspin_vel->canid = can_backspin_vel_id;
+            msg_backspin_vel->candlc = 6;
+            short_to_bytes(_candata, static_cast<short>(vel[0]));
+            short_to_bytes(_candata+2, static_cast<short>(vel[1]));
+            short_to_bytes(_candata+4, static_cast<short>(vel[2]));
+            for(int i=0; i<msg_backspin_vel->candlc; i++) msg_backspin_vel->candata[i] = _candata[i];
+            _pub_canusb->publish(*msg_backspin_vel);
+        }
+
 }  // namespace injection_interface
