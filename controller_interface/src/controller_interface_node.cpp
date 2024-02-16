@@ -437,10 +437,10 @@ namespace controller_interface
 
         void SmartphoneGamepad::callback_screen_mainpad(const std_msgs::msg::String::SharedPtr msg){
             if(msg->data.length() <= 3){
-                    move_node = msg->data;
-                    auto msg_move_node = std::make_shared<std_msgs::msg::String>();
-                    msg_move_node->data = msg->data;
-                    pub_move_node->publish(*msg_move_node);
+                move_node = msg->data;
+                auto msg_move_node = std::make_shared<std_msgs::msg::String>();
+                msg_move_node->data = msg->data;
+                pub_move_node->publish(*msg_move_node);
             } 
             else if(msg->data == "Seedling_Collection" || msg->data == "Seedling_Installation" || msg->data == "ball_Collection"){
                 auto msg_move_node_bool = std::make_shared<std_msgs::msg::Bool>();

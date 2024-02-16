@@ -56,7 +56,7 @@ namespace controller_interface
             //QoS
             rclcpp::QoS _qos = rclcpp::QoS(10);
 
-            void unity_callback(const controller_interface_msg::msg::BaseControl msg);
+            void unity_callback(const controller_interface_msg::msg::BaseControl::SharedPtr msg);
             void convergence_unity_callback(const controller_interface_msg::msg::Convergence::SharedPtr msg);
 
             std_msgs::msg::Bool msg_unity_control;

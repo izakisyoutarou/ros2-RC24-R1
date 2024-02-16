@@ -64,8 +64,6 @@ namespace controller_interface
         this->is_emergency = defalt_emergency_flag;
         this->is_move_autonomous = defalt_move_autonomous_flag;
         this->is_injection_autonomous = defalt_injection_autonomous_flag;
-        this->is_slow_speed = defalt_slow_speed_flag;
-        this->initial_state = "O";
         this->spline_convergence = defalt_spline_convergence;
         this->injection_calculator = defalt_injection_calculator_convergence;
         this->injection = defalt_injection_convergence;
@@ -108,21 +106,22 @@ namespace controller_interface
         );
     }
 
-    void Unity::unity_callback(const controller_interface_msg::msg::BaseControl msg){
+    void Unity::unity_callback(const controller_interface_msg::msg::BaseControl::SharedPtr msg){
 
-                msg_unity_control.data = msg.is_restart;
-                _pub_base_restart->publish(msg_unity_control);
+        msg_unity_control.data = msg->is_restart;
+        _pub_base_restart->publish(msg_unity_control);
 
-                msg_unity_control.data = msg.is_emergency;
-                _pub_base_emergency->publish(msg_unity_control);
+        msg_unity_control.data = msg->is_emergency;
+        _pub_base_emergency->publish(msg_unity_control);
 
-                msg_unity_control.data = msg.is_move_autonomous;
-                _pub_move_auto->publish(msg_unity_control);
+        msg_unity_control.data = msg->is_move_autonomous;
+        _pub_move_auto->publish(msg_unity_control);
 
-                msg_unity_control.data = msg.is_injection_autonomous;
-                _pub_base_injection->publish(msg_unity_control);
+        msg_unity_control.data = msg->is_injection_autonomous;
+        _pub_base_injection->publish(msg_unity_control);
     }
     void Unity::convergence_unity_callback(const controller_interface_msg::msg::Convergence::SharedPtr msg){
+        
         auto msg_unity_control = std::make_shared<std_msgs::msg::Bool>();
         msg_unity_control->data = msg->spline_convergence;
         _pub_con_spline->publish(*msg_unity_control);
