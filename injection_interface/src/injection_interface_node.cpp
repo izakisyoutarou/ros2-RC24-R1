@@ -201,6 +201,13 @@ namespace injection_interface{
         }
 
         void InjectionInterface::_callback_move_node(const std_msgs::msg::String::SharedPtr msg){
+            if(court_color_ == "blue"){
+                target_pos.x = strage_backside[0];
+                target_pos.y = strage_backside[1];
+            }else if(court_color_ == "red"){
+                target_pos.x = strage_backside[0];
+                target_pos.y = -strage_backside[1];
+            }
             if(msg->data.at(0) == 'H'){
                 for(int i = 0; i <= vel_list.size(); i++){
                     if(vel_list[i].name == msg->data){
@@ -216,7 +223,7 @@ namespace injection_interface{
         void InjectionInterface::command_injection_turn(){
             float self_z = self_pose.z;
             auto injection_angle = std::make_shared<path_msg::msg::Turning>();
-            injection_angle->angle_pos = atan2(target_pos.y - self_pose.y , target_pos.x - self_pose.x) - area(self_z, -f_pi, f_pi);
+            injection_angle->angle_pos = atan2(target_pos.y - self_pose.y, target_pos.x - self_pose.x) - area(self_z, -f_pi, f_pi);
             injection_angle->accurate_convergence = true;
             _pub_spin_position->publish(*injection_angle);
         }

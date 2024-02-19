@@ -321,10 +321,18 @@ namespace controller_interface
             //射出パラメータ&回転開始
             if(msg->data == "l1"){
                 RCLCPP_INFO(this->get_logger(), "l1");
+                if(move_node == "H6" || move_node == "H7"){
+                    auto msg_backspin_injection = std::make_shared<std_msgs::msg::Empty>();
+                     _pub_backspin_injection->publish(*msg_backspin_injection);
+                    is_backside = true;
+                }
+                else if(move_node == "IJ0" || move_node == "IJ1"){
+                    auto msg_injection = std::make_shared<std_msgs::msg::Bool>();
+                    msg_injection->data = false;
+                    _pub_injection->publish(*msg_injection);
+                    is_backside = false;
+                }
                 gamebtn.injection_spining_start(move_node,is_backside,_pub_injection,can_inject_spinning_id,is_move_autonomous,is_injection_mech_stop_m,_pub_canusb);
-
-                is_move_autonomous = true;
-                is_injection_mech_stop_m = false;
             }
 
             //高速低速モードの切り替え
@@ -333,7 +341,7 @@ namespace controller_interface
                 else is_slow_speed = true;
             }
 
-            //ステアリセット
+            //ステアリセット                
             if(msg->data == "up"){
                 RCLCPP_INFO(this->get_logger(), "up");
                 gamebtn.steer_reset(can_steer_reset_id,_pub_canusb);
@@ -366,18 +374,12 @@ namespace controller_interface
             //左ハンド籾の装填
             if(msg->data == "b"){
                 RCLCPP_INFO(this->get_logger(), "b");
-                is_backside = false;
-                is_move_autonomous = true;
-                is_injection_mech_stop_m = false;
                 gamebtn.paddy_install_left(_pub_injection,can_inject_spinning_id,_pub_canusb);
             }
 
             //右ハンド籾の回収
             if(msg->data == "x"){
                 RCLCPP_INFO(this->get_logger(), "x");
-                is_backside = true;
-                is_move_autonomous = true;
-                is_injection_mech_stop_m = false;
                 gamebtn.paddy_collect_right(_pub_injection,can_paddy_collect_id,_pub_canusb);
             }
             
