@@ -261,8 +261,7 @@ namespace controller_interface
             velPlanner_angular_z.limit(limit_angular);
         }
 
-        void SmartphoneGamepad::callback_mainpad(const std_msgs::msg::String::SharedPtr msg)
-        {
+        void SmartphoneGamepad::callback_mainpad(const std_msgs::msg::String::SharedPtr msg)    {
             //リスタート
             auto msg_restart = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
             msg_restart->canid = can_restart_id;
@@ -283,13 +282,13 @@ namespace controller_interface
 
             //緊急停止
             if(msg->data == "g"){
-                RCLCPP_INFO(this->get_logger(), "g");
+                cout<<"emergency"<<endl;
                 robotcontrol_flag = true;
                 is_emergency = true;
                 is_reset = false;
             }
             else if(msg->data == "s"){
-                RCLCPP_INFO(this->get_logger(), "s");
+                cout<<"restart"<<endl;
                 robotcontrol_flag = true;
                 flag_restart = true;
                 is_emergency = false;
@@ -309,12 +308,12 @@ namespace controller_interface
             else if(msg->data == "r1") gamebtn.injection(is_injection_convergence,is_injection_mech_stop_m,_pub_canusb); 
             //回転停止
             else if(msg->data == "r2"){
+                robotcontrol_flag = true;
                 gamebtn.injection_spining_stop(_pub_canusb);
                 is_injection_mech_stop_m = true;
             }
             //手自動の切り替え
             else if(msg->data == "r3"){
-                RCLCPP_INFO(this->get_logger(), "r3");
                 robotcontrol_flag = true;
                 if(is_move_autonomous == false){
                     is_move_autonomous = true;
@@ -326,19 +325,11 @@ namespace controller_interface
                 }
             }
             //射出パラメータ&回転開始
-            else if(msg->data == "l1"){
-                gamebtn.injection_spining_start(move_node,_pub_backspin_injection,_pub_injection,_pub_canusb);
-            }
+            else if(msg->data == "l1") gamebtn.injection_spining_start(move_node,_pub_backspin_injection,_pub_injection,_pub_canusb);
             //高速低速モードの切り替え
-            else if(msg->data == "l2"){
-                if(is_slow_speed) is_slow_speed = false;
-                else is_slow_speed = true;
-            }
+            else if(msg->data == "l2") is_slow_speed = !is_slow_speed;
             //射出情報
-            else if(msg->data == "l3"){
-                RCLCPP_INFO(this->get_logger(), "l3");
-                gamebtn.initial_sequense(initial_pickup_state,_pub_initial_sequense);
-            }
+            else if(msg->data == "l3") gamebtn.initial_sequense(initial_pickup_state,_pub_initial_sequense);
             //ステアリセット                
             else if(msg->data == "up") gamebtn.steer_reset(_pub_canusb);
             //キャリブレーション
@@ -369,7 +360,7 @@ namespace controller_interface
 
             if(msg->data=="g") _pub_canusb->publish(*msg_emergency);
 
-            if(robotcontrol_flag == true) _pub_base_control->publish(msg_base_control);
+            if(robotcontrol_flag) _pub_base_control->publish(msg_base_control);
 
             if(msg->data == "s"){
                 _pub_canusb->publish(*msg_restart);
@@ -433,7 +424,7 @@ namespace controller_interface
 
         void SmartphoneGamepad::callback_main_Seedlinghand_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg){
             is_seedlinghand_convergence = static_cast<bool>(msg->candata[1]);
-        }   void set_pub(rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr *_pub_canusb);
+        }
 
         void SmartphoneGamepad::callback_main_ballhand_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg){
             is_ballhand_convergence = static_cast<bool>(msg->candata[2]);
