@@ -327,18 +327,6 @@ namespace controller_interface
             }
             //射出パラメータ&回転開始
             else if(msg->data == "l1"){
-                RCLCPP_INFO(this->get_logger(), "l1");
-                if(move_node == "H6" || move_node == "H7"){
-                    auto msg_backspin_injection = std::make_shared<std_msgs::msg::Empty>();
-                     _pub_backspin_injection->publish(*msg_backspin_injection);
-                    is_backside = true;
-                }
-                else if(move_node == "IJ0" || move_node == "IJ1"){
-                    auto msg_injection = std::make_shared<std_msgs::msg::Bool>();
-                    msg_injection->data = false;
-                    _pub_injection->publish(*msg_injection);
-                    is_backside = false;
-                }
                 gamebtn.injection_spining_start(move_node,_pub_backspin_injection,_pub_injection,_pub_canusb);
             }
             //高速低速モードの切り替え
