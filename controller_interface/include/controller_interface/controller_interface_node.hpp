@@ -20,7 +20,6 @@
 
 #include "visibility_control.h"
 
-
 namespace controller_interface
 {
     using VelPlanner = velocity_planner::trapezoidal_velocity_planner::TrapezoidalVelocityPlanner;
@@ -93,10 +92,7 @@ namespace controller_interface
             rclcpp::TimerBase::SharedPtr _start_timer;
             rclcpp::TimerBase::SharedPtr _pub_state_communication_timer;
 
-
-
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_inject_info;
-
 
             //QoS
             rclcpp::QoS _qos = rclcpp::QoS(10);
@@ -169,7 +165,6 @@ namespace controller_interface
 
             bool is_backside = false;
 
-
             //canusb
             bool a;
             bool b;
@@ -220,22 +215,18 @@ namespace controller_interface
             const int16_t can_heartbeat_id;
             const int16_t can_restart_id;
             const int16_t can_calibrate_id;
+            const int16_t can_reset_id;
             const int16_t can_linear_id;
             const int16_t can_angular_id;
-            const int16_t can_main_button_id;
-            const int16_t can_sub_button_id;
+            const int16_t can_steer_reset_id;
             const int16_t can_inject_id;
             const int16_t can_inject_spinning_id;
             const int16_t can_seedling_collect_id;
             const int16_t can_seedling_install_id;
             const int16_t can_paddy_collect_id;
             const int16_t can_paddy_install_id;
-            const int16_t can_steer_reset_id;
-            const int16_t can_reset_id;
-
-
-            const std::string r1_pc;
-            const std::string r2_pc;
+            const int16_t can_main_button_id;
+            const int16_t can_sub_button_id;
 
             const std::string initial_pickup_state;
             const std::string initial_inject_state;
@@ -267,8 +258,6 @@ namespace controller_interface
             RecvUDP joy_main;
 
             Gamebtn gamebtn;
-
-
             
     };
 }
