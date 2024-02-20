@@ -110,7 +110,7 @@ void Gamebtn::paddy_install_right(bool is_ballhand_convergence,rclcpp::Publisher
 }
 
 void Gamebtn::paddy_install_left(bool is_ballhand_convergence,rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
-    if(!is_ballhand_convergence){
+    if(is_ballhand_convergence){
         cout<<"paddy_install_left"<<endl;
         auto msg_paddy_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
         msg_paddy_install->candlc = 1;
@@ -121,7 +121,7 @@ void Gamebtn::paddy_install_left(bool is_ballhand_convergence,rclcpp::Publisher<
 }
 
 void Gamebtn::seedling_collect_0(bool is_seedlinghand_convergence, rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
-    if(!is_seedlinghand_convergence){
+    if(is_seedlinghand_convergence){
         cout<<"seedling_collect_0"<<endl;
         auto msg_seedling_collect = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
         msg_seedling_collect->candlc = 1;
@@ -132,7 +132,7 @@ void Gamebtn::seedling_collect_0(bool is_seedlinghand_convergence, rclcpp::Publi
 }
 
 void Gamebtn::seedling_collect_1(bool is_seedlinghand_convergence, rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
-    if(!is_seedlinghand_convergence){
+    if(is_seedlinghand_convergence){
         cout<<"seedling_collect_1"<<endl;
         auto msg_seedling_collect = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
         msg_seedling_collect->candlc = 1;
