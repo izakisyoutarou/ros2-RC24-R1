@@ -119,29 +119,10 @@ controller_interface_node:
     angular_max_dec: 180.0
     
     heartbeat_ms: 100 #ハートビート周期[ms]
-    convergence_ms: 100 #収束周期[ms]
-
-    #60hzでスティックの値を送る(60hz = 6ms)
-    interval_ms: 6
-
-    base_state_communication_ms: 50
-
+    interval_ms: 6    #60hzでスティックの値を送る(60hz = 6ms)
     start_ms: 3000
     
-    #リスタート、緊急、足回りの手自動、上物の手自動、手動の射角、ボタンのカラー情報
-    defalt_restart_flag: false
-    defalt_emergency_flag: false
-    defalt_move_autonomous_flag: true
-    defalt_injection_autonomous_flag: false
-    defalt_slow_speed_flag: false
     defalt_color_information_flag: false
-
-    #収束の初期値
-    defalt_spline_convergence: false
-    defalt_injection_calculator_convergence: false
-    defalt_injection_convergence: false
-    defalt_seedlinghand_convergence: false
-    defalt_ballhand_convergence: false
 
     initial_pickup_state: "A"
     initial_inject_state: "B"
