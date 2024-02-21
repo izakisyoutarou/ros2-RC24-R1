@@ -150,8 +150,6 @@ namespace injection_interface{
             injection_pos.x = robot_pose.x + tf_injection2robot[0]*cos(robot_pose.z) - tf_injection2robot[1]*sin(robot_pose.z);
             injection_pos.y = robot_pose.y + tf_injection2robot[0]*sin(robot_pose.z) + tf_injection2robot[1]*cos(robot_pose.z);
 
-            RCLCPP_INFO(this->get_logger(), "射出位置 x:%lf y:%lf", injection_pos.x, injection_pos.y);
-
             TwoVector diff = target_pos - injection_pos;
 
             auto injection_command = std::make_shared<injection_interface_msg::msg::InjectionCommand>();
