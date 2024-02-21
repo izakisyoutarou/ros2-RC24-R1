@@ -39,17 +39,7 @@ void Gamebtn::steer_reset(rclcpp::Publisher<socketcan_interface_msg::msg::Socket
 }
 
 void Gamebtn::injection_spining_start(std::string move_node,rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr _pub_backspin_injection,rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_injection,rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
-    if(move_node.at(0) == 'H'){
-        cout<<"backspin_spining_start"<<endl;
-        auto msg_backspin_injection = std::make_shared<std_msgs::msg::Empty>();
-        _pub_backspin_injection->publish(*msg_backspin_injection);
-    }
-    else if(move_node.at(0) == 'I'){
-        cout<<"injection_spining_start"<<endl;
-        auto msg_injection = std::make_shared<std_msgs::msg::Bool>();
-        msg_injection->data = false;
-        _pub_injection->publish(*msg_injection);
-    }
+    cout<<"spining_start"<<endl;    
     auto msg_inject_spinning = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
     msg_inject_spinning->canid = canid.inject_spinning;
     msg_inject_spinning->candlc = 1;
