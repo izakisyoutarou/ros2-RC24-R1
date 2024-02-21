@@ -279,20 +279,21 @@ namespace controller_interface
 
             uint8_t _candata_btn[8];
             bool flag_restart = false;
+            is_restart = false;
 
             //緊急停止
             if(msg->data == "g"){
                 cout<<"emergency"<<endl;
                 robotcontrol_flag = true;
                 is_emergency = true;
-                is_reset = false;
+                is_restart = false;
             }
             else if(msg->data == "s"){
                 cout<<"restart"<<endl;
                 robotcontrol_flag = true;
                 flag_restart = true;
                 is_emergency = false;
-                is_reset = true;
+                is_restart = true;
                 is_injection_mech_stop_m = true;
                 is_move_autonomous = defalt_move_autonomous_flag;
                 is_injection_autonomous = defalt_injection_autonomous_flag;
@@ -348,7 +349,7 @@ namespace controller_interface
             else if(msg->data == "y") gamebtn.paddy_collect_left(is_ballhand_convergence,_pub_canusb);
 
             //base_controlへ代入
-            msg_base_control.is_restart = is_reset;
+            msg_base_control.is_restart = is_restart;
             msg_base_control.is_emergency = is_emergency;
             msg_base_control.is_move_autonomous = is_move_autonomous;
             msg_base_control.is_injection_autonomous = is_injection_autonomous;

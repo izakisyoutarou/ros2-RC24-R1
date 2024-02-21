@@ -139,22 +139,13 @@ namespace controller_interface
             std_msgs::msg::String msg_move_node;
 
             //base_control用
-            bool is_reset = false;
+            bool is_restart = false;
             bool is_emergency = false;
             bool is_move_autonomous = true;
             bool is_injection_autonomous = false;
             bool is_slow_speed = false;
             bool is_injection_mech_stop_m = false;
             std::string initial_state = "";
-
-            //unityにsubscrib
-            bool is_reset_unity = false;
-            bool is_emergency_unity = false;
-            bool is_move_autonomous_unity = false;
-            bool is_injection_autonomous_unity = false;
-            bool is_slow_speed_unity = false;
-            bool is_injection_mech_stop_m_unity = false;
-            std::string initial_state_unity = "";
             
             bool spline_convergence = false;
             bool injection_calculator = false;

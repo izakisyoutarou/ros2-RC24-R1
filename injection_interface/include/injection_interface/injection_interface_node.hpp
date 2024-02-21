@@ -53,8 +53,11 @@ private:
     rclcpp::Publisher<injection_interface_msg::msg::InjectionCommand>::SharedPtr _pub_injection;
     rclcpp::Publisher<path_msg::msg::Turning>::SharedPtr _pub_spin_position;
 
+    void set_calculate_vel(bool is_backside);
+    void set_backspin_vel(std::string node);
+    
+    void command_backspin_vel();
     void command_injection_turn();
-    void command_backspin();
 
     rclcpp::QoS _qos = rclcpp::QoS(10);
 
@@ -73,15 +76,15 @@ private:
 
     //定数
     const std::vector<double> tf_injection2robot;
-    const std::vector<double> strage_backside;
-    const std::vector<double> strage_front;
+    std::vector<double> strage_backside;
+    std::vector<double> strage_front;
 
     //フィールド
     geometry_msgs::msg::Vector3 self_pose;
     geometry_msgs::msg::Vector3 move_target_pose;
     bool is_move_tracking = false;
     bool is_correction_required = false;
-    std::shared_ptr<std_msgs::msg::Bool> last_target;
+    bool last_target;
     const std::string court_color_;
 };
 
