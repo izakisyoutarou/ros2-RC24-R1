@@ -305,8 +305,26 @@ namespace controller_interface
                 is_seedlinghand_convergence = defalt_seedlinghand_convergence;
                 is_ballhand_convergence = defalt_ballhand_convergence;                
             }
-            //射出
-            else if(msg->data == "r1") gamebtn.injection(is_injection_convergence,is_injection_mech_stop_m,_pub_canusb); 
+            //苗回収
+            else if(msg->data == "a") gamebtn.seedling_collect_right(is_seedlinghand_convergence,_pub_canusb);          
+            else if(msg->data == "b") gamebtn.seedling_collect_left(is_seedlinghand_convergence,_pub_canusb);               
+            //苗設置
+            else if(msg->data == "x") gamebtn.seedling_install_right(is_seedlinghand_convergence,_pub_canusb);   
+            else if(msg->data == "y") gamebtn.seedling_install_left(is_seedlinghand_convergence,_pub_canusb);   
+            //籾
+            else if(msg->data == "up") gamebtn.paddy_control(is_ballhand_convergence,_pub_canusb);           
+            //キャリブレーション
+            else if(msg->data == "down") gamebtn.calibrate(_pub_canusb);
+            //ステアリセット                
+            else if(msg->data == "right") gamebtn.steer_reset(_pub_canusb);
+            //基板リセット
+            else if(msg->data == "left") gamebtn.board_reset(_pub_canusb);
+            //回転開始・速度指令
+            else if(msg->data == "r1") {
+                robotcontrol_flag = true;
+                gamebtn.injection_spining_start(move_node,_pub_backspin_injection,_pub_injection,_pub_canusb);
+                is_injection_mech_stop_m = false;
+            }
             //回転停止
             else if(msg->data == "r2"){
                 robotcontrol_flag = true;
@@ -325,28 +343,13 @@ namespace controller_interface
                     is_injection_autonomous = false;
                 }
             }
-            //射出パラメータ&回転開始
-            else if(msg->data == "l1") gamebtn.injection_spining_start(move_node,_pub_backspin_injection,_pub_injection,_pub_canusb);
+            //射出
+            else if(msg->data == "l1") gamebtn.injection(is_injection_convergence,is_injection_mech_stop_m,_pub_canusb); 
             //高速低速モードの切り替え
             else if(msg->data == "l2") is_slow_speed = !is_slow_speed;
             //射出情報
             else if(msg->data == "l3") gamebtn.initial_sequense(initial_pickup_state,_pub_initial_sequense);
-            //ステアリセット                
-            else if(msg->data == "up") gamebtn.steer_reset(_pub_canusb);
-            //キャリブレーション
-            else if(msg->data == "down") gamebtn.calibrate(_pub_canusb);
-            //main基盤リセット
-            else if(msg->data == "right") gamebtn.main_reset(_pub_canusb);
-            //io基盤リセット
-            else if(msg->data == "left") gamebtn.io_reset(_pub_canusb);
-            //右ハンド籾の装填
-            else if(msg->data == "a") gamebtn.paddy_install_right(is_ballhand_convergence,_pub_canusb);
-            //左ハンド籾の装填
-            else if(msg->data == "b") gamebtn.paddy_install_left(is_ballhand_convergence,_pub_canusb);
-            //右ハンド籾の回収
-            else if(msg->data == "x") gamebtn.paddy_collect_right(is_ballhand_convergence,_pub_canusb);
-            //左ハンド籾の回収
-            else if(msg->data == "y") gamebtn.paddy_collect_left(is_ballhand_convergence,_pub_canusb);
+
 
             //base_controlへ代入
             msg_base_control.is_restart = is_restart;
@@ -405,12 +408,12 @@ namespace controller_interface
         }
 
         void SmartphoneGamepad::callback_subpad(const std_msgs::msg::String::SharedPtr msg){
-            if(msg->data == "a") gamebtn.seedling_collect_0(is_seedlinghand_convergence,_pub_canusb);
-            else if(msg->data == "b") gamebtn.seedling_collect_1(is_seedlinghand_convergence,_pub_canusb);
-            else if(msg->data == "up") gamebtn.seedling_install_0(is_seedlinghand_convergence,_pub_canusb);
-            else if(msg->data == "right") gamebtn.seedling_install_1(is_seedlinghand_convergence,_pub_canusb);
-            else if(msg->data == "down") gamebtn.seedling_install_2(is_seedlinghand_convergence,_pub_canusb);
-            else if(msg->data == "left") gamebtn.seedling_install_3(can_seedling_install_id,_pub_canusb);
+            // if(msg->data == "a") gamebtn.seedling_collect_0(is_seedlinghand_convergence,_pub_canusb);
+            // else if(msg->data == "b") gamebtn.seedling_collect_1(is_seedlinghand_convergence,_pub_canusb);
+            // else if(msg->data == "up") gamebtn.seedling_install_0(is_seedlinghand_convergence,_pub_canusb);
+            // else if(msg->data == "right") gamebtn.seedling_install_1(is_seedlinghand_convergence,_pub_canusb);
+            // else if(msg->data == "down") gamebtn.seedling_install_2(is_seedlinghand_convergence,_pub_canusb);
+            // else if(msg->data == "left") gamebtn.seedling_install_3(can_seedling_install_id,_pub_canusb);
         }
 
         //スタート地点情報をsubscribe
