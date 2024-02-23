@@ -4,6 +4,7 @@
 #include <chrono>
 #include <iostream>
 #include <future>
+#include <boost/format.hpp>
 
 using namespace utils;
 
@@ -80,10 +81,13 @@ namespace controller_interface
         can_sub_button_id(get_parameter("canid.sub_digital_button").as_int()),
         can_inject_id(get_parameter("canid.inject").as_int()),
         can_inject_spinning_id(get_parameter("canid.inject_spinning").as_int()),
+        can_inject_convergence_id(get_parameter("canid.inject_convergence").as_int()),
         can_seedling_collect_id(get_parameter("canid.seedling_collect").as_int()),
         can_seedling_install_id(get_parameter("canid.seedling_install").as_int()),
+        can_seedling_convergence_id(get_parameter("canid.seedling_convergence").as_int()),
         can_paddy_collect_id(get_parameter("canid.paddy_collect").as_int()),
         can_paddy_install_id(get_parameter("canid.paddy_install").as_int()),
+        can_paddy_convergence_id(get_parameter("canid.paddy_convergence").as_int()),
         can_steer_reset_id(get_parameter("canid.steer_reset").as_int()),
         can_reset_id(get_parameter("canid.reset").as_int()),
 
@@ -133,33 +137,34 @@ namespace controller_interface
             );
 
             //mainからsub
-            _sub_main_injection_possible = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
-                "can_rx_204",
+            _sub_inject_convergence = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
+                "can_rx_"+ (boost::format("%x") %  can_inject_convergence_id).str(),
                 _qos,
-                std::bind(&SmartphoneGamepad::callback_main_injection_possible, this, std::placeholders::_1)
+                std::bind(&SmartphoneGamepad::callback_inject_convergence, this, std::placeholders::_1)
             );
-            _sub_main_Seedlinghand_possible = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
-                "can_rx_212",
+            _sub_seedling_convergence = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
+                "can_rx_"+ (boost::format("%x") %  can_seedling_convergence_id).str(),
                 _qos,
-                std::bind(&SmartphoneGamepad::callback_main_Seedlinghand_possible, this, std::placeholders::_1)
+                std::bind(&SmartphoneGamepad::callback_seedling_convergence, this, std::placeholders::_1)
             );
-            _sub_main_ballhand_possible = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
-                "can_rx_222",
+            _sub_paddy_convergence = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
+                "can_rx_"+ (boost::format("%x") %  can_paddy_convergence_id).str(),
                 _qos,
-                std::bind(&SmartphoneGamepad::callback_main_ballhand_possible, this, std::placeholders::_1)
+                std::bind(&SmartphoneGamepad::callback_paddy_convergence, this, std::placeholders::_1)
             );
+
             //spline_pidからsub
-            _sub_spline = this->create_subscription<std_msgs::msg::Bool>(
+            _sub_is_move_tracking = this->create_subscription<std_msgs::msg::Bool>(
                 "is_move_tracking",
                 _qos,
-                std::bind(&SmartphoneGamepad::callback_spline, this, std::placeholders::_1)
+                std::bind(&SmartphoneGamepad::callback_is_move_tracking, this, std::placeholders::_1)
             );
 
             //injection_param_calculatorからsub
-            _sub_injection_calculator = this->create_subscription<std_msgs::msg::Bool>(
+            _sub_calculator_convergence = this->create_subscription<std_msgs::msg::Bool>(
                 "calculator_convergenced_",
                 _qos,
-                std::bind(&SmartphoneGamepad::callback_injection_calculator, this, std::placeholders::_1)
+                std::bind(&SmartphoneGamepad::callback_calculator_convergence, this, std::placeholders::_1)
             );
 
             //canusbへpub
@@ -167,9 +172,9 @@ namespace controller_interface
             //各nodeへ共有。
             _pub_base_control = this->create_publisher<controller_interface_msg::msg::BaseControl>("base_control",_qos);
             _pub_convergence = this->create_publisher<controller_interface_msg::msg::Convergence>("convergence" , _qos);
-            _pub_color_ball = this->create_publisher<controller_interface_msg::msg::Colorball>("color_information", _qos);
-            _pub_injection = this->create_publisher<std_msgs::msg::Bool>("is_backside", _qos);
-            _pub_backspin_injection = this->create_publisher<std_msgs::msg::Empty>("backspin", _qos);
+            _pub_color_information = this->create_publisher<controller_interface_msg::msg::Colorball>("color_information", _qos);
+            _pub_is_backside = this->create_publisher<std_msgs::msg::Bool>("is_backside", _qos);
+            _pub_backspin = this->create_publisher<std_msgs::msg::Empty>("backspin", _qos);
 
             //sprine_pid
             pub_move_node = this->create_publisher<std_msgs::msg::String>("move_node", _qos);
@@ -193,10 +198,6 @@ namespace controller_interface
             msg_base_control->is_slow_speed = defalt_slow_speed_flag;
             msg_base_control->initial_state = "O";
             _pub_base_control->publish(*msg_base_control);
-
-            auto msg_injection_con = std::make_shared<std_msgs::msg::Bool>();
-            msg_injection_con->data = injection_flag;
-            _pub_injection->publish(*msg_injection_con);
 
             auto msg_emergency = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
             msg_emergency->canid = can_emergency_id;
@@ -322,7 +323,7 @@ namespace controller_interface
             //回転開始・速度指令
             else if(msg->data == "r1") {
                 robotcontrol_flag = true;
-                gamebtn.injection_spining_start(move_node,_pub_backspin_injection,_pub_injection,_pub_canusb);
+                gamebtn.injection_spining_start(move_node,_pub_backspin,_pub_is_backside,_pub_canusb);
                 is_injection_mech_stop_m = false;
             }
             //回転停止
@@ -389,16 +390,16 @@ namespace controller_interface
         }
 
         void SmartphoneGamepad::callback_screen_subpad(const std_msgs::msg::String::SharedPtr msg){
-            if(msg->data == "Btn_info_msg") _pub_color_ball->publish(msg_colorball_info);
+            if(msg->data == "Btn_info_msg") _pub_color_information->publish(msg_color_information);
             else {
                 for(int i = 0; i < 12; i++){
                     if(msg->data.at(0) == head_english[i]){
                         if(msg->data.find("red") != -1) {
-                            msg_colorball_info.color_info[i] = true;
+                            msg_color_information.color_info[i] = true;
                             color_data[i] = true;
                         }
                         else if(msg->data.find("purple") != -1) {
-                            msg_colorball_info.color_info[i] = false;
+                            msg_color_information.color_info[i] = false;
                             color_data[i] = false;
                         }
                         break;
@@ -422,25 +423,25 @@ namespace controller_interface
         }
 
         //射出情報をsubsclib
-        void SmartphoneGamepad::callback_main_injection_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg){
+        void SmartphoneGamepad::callback_inject_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg){
             is_injection_convergence = static_cast<bool>(msg->candata[0]);
         }
 
-        void SmartphoneGamepad::callback_main_Seedlinghand_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg){
+        void SmartphoneGamepad::callback_seedling_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg){
             is_seedlinghand_convergence = static_cast<bool>(msg->candata[1]);
         }
 
-        void SmartphoneGamepad::callback_main_ballhand_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg){
+        void SmartphoneGamepad::callback_paddy_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg){
             is_ballhand_convergence = static_cast<bool>(msg->candata[2]);
         }
 
         //splineをsubsclib
-        void SmartphoneGamepad::callback_spline(const std_msgs::msg::Bool::SharedPtr msg){
+        void SmartphoneGamepad::callback_is_move_tracking(const std_msgs::msg::Bool::SharedPtr msg){
             is_spline_convergence = msg->data;           
         }
 
         //injection_param_calculatorをsubscribe
-        void SmartphoneGamepad::callback_injection_calculator(const std_msgs::msg::Bool::SharedPtr msg){
+        void SmartphoneGamepad::callback_calculator_convergence(const std_msgs::msg::Bool::SharedPtr msg){
              //injection_calculatorから上モノ指令値計算収束のsub。上物の指令値の収束情報。
             is_injection_calculator_convergence = msg->data;
         }

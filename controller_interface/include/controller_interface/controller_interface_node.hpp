@@ -46,15 +46,15 @@ namespace controller_interface
             rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_gamepad;
 
             //mainボードから
-            rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_main_injection_possible;
-            rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_main_ballhand_possible;
-            rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_main_Seedlinghand_possible;
+            rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_inject_convergence;
+            rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_paddy_convergence;
+            rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_seedling_convergence;
 
             //spline_pidから
-            rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_spline;
+            rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_is_move_tracking;
 
             //injection_param_calculatorから
-            rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_injection_calculator;
+            rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_calculator_convergence;
 
             //sequencerから
             rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_injection_strange;
@@ -69,9 +69,9 @@ namespace controller_interface
             //各nodeと共有
             rclcpp::Publisher<controller_interface_msg::msg::BaseControl>::SharedPtr _pub_base_control;
             rclcpp::Publisher<controller_interface_msg::msg::Convergence>::SharedPtr _pub_convergence;
-            rclcpp::Publisher<controller_interface_msg::msg::Colorball>::SharedPtr _pub_color_ball;
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_injection;
-            rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr _pub_backspin_injection;
+            rclcpp::Publisher<controller_interface_msg::msg::Colorball>::SharedPtr _pub_color_information;
+            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_is_backside;
+            rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr _pub_backspin;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_coat_state;
 
             //ボールと苗の回収&設置
@@ -106,17 +106,15 @@ namespace controller_interface
             void callback_screen_subpad(const std_msgs::msg::String::SharedPtr msg);
             
             //mainからのcallback
-            void callback_main_injection_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
-            void callback_main_Seedlinghand_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
-            void callback_main_ballhand_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
-            void callback_injection_complete(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
+            void callback_inject_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
+            void callback_seedling_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
+            void callback_paddy_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
 
             //splineからのcallback
-            void callback_spline(const std_msgs::msg::Bool::SharedPtr msg);
+            void callback_is_move_tracking(const std_msgs::msg::Bool::SharedPtr msg);
 
             //injection_param_calculatorからのcallback
-            void callback_injection_calculator(const std_msgs::msg::Bool::SharedPtr msg);
-            //void callback_calculator_convergenced_arm(const std_msgs::Bool::SharedPtr msg);
+            void callback_calculator_convergence(const std_msgs::msg::Bool::SharedPtr msg);
             void callback_initial_state(const std_msgs::msg::String::SharedPtr msg);
 
             //sequencerからのcallback
@@ -127,12 +125,11 @@ namespace controller_interface
             //setup
             void base_control_setup();
 
-
             void _recv_joy_main(const unsigned char data[16]);
 
             //メッセージ型の宣言
             controller_interface_msg::msg::BaseControl msg_base_control;
-            controller_interface_msg::msg::Colorball msg_colorball_info;
+            controller_interface_msg::msg::Colorball msg_color_information;
             std_msgs::msg::Bool msg_unity_control;
             std_msgs::msg::Bool msg_unity_sub_control;
             std_msgs::msg::String msg_unity_initial_state;
@@ -212,10 +209,13 @@ namespace controller_interface
             const int16_t can_steer_reset_id;
             const int16_t can_inject_id;
             const int16_t can_inject_spinning_id;
+            const int16_t can_inject_convergence_id;
             const int16_t can_seedling_collect_id;
             const int16_t can_seedling_install_id;
+            const int16_t can_seedling_convergence_id;
             const int16_t can_paddy_collect_id;
             const int16_t can_paddy_install_id;
+            const int16_t can_paddy_convergence_id;
             const int16_t can_main_button_id;
             const int16_t can_sub_button_id;
 
