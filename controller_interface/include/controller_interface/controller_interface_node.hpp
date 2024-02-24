@@ -43,7 +43,7 @@ namespace controller_interface
 
             //R1_subのcontrollerから
             rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_pad;
-            rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_gamepad;
+            rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_obj_color;
 
             //mainボードから
             rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_main_injection_possible;

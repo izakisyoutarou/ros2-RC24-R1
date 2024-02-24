@@ -121,13 +121,13 @@ namespace controller_interface
             );
 
             //controller_subからsub
-            _sub_pad = this->create_subscription<std_msgs::msg::String>(
-                "sub_pad",
+            _sub_obj_color = this->create_subscription<std_msgs::msg::String>(
+                "obj_color",
                 _qos,
                 std::bind(&SmartphoneGamepad::callback_screen_subpad, this, std::placeholders::_1)
             );
-            _sub_gamepad = this->create_subscription<std_msgs::msg::String>(
-                "sub_gamepad",
+            _sub_pad = this->create_subscription<std_msgs::msg::String>(
+                "sub_pad",
                 _qos,
                 std::bind(&SmartphoneGamepad::callback_subpad, this, std::placeholders::_1)
             );
@@ -391,6 +391,10 @@ namespace controller_interface
                 for(int i = 0; i < 12; i++){
                     if(msg->data.at(0) == head_english[i]){
                         if(msg->data.find("red") != -1) {
+                            msg_colorball_info.color_info[i] = true;
+                            color_data[i] = true;
+                        }
+                        else if(msg->data.find("blue") != -1) {
                             msg_colorball_info.color_info[i] = true;
                             color_data[i] = true;
                         }
