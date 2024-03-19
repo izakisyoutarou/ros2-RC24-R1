@@ -90,7 +90,8 @@ namespace controller_interface
         can_paddy_convergence_id(get_parameter("canid.paddy_convergence").as_int()),
         can_steer_reset_id(get_parameter("canid.steer_reset").as_int()),
         can_reset_id(get_parameter("canid.reset").as_int()),
-
+        can_arm_expansion_id(get_parameter("canid.arm_expansion").as_int()),
+        
         //回収、射出機構のはじめの位置の値を取得
         initial_pickup_state(get_parameter("initial_pickup_state").as_string()),
         initial_inject_state(get_parameter("initial_inject_state").as_string())
@@ -110,6 +111,7 @@ namespace controller_interface
             gamebtn.canid.paddy_install = can_paddy_install_id;
             gamebtn.canid.seedling_collect = can_seedling_collect_id;
             gamebtn.canid.seedling_install = can_seedling_install_id;
+            gamebtn.canid.arm_expansion = can_arm_expansion_id;
             
             //controller_mainからsub
             _sub_main_pad = this->create_subscription<std_msgs::msg::String>(
@@ -418,7 +420,10 @@ namespace controller_interface
             // else if(msg->data == "b") gamebtn.seedling_collect_1(is_seedlinghand_convergence,_pub_canusb);
             // else if(msg->data == "up") gamebtn.seedling_install_0(is_seedlinghand_convergence,_pub_canusb);
             // else if(msg->data == "right") gamebtn.seedling_install_1(is_seedlinghand_convergence,_pub_canusb);
-            // else if(msg->data == "down") gamebtn.seedling_install_2(is_seedlinghand_convergence,_pub_canusb);
+            if(msg->data == "down" && arm_expansion_flag){
+                gamebtn.arm_expansion(_pub_canusb);
+                arm_expansion_flag = false;
+            }
             // else if(msg->data == "left") gamebtn.seedling_install_3(can_seedling_install_id,_pub_canusb);
         }
 

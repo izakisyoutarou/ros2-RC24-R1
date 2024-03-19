@@ -27,9 +27,11 @@ class Gamebtn{
             int16_t paddy_collect;
             int16_t paddy_install;
             int16_t steer_reset;
+
+            int16_t arm_expansion;
         };
         CANID canid;
-
+        //mainコントローラー物理ボタン
         void calibrate(rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb);
         void board_reset(rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb);
         void steer_reset(rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb);
@@ -51,6 +53,9 @@ class Gamebtn{
         void paddy_collect(rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb);
         void paddy_install(rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb);
         void initial_sequense(std::string initial_pickup_state,rclcpp::Publisher<std_msgs::msg::String>::SharedPtr _pub_initial_sequense);
+
+        //subコントローラー物理ボタン
+        void arm_expansion(rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb);
 
     private:
         int seed_right_flag = 0;
