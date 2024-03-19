@@ -16,8 +16,10 @@ namespace injection_interface{
         tf_injection2robot(get_parameter("tf_injection2robot").as_double_array()),
         strage_backside(get_parameter("strage_backside").as_double_array()),
         strage_front(get_parameter("strage_front").as_double_array()),
+        pitch(get_parameter("pitch").as_double_array()),
         court_color_(get_parameter("court_color").as_string()),
-        can_backspin_vel_id(get_parameter("canid.backspin_vel").as_int())
+        can_backspin_vel_id(get_parameter("canid.backspin_vel").as_int()),
+        can_inject_pitch_id(get_parameter("canid.inject_pitch").as_int())
         
         {
             _sub_is_backside = this->create_subscription<std_msgs::msg::Bool>(
@@ -34,7 +36,7 @@ namespace injection_interface{
 
             _sub_self_pose = this->create_subscription<geometry_msgs::msg::Vector3>(
                 "self_pose",
-                _qos,
+                rclcpp::SensorDataQoS(),
                 std::bind(&InjectionInterface::_callback_self_pose, this, std::placeholders::_1)
             );
 
@@ -56,11 +58,11 @@ namespace injection_interface{
             //     std::bind(&InjectionInterface::_callback_backspin, this, std::placeholders::_1)
             // );
 
-            // _sub_move_node = this->create_subscription<std_msgs::msg::String>(
-            //     "move_node",
-            //     _qos,
-            //     std::bind(&InjectionInterface::_callback_move_node, this, std::placeholders::_1)
-            // );
+            _sub_move_node = this->create_subscription<std_msgs::msg::String>(
+                "move_node",
+                _qos,
+                std::bind(&InjectionInterface::_callback_move_node, this, std::placeholders::_1)
+            );
 
             _pub_injection = this->create_publisher<injection_interface_msg::msg::InjectionCommand>("injection_command", 10);
             _pub_spin_position = this->create_publisher<path_msg::msg::Turning>("spin_position", 10);
@@ -134,10 +136,12 @@ namespace injection_interface{
         //     command_injection_turn();
         // }
 
-        // void InjectionInterface::_callback_move_node(const std_msgs::msg::String::SharedPtr msg){
-        //     if(msg->data[0] == 'H') set_backspin_vel(msg->data);
-        //     else if(msg->data[0] == 'I') set_calculate_vel(false);
-        // }
+        void InjectionInterface::_callback_move_node(const std_msgs::msg::String::SharedPtr msg){
+            // if(msg->data[0] == 'H') set_backspin_vel(msg->data);
+            // else if(msg->data[0] == 'I') set_calculate_vel(false);
+            if(msg->data[0] == 'H') command_injection_pitch(pitch[0]);
+            else if(msg->data[0] == 'I') command_injection_pitch(pitch[1]);
+        }
 
         void InjectionInterface::set_calculate_vel(bool is_backside){
             double target_height;
@@ -214,5 +218,15 @@ namespace injection_interface{
         //     for(int i=0; i<msg_backspin_vel->candlc; i++) msg_backspin_vel->candata[i] = _candata[i];
         //     _pub_canusb->publish(*msg_backspin_vel);
         // }
+
+        void InjectionInterface::command_injection_pitch(double pitch){
+            uint8_t _candata[8];
+            float_to_bytes(_candata, static_cast<float>(pitch));
+            auto msg_injection_pitch = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+            msg_injection_pitch->canid = can_inject_pitch_id;
+            msg_injection_pitch->candlc = 4;
+            for(int i=0; i<msg_injection_pitch->candlc; i++) msg_injection_pitch->candata[i] = _candata[i];
+            _pub_canusb->publish(*msg_injection_pitch);
+        }
 
 }  // namespace injection_interface

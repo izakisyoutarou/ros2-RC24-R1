@@ -39,7 +39,7 @@ private:
     rclcpp::Subscription<geometry_msgs::msg::Vector3>::SharedPtr _sub_move_target_pose;
     // rclcpp::Subscription<std_msgs::msg::Int16MultiArray>::SharedPtr _sub_backspin_vel;
     // rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr _sub_backspin;
-    // rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_move_node;
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_move_node;
 
     void _callback_is_backside(const std_msgs::msg::Bool::SharedPtr msg);
     void _callback_is_move_tracking(const std_msgs::msg::Bool::SharedPtr msg);
@@ -47,7 +47,7 @@ private:
     void _callback_move_target_pose(const geometry_msgs::msg::Vector3::SharedPtr msg);
     // void _callback_backspin_vel(const std_msgs::msg::Int16MultiArray::SharedPtr msg);
     // void _callback_backspin(const std_msgs::msg::Empty::SharedPtr msg);
-    // void _callback_move_node(const std_msgs::msg::String::SharedPtr msg);
+    void _callback_move_node(const std_msgs::msg::String::SharedPtr msg);
     
     rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb;
     rclcpp::Publisher<injection_interface_msg::msg::InjectionCommand>::SharedPtr _pub_injection;
@@ -58,10 +58,12 @@ private:
     
     // void command_backspin_vel();
     void command_injection_turn();
+    void command_injection_pitch(double pitch);
 
     rclcpp::QoS _qos = rclcpp::QoS(10);
 
     const int16_t can_backspin_vel_id;
+    const int16_t can_inject_pitch_id;
 
     // int16_t vel[3];
 
@@ -78,6 +80,7 @@ private:
     const std::vector<double> tf_injection2robot;
     std::vector<double> strage_backside;
     std::vector<double> strage_front;
+    std::vector<double> pitch;
 
     //フィールド
     geometry_msgs::msg::Vector3 self_pose;
