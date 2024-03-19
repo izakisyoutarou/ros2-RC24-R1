@@ -322,18 +322,18 @@ namespace controller_interface
             else if(msg->data == "right") gamebtn.steer_reset(_pub_canusb);
             //基板リセット
             else if(msg->data == "left") gamebtn.board_reset(_pub_canusb);
-            //回転開始・速度指令
-            else if(msg->data == "r1") {
-                robotcontrol_flag = true;
-                gamebtn.injection_spining_start(move_node,_pub_backspin,_pub_is_backside,_pub_canusb);
-                is_injection_mech_stop_m = false;
-            }
-            //回転停止
-            else if(msg->data == "r2"){
-                robotcontrol_flag = true;
-                gamebtn.injection_spining_stop(_pub_canusb);
-                is_injection_mech_stop_m = true;
-            }
+            else if(msg->data == "r1") gamebtn.injection_frontside_vel(_pub_is_backside);
+            // {
+            //     robotcontrol_flag = true;
+            //     gamebtn.injection_spining_start(move_node,_pub_backspin,_pub_is_backside,_pub_canusb);
+            //     is_injection_mech_stop_m = false;
+            // }
+            else if(msg->data == "r2") gamebtn.injection_backside_vel(_pub_is_backside);
+            // {
+            //     robotcontrol_flag = true;
+            //     gamebtn.injection_spining_stop(_pub_canusb);
+            //     is_injection_mech_stop_m = true;
+            // }
             //手自動の切り替え
             else if(msg->data == "r3"){
                 robotcontrol_flag = true;
@@ -347,7 +347,8 @@ namespace controller_interface
                 }
             }
             //射出
-            else if(msg->data == "l1") gamebtn.injection(is_injection_convergence,is_injection_mech_stop_m,_pub_canusb); 
+            else if(msg->data == "l1") gamebtn.injection(is_injection_convergence,is_injection_calculator_convergence,_pub_canusb); 
+            // gamebtn.injection(is_injection_convergence,is_injection_mech_stop_m,_pub_canusb); 
             //高速低速モードの切り替え
             else if(msg->data == "l2") is_slow_speed = !is_slow_speed;
             //射出情報

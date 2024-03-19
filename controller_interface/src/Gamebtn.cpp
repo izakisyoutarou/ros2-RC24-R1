@@ -31,26 +31,50 @@ void Gamebtn::steer_reset(rclcpp::Publisher<socketcan_interface_msg::msg::Socket
     _pub_canusb->publish(*msg_steer_reset);
 }
 
-void Gamebtn::injection_spining_start(std::string move_node,rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr _pub_backspin_injection,rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_injection,rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
-    cout<<"spining_start"<<endl;    
-    auto msg_inject_spinning = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-    msg_inject_spinning->canid = canid.inject_spinning;
-    msg_inject_spinning->candlc = 1;
-    msg_inject_spinning->candata[0] = true;
-    _pub_canusb->publish(*msg_inject_spinning);
+// void Gamebtn::injection_spining_start(std::string move_node,rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr _pub_backspin_injection,rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_is_backside,rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
+//     cout<<"spining_start"<<endl;    
+//     auto msg_inject_spinning = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+//     msg_inject_spinning->canid = canid.inject_spinning;
+//     msg_inject_spinning->candlc = 1;
+//     msg_inject_spinning->candata[0] = true;
+//     _pub_canusb->publish(*msg_inject_spinning);
+// }
+
+// void Gamebtn::injection_spining_stop(rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
+//     cout<<"spining_stop"<<endl;
+//     auto msg_inject_spinning = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+//     msg_inject_spinning->canid = canid.inject_spinning;
+//     msg_inject_spinning->candlc = 1;
+//     msg_inject_spinning->candata[0] = false;
+//     _pub_canusb->publish(*msg_inject_spinning);
+// }
+
+// void Gamebtn::injection(bool is_injection_convergence,bool is_injection_mech_stop_m, rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
+//     if(is_injection_convergence && !is_injection_mech_stop_m){
+//         cout<<"injection"<<endl;        
+//         auto msg_inject = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+//         msg_inject->canid = canid.inject;
+//         msg_inject->candlc = 0;
+//         _pub_canusb->publish(*msg_inject);
+//     }
+// }
+
+void Gamebtn::injection_frontside_vel(rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_is_backside){
+    cout<<"frontside_vel"<<endl;    
+    auto msg_is_backside = std::make_shared<std_msgs::msg::Bool>();
+    msg_is_backside->data = false;
+    _pub_is_backside->publish(*msg_is_backside);
 }
 
-void Gamebtn::injection_spining_stop(rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
-    cout<<"spining_stop"<<endl;
-    auto msg_inject_spinning = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-    msg_inject_spinning->canid = canid.inject_spinning;
-    msg_inject_spinning->candlc = 1;
-    msg_inject_spinning->candata[0] = false;
-    _pub_canusb->publish(*msg_inject_spinning);
+void Gamebtn::injection_backside_vel(rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_is_backside){
+    cout<<"backside_vel"<<endl;    
+    auto msg_is_backside = std::make_shared<std_msgs::msg::Bool>();
+    msg_is_backside->data = true;
+    _pub_is_backside->publish(*msg_is_backside);
 }
 
-void Gamebtn::injection(bool is_injection_convergence,bool is_injection_mech_stop_m, rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
-    if(is_injection_convergence && !is_injection_mech_stop_m){
+void Gamebtn::injection(bool is_injection_convergence, bool injection_calculator_convergence, rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
+    if(is_injection_convergence && injection_calculator_convergence){
         cout<<"injection"<<endl;        
         auto msg_inject = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
         msg_inject->canid = canid.inject;
