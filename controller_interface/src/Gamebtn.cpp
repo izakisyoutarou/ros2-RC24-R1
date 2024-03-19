@@ -184,3 +184,11 @@ void Gamebtn::initial_sequense(std::string initial_pickup_state,rclcpp::Publishe
     initial_sequense_pickup->data = initial_pickup_state;
     _pub_initial_sequense->publish(*initial_sequense_pickup);
 }
+
+void Gamebtn::arm_expansion(rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
+    cout<<"arm_expansion"<<endl;
+    auto msg_arm_expansion = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+    msg_arm_expansion->canid = canid.arm_expansion;
+    msg_arm_expansion->candlc = 1;
+    _pub_canusb->publish(*msg_arm_expansion);
+}

@@ -37,7 +37,7 @@ int main(int argc, char * argv[]){
     exec.add_node(injection_param_calculator_node);
     exec.add_node(ransac_localization);
     exec.add_node(sequencer_node);
-    exec.add_node(socketcan_node);
+    //exec.add_node(socketcan_node);
     exec.add_node(spline_pid_node);
     exec.add_node(spin_turn_node);
     exec.add_node(logger_converter_node);

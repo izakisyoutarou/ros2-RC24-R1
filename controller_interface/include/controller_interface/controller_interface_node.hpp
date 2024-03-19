@@ -218,6 +218,7 @@ namespace controller_interface
             const int16_t can_paddy_convergence_id;
             const int16_t can_main_button_id;
             const int16_t can_sub_button_id;
+            const int16_t can_arm_expansion_id;
 
             const std::string initial_pickup_state;
             const std::string initial_inject_state;
@@ -249,6 +250,7 @@ namespace controller_interface
             RecvUDP joy_main;
 
             Gamebtn gamebtn;
+            bool arm_expansion_flag = true;
             
     };
 }
