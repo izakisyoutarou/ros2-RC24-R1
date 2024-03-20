@@ -58,7 +58,7 @@ private:
     
     // void command_backspin_vel();
     void command_injection_turn();
-    void command_injection_pitch(double pitch);
+    void command_injection_pitch(double linear_pitch);
 
     rclcpp::QoS _qos = rclcpp::QoS(10);
 
@@ -80,7 +80,8 @@ private:
     const std::vector<double> tf_injection2robot;
     std::vector<double> strage_backside;
     std::vector<double> strage_front;
-    std::vector<double> pitch;
+    std::vector<double> linear_pitch;
+    std::vector<double> linear_tf;
 
     //フィールド
     geometry_msgs::msg::Vector3 self_pose;

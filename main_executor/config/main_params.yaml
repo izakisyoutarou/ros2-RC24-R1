@@ -149,9 +149,10 @@ controller_interface_node:
 injection_interface_node:
   ros__parameters:
     tf_injection2robot: [0.18, 0.0] #射出機構のTF[x, y]
-    strage_backside: [8.60, 1.90, -0.55] #ストレージエリアの[x, y, 高さ]
-    strage_front: [8.60, 1.65, -0.55]
-    pitch: [17.0, 30.0]
+    strage_backside: [8.60, 1.90, -0.45] #ストレージエリアの[x, y, 高さ]
+    strage_front: [8.60, 1.65, -0.54]
+    linear_pitch: [17.0, 30.0] #H,IJ
+    linear_tf: [0.24653035658,0.177579948024] 
 
 rasnac_localization:
   ros__parameters:
