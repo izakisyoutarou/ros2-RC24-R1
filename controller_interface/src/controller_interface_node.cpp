@@ -466,24 +466,25 @@ namespace controller_interface
 
         //ジョイスティックの値
         void SmartphoneGamepad::_recv_joy_main(const unsigned char data[16]){
-            float values[4];
-            //メモリをコピー
-            memcpy(values, data, sizeof(float)*4);
-            auto msg_linear = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-            msg_linear->canid = can_linear_id;
-            msg_linear->candlc = 8;
 
-            auto msg_angular = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-            msg_angular->canid = can_angular_id;
-            msg_angular->candlc = 4;
-            
-            auto msg_gazebo = std::make_shared<geometry_msgs::msg::Twist>();
-
-            bool flag_move_autonomous = false;
-            
-            uint8_t _candata_joy[8];
             //手動モード
             if(is_move_autonomous == false){
+                float values[4];
+                //メモリをコピー
+                memcpy(values, data, sizeof(float)*4);
+                auto msg_linear = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                msg_linear->canid = can_linear_id;
+                msg_linear->candlc = 8;
+
+                auto msg_angular = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                msg_angular->canid = can_angular_id;
+                msg_angular->candlc = 4;
+                
+                auto msg_gazebo = std::make_shared<geometry_msgs::msg::Twist>();
+
+                bool flag_move_autonomous = false;
+                
+                uint8_t _candata_joy[8];
                 //低速モード
                 if(is_slow_speed == true){
                     slow_velPlanner_linear_x.vel(static_cast<double>(values[1]));//unityとロボットにおける。xとyが違うので逆にしている。
