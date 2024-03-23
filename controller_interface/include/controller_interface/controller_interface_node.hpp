@@ -40,6 +40,7 @@ namespace controller_interface
             rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_screen_pad;
             rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_coatstate_pad;
             rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_state_num_R1;
+            rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr _sub_inject_calibration;
 
             //R1_subのcontrollerから
             rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_pad;
@@ -100,6 +101,7 @@ namespace controller_interface
             //controller_mainからのcallback
             void callback_mainpad(const std_msgs::msg::String::SharedPtr msg);
             void callback_screen_mainpad(const std_msgs::msg::String::SharedPtr msg);
+            void callback_inject_calibration(const std_msgs::msg::Empty::SharedPtr msg);
 
             //controller_subからのcallback
             void callback_subpad(const std_msgs::msg::String::SharedPtr msg);
@@ -219,6 +221,7 @@ namespace controller_interface
             const int16_t can_main_button_id;
             const int16_t can_sub_button_id;
             const int16_t can_arm_expansion_id;
+            const int16_t can_inject_calibration_id;
 
             const std::string initial_pickup_state;
             const std::string initial_inject_state;

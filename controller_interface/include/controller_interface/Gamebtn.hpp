@@ -29,6 +29,7 @@ class Gamebtn{
             int16_t steer_reset;
 
             int16_t arm_expansion;
+            int16_t inject_calibration;
         };
         CANID canid;
         //mainコントローラー物理ボタン
@@ -56,6 +57,7 @@ class Gamebtn{
 
         //subコントローラー物理ボタン
         void arm_expansion(rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb);
+        void inject_calibration(rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb);
 
     private:
         int seed_right_flag = 0;

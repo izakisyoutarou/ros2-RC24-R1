@@ -45,6 +45,8 @@ launch: #起動パラメータ
       backspin_vel: 0x203
       inject_convergence: 0x204
       inject_pitch: 0x205
+      #射出キャリブレーション
+      inject_calibration: 0x206
       #苗
       seedling_collect: 0x210
       seedling_install: 0x211
@@ -149,10 +151,11 @@ controller_interface_node:
 injection_interface_node:
   ros__parameters:
     tf_injection2robot: [0.18, 0.0] #射出機構のTF[x, y]
-    strage_backside: [8.60, 1.90, -0.45] #ストレージエリアの[x, y, 高さ]
+    # strage_backside: [8.60, 2.70, -0.42] #ストレージエリアの[x, y, 高さ]
+    strage_backside: [8.60, 3.40, -0.36] #ストレージエリアの[x, y, 高さ]
     strage_front: [8.60, 1.65, -0.54]
-    linear_pitch: [17.0, 30.0] #H,IJ
-    linear_tf: [0.24653035658,0.177579948024] 
+    linear_pitch: [20.0, 30.0] #H,IJ
+    linear_tf: [0.23237,0.17757] 
 
 rasnac_localization:
   ros__parameters:
@@ -187,8 +190,8 @@ injection_param_calculator_node:
   ros__parameters:
     mass: 0.300                  # リングの重量[kg]
     gravitational_accelerastion: 9.80665 # 重力加速度[m/s^2]
-    air_resistance: 0.0076488965              # 空気抵抗係数[kg/s]
-    foundation_hight: 0.55                # 射出機構の地面からの高さ[m]
+    air_resistance:   0.024  #0.0076488965              # 空気抵抗係数[kg/s]
+    foundation_hight: 0.0                # 射出機構の地面からの高さ[m]
     velocity_lim_max: 50.0               # 最大初速度[m/s]
     injection_angle: 30.0                # 射出角度[deg]
     max_loop: 100                        # ニュートン法のループ制限回数

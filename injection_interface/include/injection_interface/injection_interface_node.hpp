@@ -90,6 +90,7 @@ private:
     bool is_correction_required = false;
     bool last_target;
     const std::string court_color_;
+    double pitch = 0.0;
 };
 
 }

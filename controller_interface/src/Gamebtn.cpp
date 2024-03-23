@@ -74,7 +74,7 @@ void Gamebtn::injection_backside_vel(rclcpp::Publisher<std_msgs::msg::Bool>::Sha
 }
 
 void Gamebtn::injection(bool is_injection_convergence, bool is_injection_calculator_convergence, rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
-    if(is_injection_convergence && is_injection_calculator_convergence){
+    if(/*is_injection_convergence &&*/ is_injection_calculator_convergence){
         cout<<"injection"<<endl;        
         auto msg_inject = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
         msg_inject->canid = canid.inject;
@@ -215,4 +215,11 @@ void Gamebtn::arm_expansion(rclcpp::Publisher<socketcan_interface_msg::msg::Sock
     msg_arm_expansion->canid = canid.arm_expansion;
     msg_arm_expansion->candlc = 1;
     _pub_canusb->publish(*msg_arm_expansion);
+}
+void Gamebtn::inject_calibration(rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
+    cout<<"inject_calibration"<<endl;
+    auto msg_inject_calibration = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+    msg_inject_calibration->canid = canid.inject_calibration;
+    msg_inject_calibration->candlc = 1;
+    _pub_canusb->publish(*msg_inject_calibration);
 }

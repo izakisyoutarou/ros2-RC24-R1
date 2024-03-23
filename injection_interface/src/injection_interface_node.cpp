@@ -193,6 +193,7 @@ namespace injection_interface{
             auto injection_command = std::make_shared<injection_interface_msg::msg::InjectionCommand>();
             injection_command->distance = diff.length();
             injection_command->height = target_height;
+            injection_command->pitch = pitch;
             _pub_injection->publish(*injection_command);
             command_injection_turn();    
 
@@ -243,6 +244,7 @@ namespace injection_interface{
         // }
 
         void InjectionInterface::command_injection_pitch(double linear_pitch){
+            pitch = linear_pitch;
             uint8_t _candata[8];
             float_to_bytes(_candata, static_cast<float>(linear_pitch));
             auto msg_injection_pitch = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();

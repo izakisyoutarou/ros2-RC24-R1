@@ -91,6 +91,8 @@ namespace controller_interface
         can_steer_reset_id(get_parameter("canid.steer_reset").as_int()),
         can_reset_id(get_parameter("canid.reset").as_int()),
         can_arm_expansion_id(get_parameter("canid.arm_expansion").as_int()),
+        can_inject_calibration_id(get_parameter("canid.inject_calibration").as_int()),
+
         
         //回収、射出機構のはじめの位置の値を取得
         initial_pickup_state(get_parameter("initial_pickup_state").as_string()),
@@ -112,6 +114,7 @@ namespace controller_interface
             gamebtn.canid.seedling_collect = can_seedling_collect_id;
             gamebtn.canid.seedling_install = can_seedling_install_id;
             gamebtn.canid.arm_expansion = can_arm_expansion_id;
+            gamebtn.canid.inject_calibration = can_inject_calibration_id;
             
             //controller_mainからsub
             _sub_main_pad = this->create_subscription<std_msgs::msg::String>(
@@ -167,6 +170,12 @@ namespace controller_interface
                 "calculator_convergenced_",
                 _qos,
                 std::bind(&SmartphoneGamepad::callback_calculator_convergence, this, std::placeholders::_1)
+            );
+
+            _sub_inject_calibration = this->create_subscription<std_msgs::msg::Empty>(
+                "Injection_Calibration",
+                _qos,
+                std::bind(&SmartphoneGamepad::callback_inject_calibration, this, std::placeholders::_1)
             );
 
             //canusbへpub
@@ -413,6 +422,10 @@ namespace controller_interface
                     }
                 }
             }
+        }
+
+        void SmartphoneGamepad::callback_inject_calibration(const std_msgs::msg::Empty::SharedPtr msg){
+            gamebtn.inject_calibration(_pub_canusb);
         }
 
         void SmartphoneGamepad::callback_subpad(const std_msgs::msg::String::SharedPtr msg){

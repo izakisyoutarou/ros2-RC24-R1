@@ -51,6 +51,7 @@ namespace injection_param_calculator{
 
         injection_command.distance = msg->distance;
         injection_command.height = msg->height;
+        injection_command.pitch = msg->pitch;
 
         isConvergenced = calculateVelocity();
         msg_isConvergenced->data = isConvergenced;
@@ -99,7 +100,7 @@ namespace injection_param_calculator{
         double g = gravitational_accelerastion;
         double k = air_resistance;
         double omega = std::sqrt(m*g/k);
-        double angle = utils::dtor(injection_angle);
+        double angle = utils::dtor(injection_command.pitch);
         double T = m/(k*omega)*std::atan(v0*std::sin(angle)/omega);
         double X = m/k*std::log(k*v0*std::cos(angle)/m*T+1);
         double y0 = 0.0;
