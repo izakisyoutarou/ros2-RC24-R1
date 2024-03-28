@@ -51,6 +51,7 @@ namespace controller_interface
         _pub_base_restart = this->create_publisher<std_msgs::msg::Bool>("restart_unity", _qos);
         _pub_base_emergency = this->create_publisher<std_msgs::msg::Bool>("emergency_unity", _qos);
         _pub_move_auto = this->create_publisher<std_msgs::msg::Bool>("move_autonomous_unity", _qos);
+        _pub_slow_speed = this->create_publisher<std_msgs::msg::Bool>("slow_speed_unity", _qos);
         _pub_base_injection = this->create_publisher<std_msgs::msg::Bool>("injection_autonomous_unity", _qos);
 
         _pub_con_spline = this->create_publisher<std_msgs::msg::Bool>("spline_convergence_unity", _qos);
@@ -63,6 +64,7 @@ namespace controller_interface
         this->is_reset = defalt_restart_flag;
         this->is_emergency = defalt_emergency_flag;
         this->is_move_autonomous = defalt_move_autonomous_flag;
+        this->is_slow_speed = defalt_slow_speed_flag;
         this->is_injection_autonomous = defalt_injection_autonomous_flag;
         this->spline_convergence = defalt_spline_convergence;
         this->injection_calculator = defalt_injection_calculator_convergence;
@@ -80,6 +82,9 @@ namespace controller_interface
 
         msg_unity_control->data = is_move_autonomous;
         _pub_move_auto->publish(*msg_unity_control);
+
+       msg_unity_control->data = is_slow_speed;
+        _pub_slow_speed->publish(*msg_unity_control); 
 
         msg_unity_control->data = is_injection_autonomous;
         _pub_base_injection->publish(*msg_unity_control);
@@ -116,6 +121,9 @@ namespace controller_interface
 
         msg_unity_control.data = msg->is_move_autonomous;
         _pub_move_auto->publish(msg_unity_control);
+
+        msg_unity_control.data = msg->is_slow_speed;
+        _pub_slow_speed->publish(msg_unity_control);
 
         msg_unity_control.data = msg->is_injection_autonomous;
         _pub_base_injection->publish(msg_unity_control);

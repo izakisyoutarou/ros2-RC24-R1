@@ -501,8 +501,8 @@ namespace controller_interface
                 //低速モード
                 if(is_slow_speed == true){
                     slow_velPlanner_linear_x.vel(static_cast<double>(values[1]));//unityとロボットにおける。xとyが違うので逆にしている。
-                    slow_velPlanner_linear_y.vel(static_cast<double>(-values[0]));
-                    velPlanner_angular_z.vel(static_cast<double>(-values[2]));
+                    slow_velPlanner_linear_y.vel(-static_cast<double>(values[0]));
+                    velPlanner_angular_z.vel(-static_cast<double>(values[2]));
                     //演算処理
                     slow_velPlanner_linear_x.cycle();
                     slow_velPlanner_linear_y.cycle();
@@ -523,10 +523,15 @@ namespace controller_interface
                     high_velPlanner_linear_x.vel(static_cast<double>(values[1]));//unityとロボットにおける。xとyが違うので逆にしている。
                     high_velPlanner_linear_y.vel(static_cast<double>(-values[0]));
                     velPlanner_angular_z.vel(static_cast<double>(-values[2]));
+                    // cout<<values[1]<<", "<<values[0]<<", "<<values[2]<<endl;
+                    RCLCPP_INFO(this->get_logger(), "x:%f, y:%f, z:%f", values[1], values[0], values[2]);
+                    
 
                     high_velPlanner_linear_x.cycle();
                     high_velPlanner_linear_y.cycle();
                     velPlanner_angular_z.cycle();
+
+                    // cout<<high_velPlanner_linear_x.vel()<<", "<<high_velPlanner_linear_y.vel()<<", "<<velPlanner_angular_z.vel()<<endl;
 
                     float_to_bytes(_candata_joy, static_cast<float>(high_velPlanner_linear_x.vel()) * high_manual_linear_max_vel);
                     float_to_bytes(_candata_joy+4, static_cast<float>(high_velPlanner_linear_y.vel()) * high_manual_linear_max_vel);
