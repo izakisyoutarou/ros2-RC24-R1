@@ -11,17 +11,14 @@
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/empty.hpp"
+#include "controller_interface/Gamebtn.hpp"
 //他のpkg
 #include "utilities/can_utils.hpp"
 #include "utilities/utils.hpp"
 #include "socket_udp.hpp"
 #include "trapezoidal_velocity_planner.hpp"
 
-#include "send_udp.hpp"
-#include "super_command.hpp"
-
 #include "visibility_control.h"
-
 
 namespace controller_interface
 {
@@ -43,25 +40,31 @@ namespace controller_interface
             rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_screen_pad;
             rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_coatstate_pad;
             rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_state_num_R1;
+            rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr _sub_inject_calibration;
+            rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr _sub_connection_state; 
 
             //R1_subのcontrollerから
-            rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_pad_sub;
+            rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_pad;
+            rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_obj_color;
 
             //mainボードから
-            rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_main_injection_possible;
-            rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_main_ballhand_possible;
-            rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_main_Seedlinghand_possible;
+            rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_inject_convergence;
+            rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_paddy_convergence;
+            rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_seedling_convergence;
+            rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_emergency_state;
 
             //spline_pidから
-            rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_spline;
-
+            rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_is_move_tracking;
 
             //injection_param_calculatorから
-            rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_injection_calculator;
+            rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_calculator_convergence;
+
             //sequencerから
             rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_injection_strange;
-
             rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_collection_ball;
+
+            //sequenserへ
+            rclcpp::Publisher<std_msgs::msg::String>::SharedPtr _pub_initial_sequense;
 
             //CanUsbへ
             rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb;
@@ -69,31 +72,18 @@ namespace controller_interface
             //各nodeと共有
             rclcpp::Publisher<controller_interface_msg::msg::BaseControl>::SharedPtr _pub_base_control;
             rclcpp::Publisher<controller_interface_msg::msg::Convergence>::SharedPtr _pub_convergence;
-            rclcpp::Publisher<controller_interface_msg::msg::Colorball>::SharedPtr _pub_color_ball;
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_injection;
+            rclcpp::Publisher<controller_interface_msg::msg::Colorball>::SharedPtr _pub_color_information;
+            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_is_backside;
+            rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr _pub_backspin;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_coat_state;
 
             //ボールと苗の回収&設置
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_seedling_collection;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_seedling_installation;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_ball_collection;
-            
 
             //gazebo_simulator用のpub
             rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr _pub_gazebo;
-
-            //main_controlerからのsubscriber
-            rclcpp::Publisher<std_msgs::msg::String>::SharedPtr _pub_initial_state;
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_base_restart;
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_base_emergency;
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_move_auto;
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_base_injection;
-            
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_spline;
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_colcurator;
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_injection;
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_seedlinghand;
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_ballhand;
 
             //sprine_pid
             rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_move_node;
@@ -103,31 +93,36 @@ namespace controller_interface
             rclcpp::TimerBase::SharedPtr _pub_timer_convergence;
             rclcpp::TimerBase::SharedPtr _socket_timer;
             rclcpp::TimerBase::SharedPtr _start_timer;
+            rclcpp::TimerBase::SharedPtr _pub_state_communication_timer;
+            rclcpp::TimerBase::SharedPtr check_controller_connection;
+            rclcpp::TimerBase::SharedPtr check_mainboard_connection;
+
+            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_inject_info;
 
             //QoS
             rclcpp::QoS _qos = rclcpp::QoS(10);
             
             //controller_mainからのcallback
-            void callback_main_pad(const std_msgs::msg::String::SharedPtr msg);
-            void callback_screen_pad(const std_msgs::msg::String::SharedPtr msg);
-            void callback_coatstate_pad(const std_msgs::msg::Bool::SharedPtr msg);
-            void callback_state_num_R1(const std_msgs::msg::String::SharedPtr msg);
+            void callback_mainpad(const std_msgs::msg::String::SharedPtr msg);
+            void callback_screen_mainpad(const std_msgs::msg::String::SharedPtr msg);
+            void callback_inject_calibration(const std_msgs::msg::Empty::SharedPtr msg);
+            void callback_connection_state(const std_msgs::msg::Empty::SharedPtr msg);
 
             //controller_subからのcallback
-            void callback_sub_pad(const std_msgs::msg::String::SharedPtr msg);
-
+            void callback_subpad(const std_msgs::msg::String::SharedPtr msg);
+            void callback_screen_subpad(const std_msgs::msg::String::SharedPtr msg);
+            
             //mainからのcallback
-            void callback_main_injection_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
-            void callback_main_Seedlinghand_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
-            void callback_main_ballhand_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
-            void callback_injection_complete(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
+            void callback_emergency_state(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
+            void callback_inject_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
+            void callback_seedling_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
+            void callback_paddy_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
 
             //splineからのcallback
-            void callback_spline(const std_msgs::msg::Bool::SharedPtr msg);
+            void callback_is_move_tracking(const std_msgs::msg::Bool::SharedPtr msg);
 
             //injection_param_calculatorからのcallback
-            void callback_injection_calculator(const std_msgs::msg::Bool::SharedPtr msg);
-            //void callback_calculator_convergenced_arm(const std_msgs::Bool::SharedPtr msg);
+            void callback_calculator_convergence(const std_msgs::msg::Bool::SharedPtr msg);
             void callback_initial_state(const std_msgs::msg::String::SharedPtr msg);
 
             //sequencerからのcallback
@@ -135,34 +130,27 @@ namespace controller_interface
             void callback_collecting_ball(const std_msgs::msg::String::SharedPtr msg);
             void _recv_callback();
 
+            //setup
+            void base_control_setup();
 
             void _recv_joy_main(const unsigned char data[16]);
 
             //メッセージ型の宣言
             controller_interface_msg::msg::BaseControl msg_base_control;
-            controller_interface_msg::msg::Colorball msg_colorball_info;
+            controller_interface_msg::msg::Colorball msg_color_information;
             std_msgs::msg::Bool msg_unity_control;
             std_msgs::msg::Bool msg_unity_sub_control;
             std_msgs::msg::String msg_unity_initial_state;
-
+            std_msgs::msg::String msg_move_node;
 
             //base_control用
-            bool is_reset = false;
+            bool is_restart = false;
             bool is_emergency = false;
-            bool is_move_autonomous = false;
+            bool is_move_autonomous = true;
             bool is_injection_autonomous = false;
             bool is_slow_speed = false;
             bool is_injection_mech_stop_m = false;
             std::string initial_state = "";
-
-            //unityにsubscrib
-            bool is_reset_unity = false;
-            bool is_emergency_unity = false;
-            bool is_move_autonomous_unity = false;
-            bool is_injection_autonomous_unity = false;
-            bool is_slow_speed_unity = false;
-            bool is_injection_mech_stop_m_unity = false;
-            std::string initial_state_unity = "";
             
             bool spline_convergence = false;
             bool injection_calculator = false;
@@ -171,6 +159,7 @@ namespace controller_interface
             bool ballhand = false;
             bool injection_flag = false;
 
+            bool is_backside = false;
 
             //canusb
             bool a;
@@ -190,7 +179,8 @@ namespace controller_interface
             bool down;
             bool right;
 
-
+            //robotcontrol_flagはtrueのときpublishできる
+            bool robotcontrol_flag = false;
 
             //convergence用
             bool is_spline_convergence;
@@ -220,16 +210,25 @@ namespace controller_interface
             const int16_t can_emergency_id;
             const int16_t can_heartbeat_id;
             const int16_t can_restart_id;
+            const int16_t can_calibrate_id;
+            const int16_t can_reset_id;
+            const int16_t can_emergency_state_id;   
             const int16_t can_linear_id;
             const int16_t can_angular_id;
-            const int16_t can_main_button_id;
-            const int16_t can_sub_button_id;
+            const int16_t can_steer_reset_id;
             const int16_t can_inject_id;
             const int16_t can_inject_spinning_id;
-
-
-            const std::string r1_pc;
-            const std::string r2_pc;
+            const int16_t can_inject_convergence_id;
+            const int16_t can_seedling_collect_id;
+            const int16_t can_seedling_install_id;
+            const int16_t can_seedling_convergence_id;
+            const int16_t can_paddy_collect_id;
+            const int16_t can_paddy_install_id;
+            const int16_t can_paddy_convergence_id;
+            const int16_t can_main_button_id;
+            const int16_t can_sub_button_id;
+            const int16_t can_arm_expansion_id;
+            const int16_t can_inject_calibration_id;
 
             const std::string initial_pickup_state;
             const std::string initial_inject_state;
@@ -255,9 +254,16 @@ namespace controller_interface
             VelPlanner velPlanner_angular_z;
             const VelPlannerLimit limit_angular;
 
-            send_udp send;
-            super_command command;
-
+            bool color_data[12] = {false, false, false, false, false, false, false, false, false, false, false, false};
+            char head_english[12] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'};
+            std::string move_node;
             RecvUDP joy_main;
+
+            Gamebtn gamebtn;
+            bool arm_expansion_flag = true;
+
+            std::chrono::system_clock::time_point get_controller_time;
+            std::chrono::system_clock::time_point get_mainboard_time;
+            
     };
 }
