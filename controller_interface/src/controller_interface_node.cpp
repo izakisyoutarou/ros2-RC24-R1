@@ -4,6 +4,7 @@
 #include <chrono>
 #include <iostream>
 #include <future>
+#include <boost/format.hpp>
 
 using namespace utils;
 
@@ -74,19 +75,25 @@ namespace controller_interface
         can_heartbeat_id(get_parameter("canid.heartbeat").as_int()),
         can_restart_id(get_parameter("canid.restart").as_int()),
         can_calibrate_id(get_parameter("canid.calibrate").as_int()),
+        can_reset_id(get_parameter("canid.reset").as_int()),
+        can_emergency_state_id(get_parameter("canid.emergency_state").as_int()),
         can_linear_id(get_parameter("canid.linear").as_int()),
         can_angular_id(get_parameter("canid.angular").as_int()),
+        can_steer_reset_id(get_parameter("canid.steer_reset").as_int()),
         can_main_button_id(get_parameter("canid.main_digital_button").as_int()),
         can_sub_button_id(get_parameter("canid.sub_digital_button").as_int()),
         can_inject_id(get_parameter("canid.inject").as_int()),
         can_inject_spinning_id(get_parameter("canid.inject_spinning").as_int()),
+        can_inject_convergence_id(get_parameter("canid.inject_convergence").as_int()),
+        can_inject_calibration_id(get_parameter("canid.inject_calibration").as_int()),
         can_seedling_collect_id(get_parameter("canid.seedling_collect").as_int()),
         can_seedling_install_id(get_parameter("canid.seedling_install").as_int()),
+        can_seedling_convergence_id(get_parameter("canid.seedling_convergence").as_int()),
         can_paddy_collect_id(get_parameter("canid.paddy_collect").as_int()),
         can_paddy_install_id(get_parameter("canid.paddy_install").as_int()),
-        can_steer_reset_id(get_parameter("canid.steer_reset").as_int()),
-        can_reset_id(get_parameter("canid.reset").as_int()),
-
+        can_paddy_convergence_id(get_parameter("canid.paddy_convergence").as_int()),
+        can_arm_expansion_id(get_parameter("canid.arm_expansion").as_int()),
+        
         //回収、射出機構のはじめの位置の値を取得
         initial_pickup_state(get_parameter("initial_pickup_state").as_string()),
         initial_inject_state(get_parameter("initial_inject_state").as_string())
@@ -96,6 +103,8 @@ namespace controller_interface
             const auto heartbeat_ms = this->get_parameter("heartbeat_ms").as_int();
             const auto convergence_ms = this->get_parameter("convergence_ms").as_int();
             const auto base_state_communication_ms = this->get_parameter("base_state_communication_ms").as_int();
+            const auto controller_ms = this->get_parameter("controller_ms").as_int();
+            const auto mainboard_ms = this->get_parameter("mainboard_ms").as_int();
 
             gamebtn.canid.calibrate = can_calibrate_id;
             gamebtn.canid.reset = can_reset_id;
@@ -106,6 +115,8 @@ namespace controller_interface
             gamebtn.canid.paddy_install = can_paddy_install_id;
             gamebtn.canid.seedling_collect = can_seedling_collect_id;
             gamebtn.canid.seedling_install = can_seedling_install_id;
+            gamebtn.canid.arm_expansion = can_arm_expansion_id;
+            gamebtn.canid.inject_calibration = can_inject_calibration_id;
             
             //controller_mainからsub
             _sub_main_pad = this->create_subscription<std_msgs::msg::String>(
@@ -119,47 +130,63 @@ namespace controller_interface
                 _qos,
                 std::bind(&SmartphoneGamepad::callback_screen_mainpad, this, std::placeholders::_1)
             );
-
+            _sub_connection_state = this->create_subscription<std_msgs::msg::Empty>(
+                "connection_state",
+                _qos,
+                std::bind(&SmartphoneGamepad::callback_connection_state, this, std::placeholders::_1)
+            );    
             //controller_subからsub
-            _sub_pad = this->create_subscription<std_msgs::msg::String>(
-                "sub_pad",
+            _sub_obj_color = this->create_subscription<std_msgs::msg::String>(
+                "obj_color",
                 _qos,
                 std::bind(&SmartphoneGamepad::callback_screen_subpad, this, std::placeholders::_1)
             );
-            _sub_gamepad = this->create_subscription<std_msgs::msg::String>(
-                "sub_gamepad",
+            _sub_pad = this->create_subscription<std_msgs::msg::String>(
+                "sub_pad",
                 _qos,
                 std::bind(&SmartphoneGamepad::callback_subpad, this, std::placeholders::_1)
             );
 
             //mainからsub
-            _sub_main_injection_possible = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
-                "can_rx_204",
+            _sub_emergency_state = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
+                "can_rx_"+ (boost::format("%x") % can_emergency_state_id).str(),
                 _qos,
-                std::bind(&SmartphoneGamepad::callback_main_injection_possible, this, std::placeholders::_1)
+                std::bind(&SmartphoneGamepad::callback_emergency_state, this, std::placeholders::_1)
             );
-            _sub_main_Seedlinghand_possible = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
-                "can_rx_212",
+            _sub_inject_convergence = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
+                "can_rx_"+ (boost::format("%x") %  can_inject_convergence_id).str(),
                 _qos,
-                std::bind(&SmartphoneGamepad::callback_main_Seedlinghand_possible, this, std::placeholders::_1)
+                std::bind(&SmartphoneGamepad::callback_inject_convergence, this, std::placeholders::_1)
             );
-            _sub_main_ballhand_possible = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
-                "can_rx_222",
+            _sub_seedling_convergence = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
+                "can_rx_"+ (boost::format("%x") %  can_seedling_convergence_id).str(),
                 _qos,
-                std::bind(&SmartphoneGamepad::callback_main_ballhand_possible, this, std::placeholders::_1)
+                std::bind(&SmartphoneGamepad::callback_seedling_convergence, this, std::placeholders::_1)
             );
+            _sub_paddy_convergence = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
+                "can_rx_"+ (boost::format("%x") %  can_paddy_convergence_id).str(),
+                _qos,
+                std::bind(&SmartphoneGamepad::callback_paddy_convergence, this, std::placeholders::_1)
+            );
+
             //spline_pidからsub
-            _sub_spline = this->create_subscription<std_msgs::msg::Bool>(
+            _sub_is_move_tracking = this->create_subscription<std_msgs::msg::Bool>(
                 "is_move_tracking",
                 _qos,
-                std::bind(&SmartphoneGamepad::callback_spline, this, std::placeholders::_1)
+                std::bind(&SmartphoneGamepad::callback_is_move_tracking, this, std::placeholders::_1)
             );
 
             //injection_param_calculatorからsub
-            _sub_injection_calculator = this->create_subscription<std_msgs::msg::Bool>(
+            _sub_calculator_convergence = this->create_subscription<std_msgs::msg::Bool>(
                 "calculator_convergenced_",
                 _qos,
-                std::bind(&SmartphoneGamepad::callback_injection_calculator, this, std::placeholders::_1)
+                std::bind(&SmartphoneGamepad::callback_calculator_convergence, this, std::placeholders::_1)
+            );
+
+            _sub_inject_calibration = this->create_subscription<std_msgs::msg::Empty>(
+                "Injection_Calibration",
+                _qos,
+                std::bind(&SmartphoneGamepad::callback_inject_calibration, this, std::placeholders::_1)
             );
 
             //canusbへpub
@@ -167,9 +194,9 @@ namespace controller_interface
             //各nodeへ共有。
             _pub_base_control = this->create_publisher<controller_interface_msg::msg::BaseControl>("base_control",_qos);
             _pub_convergence = this->create_publisher<controller_interface_msg::msg::Convergence>("convergence" , _qos);
-            _pub_color_ball = this->create_publisher<controller_interface_msg::msg::Colorball>("color_information", _qos);
-            _pub_injection = this->create_publisher<std_msgs::msg::Bool>("is_backside", _qos);
-            _pub_backspin_injection = this->create_publisher<std_msgs::msg::Empty>("backspin", _qos);
+            _pub_color_information = this->create_publisher<controller_interface_msg::msg::Colorball>("color_information", _qos);
+            _pub_is_backside = this->create_publisher<std_msgs::msg::Bool>("is_backside", _qos);
+            _pub_backspin = this->create_publisher<std_msgs::msg::Empty>("backspin", _qos);
 
             //sprine_pid
             pub_move_node = this->create_publisher<std_msgs::msg::String>("move_node", _qos);
@@ -193,10 +220,6 @@ namespace controller_interface
             msg_base_control->is_slow_speed = defalt_slow_speed_flag;
             msg_base_control->initial_state = "O";
             _pub_base_control->publish(*msg_base_control);
-
-            auto msg_injection_con = std::make_shared<std_msgs::msg::Bool>();
-            msg_injection_con->data = injection_flag;
-            _pub_injection->publish(*msg_injection_con);
 
             auto msg_emergency = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
             msg_emergency->canid = can_emergency_id;
@@ -251,6 +274,39 @@ namespace controller_interface
                 }
             );
 
+            check_controller_connection = this->create_wall_timer(
+                std::chrono::milliseconds(static_cast<int>(controller_ms * 1.5)),
+                [this] {
+                    std::chrono::system_clock::time_point now_time = std::chrono::system_clock::now();
+                    if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_controller_time).count() > 100 * 1.5){
+                        auto msg_emergency = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                        msg_emergency->canid = can_emergency_id;
+                        msg_emergency->candlc = 1;
+                        msg_emergency->candata[0] = 1;
+                        _pub_canusb->publish(*msg_emergency);
+                        RCLCPP_INFO(get_logger(),"controller_connection_lost!!");
+                    }
+                }
+            );
+
+            check_mainboard_connection = this->create_wall_timer(
+                std::chrono::milliseconds(static_cast<int>(mainboard_ms * 1.5)),
+                [this] { 
+                    if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_mainboard_time).count() > 200 * 1.5){
+                        is_emergency = true;
+                        is_restart = false; 
+                        auto msg_base_control = std::make_shared<controller_interface_msg::msg::BaseControl>();   
+                        msg_base_control->is_restart = is_restart;
+                        msg_base_control->is_emergency = is_emergency;
+                        msg_base_control->is_move_autonomous = is_move_autonomous;
+                        msg_base_control->is_slow_speed = is_slow_speed;
+                        msg_base_control->initial_state = initial_state;
+                        _pub_base_control->publish(*msg_base_control);
+                        RCLCPP_INFO(get_logger(),"mainboard_connection_lost!!");
+                    }
+                }
+            );
+
             //計画機にリミットを設定する
             high_velPlanner_linear_x.limit(high_limit_linear);
             high_velPlanner_linear_y.limit(high_limit_linear);
@@ -285,8 +341,7 @@ namespace controller_interface
             if(msg->data == "g"){
                 cout<<"emergency"<<endl;
                 robotcontrol_flag = true;
-                is_emergency = true;
-                is_restart = false;
+                msg_emergency->candata[0] = true;
             }
             else if(msg->data == "s"){
                 cout<<"restart"<<endl;
@@ -305,14 +360,32 @@ namespace controller_interface
                 is_seedlinghand_convergence = defalt_seedlinghand_convergence;
                 is_ballhand_convergence = defalt_ballhand_convergence;                
             }
-            //射出
-            else if(msg->data == "r1") gamebtn.injection(is_injection_convergence,is_injection_mech_stop_m,_pub_canusb); 
-            //回転停止
-            else if(msg->data == "r2"){
-                robotcontrol_flag = true;
-                gamebtn.injection_spining_stop(_pub_canusb);
-                is_injection_mech_stop_m = true;
-            }
+            //苗回収
+            else if(msg->data == "a") gamebtn.seedling_collect_right(is_seedlinghand_convergence,_pub_canusb);          
+            else if(msg->data == "b") gamebtn.seedling_collect_left(is_seedlinghand_convergence,_pub_canusb);               
+            //苗設置
+            else if(msg->data == "x") gamebtn.seedling_install_right(is_seedlinghand_convergence,_pub_canusb);   
+            else if(msg->data == "y") gamebtn.seedling_install_left(is_seedlinghand_convergence,_pub_canusb);   
+            //籾
+            else if(msg->data == "up") gamebtn.paddy_control(is_ballhand_convergence,_pub_canusb);           
+            //キャリブレーション
+            else if(msg->data == "down") gamebtn.calibrate(_pub_canusb);
+            //ステアリセット                
+            else if(msg->data == "right") gamebtn.steer_reset(_pub_canusb);
+            //基板リセット
+            else if(msg->data == "left") gamebtn.board_reset(_pub_canusb);
+            else if(msg->data == "r1") gamebtn.injection_frontside_vel(_pub_is_backside);
+            // {
+            //     robotcontrol_flag = true;
+            //     gamebtn.injection_spining_start(move_node,_pub_backspin,_pub_is_backside,_pub_canusb);
+            //     is_injection_mech_stop_m = false;
+            // }
+            else if(msg->data == "r2") gamebtn.injection_backside_vel(_pub_is_backside);
+            // {
+            //     robotcontrol_flag = true;
+            //     gamebtn.injection_spining_stop(_pub_canusb);
+            //     is_injection_mech_stop_m = true;
+            // }
             //手自動の切り替え
             else if(msg->data == "r3"){
                 robotcontrol_flag = true;
@@ -325,28 +398,14 @@ namespace controller_interface
                     is_injection_autonomous = false;
                 }
             }
-            //射出パラメータ&回転開始
-            else if(msg->data == "l1") gamebtn.injection_spining_start(move_node,_pub_backspin_injection,_pub_injection,_pub_canusb);
+            //射出
+            else if(msg->data == "l1") gamebtn.injection(is_injection_convergence,is_injection_calculator_convergence,_pub_canusb); 
+            // gamebtn.injection(is_injection_convergence,is_injection_mech_stop_m,_pub_canusb); 
             //高速低速モードの切り替え
             else if(msg->data == "l2") is_slow_speed = !is_slow_speed;
             //射出情報
             else if(msg->data == "l3") gamebtn.initial_sequense(initial_pickup_state,_pub_initial_sequense);
-            //ステアリセット                
-            else if(msg->data == "up") gamebtn.steer_reset(_pub_canusb);
-            //キャリブレーション
-            else if(msg->data == "down") gamebtn.calibrate(_pub_canusb);
-            //main基盤リセット
-            else if(msg->data == "right") gamebtn.main_reset(_pub_canusb);
-            //io基盤リセット
-            else if(msg->data == "left") gamebtn.io_reset(_pub_canusb);
-            //右ハンド籾の装填
-            else if(msg->data == "a") gamebtn.paddy_install_right(is_ballhand_convergence,_pub_canusb);
-            //左ハンド籾の装填
-            else if(msg->data == "b") gamebtn.paddy_install_left(is_ballhand_convergence,_pub_canusb);
-            //右ハンド籾の回収
-            else if(msg->data == "x") gamebtn.paddy_collect_right(is_ballhand_convergence,_pub_canusb);
-            //左ハンド籾の回収
-            else if(msg->data == "y") gamebtn.paddy_collect_left(is_ballhand_convergence,_pub_canusb);
+
 
             //base_controlへ代入
             msg_base_control.is_restart = is_restart;
@@ -386,16 +445,20 @@ namespace controller_interface
         }
 
         void SmartphoneGamepad::callback_screen_subpad(const std_msgs::msg::String::SharedPtr msg){
-            if(msg->data == "Btn_info_msg") _pub_color_ball->publish(msg_colorball_info);
+            if(msg->data == "Btn_info_msg") _pub_color_information->publish(msg_color_information);
             else {
                 for(int i = 0; i < 12; i++){
                     if(msg->data.at(0) == head_english[i]){
                         if(msg->data.find("red") != -1) {
-                            msg_colorball_info.color_info[i] = true;
+                            msg_color_information.color_info[i] = true;
+                            color_data[i] = true;
+                        }
+                        else if(msg->data.find("blue") != -1) {
+                            msg_color_information.color_info[i] = true;
                             color_data[i] = true;
                         }
                         else if(msg->data.find("purple") != -1) {
-                            msg_colorball_info.color_info[i] = false;
+                            msg_color_information.color_info[i] = false;
                             color_data[i] = false;
                         }
                         break;
@@ -404,13 +467,20 @@ namespace controller_interface
             }
         }
 
+        void SmartphoneGamepad::callback_inject_calibration(const std_msgs::msg::Empty::SharedPtr msg){
+            gamebtn.inject_calibration(_pub_canusb);
+        }
+
         void SmartphoneGamepad::callback_subpad(const std_msgs::msg::String::SharedPtr msg){
-            if(msg->data == "a") gamebtn.seedling_collect_0(is_seedlinghand_convergence,_pub_canusb);
-            else if(msg->data == "b") gamebtn.seedling_collect_1(is_seedlinghand_convergence,_pub_canusb);
-            else if(msg->data == "up") gamebtn.seedling_install_0(is_seedlinghand_convergence,_pub_canusb);
-            else if(msg->data == "right") gamebtn.seedling_install_1(is_seedlinghand_convergence,_pub_canusb);
-            else if(msg->data == "down") gamebtn.seedling_install_2(is_seedlinghand_convergence,_pub_canusb);
-            else if(msg->data == "left") gamebtn.seedling_install_3(can_seedling_install_id,_pub_canusb);
+            // if(msg->data == "a") gamebtn.seedling_collect_0(is_seedlinghand_convergence,_pub_canusb);
+            // else if(msg->data == "b") gamebtn.seedling_collect_1(is_seedlinghand_convergence,_pub_canusb);
+            // else if(msg->data == "up") gamebtn.seedling_install_0(is_seedlinghand_convergence,_pub_canusb);
+            // else if(msg->data == "right") gamebtn.seedling_install_1(is_seedlinghand_convergence,_pub_canusb);
+            if(msg->data == "down" && arm_expansion_flag){
+                gamebtn.arm_expansion(_pub_canusb);
+                arm_expansion_flag = false;
+            }
+            // else if(msg->data == "left") gamebtn.seedling_install_3(can_seedling_install_id,_pub_canusb);
         }
 
         //スタート地点情報をsubscribe
@@ -418,26 +488,45 @@ namespace controller_interface
             initial_state = msg->data[0];
         }
 
+
+        void SmartphoneGamepad::callback_connection_state(const std_msgs::msg::Empty::SharedPtr msg){
+            get_controller_time = std::chrono::system_clock::now();
+        }
+
+        void SmartphoneGamepad::callback_emergency_state(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg){
+            get_mainboard_time = std::chrono::system_clock::now();
+            if(is_emergency != static_cast<bool>(msg->candata[0])) {
+                is_emergency = static_cast<bool>(msg->candata[0]);
+                is_restart = false; 
+                msg_base_control.is_restart = is_restart;
+                msg_base_control.is_emergency = is_emergency;
+                msg_base_control.is_move_autonomous = is_move_autonomous;
+                msg_base_control.is_slow_speed = is_slow_speed;
+                msg_base_control.initial_state = initial_state;
+                _pub_base_control->publish(msg_base_control);
+            }
+        }
+
         //射出情報をsubsclib
-        void SmartphoneGamepad::callback_main_injection_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg){
+        void SmartphoneGamepad::callback_inject_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg){
             is_injection_convergence = static_cast<bool>(msg->candata[0]);
         }
 
-        void SmartphoneGamepad::callback_main_Seedlinghand_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg){
+        void SmartphoneGamepad::callback_seedling_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg){
             is_seedlinghand_convergence = static_cast<bool>(msg->candata[1]);
         }
 
-        void SmartphoneGamepad::callback_main_ballhand_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg){
+        void SmartphoneGamepad::callback_paddy_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg){
             is_ballhand_convergence = static_cast<bool>(msg->candata[2]);
         }
 
         //splineをsubsclib
-        void SmartphoneGamepad::callback_spline(const std_msgs::msg::Bool::SharedPtr msg){
+        void SmartphoneGamepad::callback_is_move_tracking(const std_msgs::msg::Bool::SharedPtr msg){
             is_spline_convergence = msg->data;           
         }
 
         //injection_param_calculatorをsubscribe
-        void SmartphoneGamepad::callback_injection_calculator(const std_msgs::msg::Bool::SharedPtr msg){
+        void SmartphoneGamepad::callback_calculator_convergence(const std_msgs::msg::Bool::SharedPtr msg){
              //injection_calculatorから上モノ指令値計算収束のsub。上物の指令値の収束情報。
             is_injection_calculator_convergence = msg->data;
         }
@@ -452,24 +541,25 @@ namespace controller_interface
 
         //ジョイスティックの値
         void SmartphoneGamepad::_recv_joy_main(const unsigned char data[16]){
-            float values[4];
-            //メモリをコピー
-            memcpy(values, data, sizeof(float)*4);
-            auto msg_linear = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-            msg_linear->canid = can_linear_id;
-            msg_linear->candlc = 8;
 
-            auto msg_angular = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-            msg_angular->canid = can_angular_id;
-            msg_angular->candlc = 4;
-            
-            auto msg_gazebo = std::make_shared<geometry_msgs::msg::Twist>();
-
-            bool flag_move_autonomous = false;
-            
-            uint8_t _candata_joy[8];
             //手動モード
             if(is_move_autonomous == false){
+                float values[4];
+                //メモリをコピー
+                memcpy(values, data, sizeof(float)*4);
+                auto msg_linear = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                msg_linear->canid = can_linear_id;
+                msg_linear->candlc = 8;
+
+                auto msg_angular = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                msg_angular->canid = can_angular_id;
+                msg_angular->candlc = 4;
+                
+                auto msg_gazebo = std::make_shared<geometry_msgs::msg::Twist>();
+
+                bool flag_move_autonomous = false;
+                
+                uint8_t _candata_joy[8];
                 //低速モード
                 if(is_slow_speed == true){
                     slow_velPlanner_linear_x.vel(static_cast<double>(values[1]));//unityとロボットにおける。xとyが違うので逆にしている。
@@ -495,10 +585,15 @@ namespace controller_interface
                     high_velPlanner_linear_x.vel(static_cast<double>(values[1]));//unityとロボットにおける。xとyが違うので逆にしている。
                     high_velPlanner_linear_y.vel(static_cast<double>(-values[0]));
                     velPlanner_angular_z.vel(static_cast<double>(-values[2]));
+                    // cout<<values[1]<<", "<<values[0]<<", "<<values[2]<<endl;
+                    RCLCPP_INFO(this->get_logger(), "x:%f, y:%f, z:%f", values[1], values[0], values[2]);
+                    
 
                     high_velPlanner_linear_x.cycle();
                     high_velPlanner_linear_y.cycle();
                     velPlanner_angular_z.cycle();
+
+                    // cout<<high_velPlanner_linear_x.vel()<<", "<<high_velPlanner_linear_y.vel()<<", "<<velPlanner_angular_z.vel()<<endl;
 
                     float_to_bytes(_candata_joy, static_cast<float>(high_velPlanner_linear_x.vel()) * high_manual_linear_max_vel);
                     float_to_bytes(_candata_joy+4, static_cast<float>(high_velPlanner_linear_y.vel()) * high_manual_linear_max_vel);

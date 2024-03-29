@@ -33,13 +33,14 @@ namespace controller_interface
             CONTROLLER_INTERFACE_PUBLIC
             explicit Unity(const std::string& name_space, const rclcpp::NodeOptions& options = rclcpp::NodeOptions());
         private:
-
+            //base_control
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_base_restart;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_base_emergency;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_move_auto;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_base_injection;
+            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_slow_speed;
             rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr _pub_base_state_communication;
-            
+            //convergence
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_spline;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_colcurator;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_con_injection;

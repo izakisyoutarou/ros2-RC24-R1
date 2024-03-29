@@ -37,16 +37,16 @@ private:
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_is_move_tracking;
     rclcpp::Subscription<geometry_msgs::msg::Vector3>::SharedPtr _sub_self_pose;
     rclcpp::Subscription<geometry_msgs::msg::Vector3>::SharedPtr _sub_move_target_pose;
-    rclcpp::Subscription<std_msgs::msg::Int16MultiArray>::SharedPtr _sub_backspin_vel;
-    rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr _sub_backspin;
+    // rclcpp::Subscription<std_msgs::msg::Int16MultiArray>::SharedPtr _sub_backspin_vel;
+    // rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr _sub_backspin;
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_move_node;
 
     void _callback_is_backside(const std_msgs::msg::Bool::SharedPtr msg);
     void _callback_is_move_tracking(const std_msgs::msg::Bool::SharedPtr msg);
     void _callback_self_pose(const geometry_msgs::msg::Vector3::SharedPtr msg);
     void _callback_move_target_pose(const geometry_msgs::msg::Vector3::SharedPtr msg);
-    void _callback_backspin_vel(const std_msgs::msg::Int16MultiArray::SharedPtr msg);
-    void _callback_backspin(const std_msgs::msg::Empty::SharedPtr msg);
+    // void _callback_backspin_vel(const std_msgs::msg::Int16MultiArray::SharedPtr msg);
+    // void _callback_backspin(const std_msgs::msg::Empty::SharedPtr msg);
     void _callback_move_node(const std_msgs::msg::String::SharedPtr msg);
     
     rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb;
@@ -54,23 +54,25 @@ private:
     rclcpp::Publisher<path_msg::msg::Turning>::SharedPtr _pub_spin_position;
 
     void set_calculate_vel(bool is_backside);
-    void set_backspin_vel(std::string node);
+    // void set_backspin_vel(std::string node);
     
-    void command_backspin_vel();
+    // void command_backspin_vel();
     void command_injection_turn();
+    void command_injection_pitch(double linear_pitch);
 
     rclcpp::QoS _qos = rclcpp::QoS(10);
 
     const int16_t can_backspin_vel_id;
+    const int16_t can_inject_pitch_id;
 
-    int16_t vel[3];
+    // int16_t vel[3];
 
-    struct Vel{
-        std::string name;
-        short vel[3];
-    };
+    // struct Vel{
+    //     std::string name;
+    //     short vel[3];
+    // };
 
-    std::vector<Vel> vel_list;
+    // std::vector<Vel> vel_list;
 
     TwoVector target_pos;
 
@@ -78,6 +80,8 @@ private:
     const std::vector<double> tf_injection2robot;
     std::vector<double> strage_backside;
     std::vector<double> strage_front;
+    std::vector<double> linear_pitch;
+    std::vector<double> linear_tf;
 
     //フィールド
     geometry_msgs::msg::Vector3 self_pose;
@@ -86,6 +90,7 @@ private:
     bool is_correction_required = false;
     bool last_target;
     const std::string court_color_;
+    double pitch = 0.0;
 };
 
 }
