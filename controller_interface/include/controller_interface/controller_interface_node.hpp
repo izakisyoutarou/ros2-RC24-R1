@@ -41,6 +41,7 @@ namespace controller_interface
             rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_coatstate_pad;
             rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_state_num_R1;
             rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr _sub_inject_calibration;
+            rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr _sub_connection_state; 
 
             //R1_subのcontrollerから
             rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_pad;
@@ -50,6 +51,7 @@ namespace controller_interface
             rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_inject_convergence;
             rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_paddy_convergence;
             rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_seedling_convergence;
+            rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_emergency_state;
 
             //spline_pidから
             rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_is_move_tracking;
@@ -92,6 +94,8 @@ namespace controller_interface
             rclcpp::TimerBase::SharedPtr _socket_timer;
             rclcpp::TimerBase::SharedPtr _start_timer;
             rclcpp::TimerBase::SharedPtr _pub_state_communication_timer;
+            rclcpp::TimerBase::SharedPtr check_controller_connection;
+            rclcpp::TimerBase::SharedPtr check_mainboard_connection;
 
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_inject_info;
 
@@ -102,12 +106,14 @@ namespace controller_interface
             void callback_mainpad(const std_msgs::msg::String::SharedPtr msg);
             void callback_screen_mainpad(const std_msgs::msg::String::SharedPtr msg);
             void callback_inject_calibration(const std_msgs::msg::Empty::SharedPtr msg);
+            void callback_connection_state(const std_msgs::msg::Empty::SharedPtr msg);
 
             //controller_subからのcallback
             void callback_subpad(const std_msgs::msg::String::SharedPtr msg);
             void callback_screen_subpad(const std_msgs::msg::String::SharedPtr msg);
             
             //mainからのcallback
+            void callback_emergency_state(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
             void callback_inject_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
             void callback_seedling_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
             void callback_paddy_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
@@ -206,6 +212,7 @@ namespace controller_interface
             const int16_t can_restart_id;
             const int16_t can_calibrate_id;
             const int16_t can_reset_id;
+            const int16_t can_emergency_state_id;   
             const int16_t can_linear_id;
             const int16_t can_angular_id;
             const int16_t can_steer_reset_id;
@@ -254,6 +261,9 @@ namespace controller_interface
 
             Gamebtn gamebtn;
             bool arm_expansion_flag = true;
+
+            std::chrono::system_clock::time_point get_controller_time;
+            std::chrono::system_clock::time_point get_mainboard_time;
             
     };
 }

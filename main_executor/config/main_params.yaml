@@ -29,6 +29,7 @@ launch: #起動パラメータ
       restart: 0x002
       calibrate: 0x003
       reset: 0x004
+      emergency_state: 0x005
       #100番台(足回り)
       linear: 0x100
       angular: 0x101
@@ -86,6 +87,54 @@ launch: #起動パラメータ
     defalt_seedlinghand_convergence: false
     defalt_ballhand_convergence: false
 
+controller_interface_node:
+  ros__parameters:
+    # 手動の高速　並進　速度[m/s],加速度[m/s^2],加減速度[-m/s^2]
+    high_linear_max_vel: 4.0
+    high_linear_max_acc: 4.0
+    high_linear_max_dec: 5.0
+    # 手動の低速　並進　速度[m/s],加速度[m/s^2],加減速度[-m/s^2]
+    slow_linear_max_vel: 3.0
+    slow_linear_max_acc: 3.0
+    slow_linear_max_dec: 0.5
+    # 手動の回転  速度[deg/s],加速度[deg/s^2],加減速度[-deg/s^2]
+    angular_max_vel: 90.0
+    angular_max_acc: 180.0
+    angular_max_dec: 180.0
+    
+    heartbeat_ms: 100 #ハートビート周期[ms]
+    start_ms: 3000
+    interval_ms: 6
+    controller_ms: 100
+    mainboard_ms: 200
+    
+    defalt_color_information_flag: false
+
+    initial_pickup_state: "A"
+    initial_inject_state: "B"
+
+rasnac_localization:
+  ros__parameters:
+    plot_mode: true            #実機のときはfalse
+    laser_weight: 1.0        #lidarの重み->値を大きくするとlidarが優先される
+    odom_weight_liner: 2.0e-3     #値が大きくなると共分散が小さくなる
+    odom_weight_angler: 4.0e-4
+    voxel_size: 0.04
+    trial_num: 50
+    inlier_dist_threshold: 0.015
+    inlier_length_threshold: 0.5 #インライアのしきい値
+    second_ransac: false         #2回ransacするか
+    #以下カルマンフィルタのノイズ->値を小さくするとセンサーが優先される
+    cov_sys_px: 0.5    # システム雑音の位置x[m]の標準偏差
+    cov_sys_py: 0.5    # システム雑音の位置x[m]の標準偏差
+    cov_sys_yaw: 0.1   # システム雑音の角度yaw[deg]の標準偏差
+    cov_obs_px1: 0.5   # 観測雑音の位置x[m]の標準偏差
+    cov_obs_py1: 0.5   # 観測雑音の位置y[m]の標準偏差
+    cov_obs_px2: 0.2   # 観測雑音の位置x[m]の標準偏差
+    cov_obs_py2: 0.2   # 観測雑音の位置x[m]の標準偏差
+    cov_px: 0.3        # x誤差共分散行列
+    cov_py: 0.3        # y誤差共分散行列
+
 spline_pid_node:
   ros__parameters:
     interval_ms: 20     #サイクル周期[ms]
@@ -123,30 +172,6 @@ spline_trajectories_node:
   ros__parameters:
     resolution: 0.01  #起動点の分解能[m]
 
-controller_interface_node:
-  ros__parameters:
-    # 手動の高速　並進　速度[m/s],加速度[m/s^2],加減速度[-m/s^2]
-    high_linear_max_vel: 4.0
-    high_linear_max_acc: 4.0
-    high_linear_max_dec: 5.0
-    # 手動の低速　並進　速度[m/s],加速度[m/s^2],加減速度[-m/s^2]
-    slow_linear_max_vel: 3.0
-    slow_linear_max_acc: 3.0
-    slow_linear_max_dec: 0.5
-    # 手動の回転  速度[deg/s],加速度[deg/s^2],加減速度[-deg/s^2]
-    angular_max_vel: 90.0
-    angular_max_acc: 180.0
-    angular_max_dec: 180.0
-    
-    heartbeat_ms: 100 #ハートビート周期[ms]
-    start_ms: 3000
-    interval_ms: 6
-    
-    defalt_color_information_flag: false
-
-    initial_pickup_state: "A"
-    initial_inject_state: "B"
-
 injection_interface_node:
   ros__parameters:
     tf_injection2robot: [0.18, 0.0] #射出機構のTF[x, y]
@@ -155,35 +180,6 @@ injection_interface_node:
     strage_front: [8.60, 1.65, -0.54]
     linear_pitch: [20.0, 30.0] #H,IJ
     linear_tf: [0.23237,0.17757] 
-
-rasnac_localization:
-  ros__parameters:
-    plot_mode: true            #実機のときはfalse
-    laser_weight: 1.0        #lidarの重み->値を大きくするとlidarが優先される
-    odom_weight_liner: 2.0e-3     #値が大きくなると共分散が小さくなる
-    odom_weight_angler: 4.0e-4
-    voxel_size: 0.04
-    trial_num: 50
-    inlier_dist_threshold: 0.015
-    inlier_length_threshold: 0.5 #インライアのしきい値
-    second_ransac: false         #2回ransacするか
-    #以下カルマンフィルタのノイズ->値を小さくするとセンサーが優先される
-    cov_sys_px: 0.5    # システム雑音の位置x[m]の標準偏差
-    cov_sys_py: 0.5    # システム雑音の位置x[m]の標準偏差
-    cov_sys_yaw: 0.1   # システム雑音の角度yaw[deg]の標準偏差
-    cov_obs_px1: 0.5   # 観測雑音の位置x[m]の標準偏差
-    cov_obs_py1: 0.5   # 観測雑音の位置y[m]の標準偏差
-    cov_obs_px2: 0.2   # 観測雑音の位置x[m]の標準偏差
-    cov_obs_py2: 0.2   # 観測雑音の位置x[m]の標準偏差
-    cov_px: 0.3        # x誤差共分散行列
-    cov_py: 0.3        # y誤差共分散行列
-
-sequencer_node:
-  ros__parameters:
-    select_algorithm: 0
-    seedling_order: ["S0", "S1", "S2", "S3"]
-    planting_order: ["P0", "P1", "P2", "P3", "P4", "P5", "P6", "P7"]
-    harvesting_order: ["H0", "H1", "H2", "H3", "H4", "H5", "H6", "H7", "H8", "H9", "H10", "H11"]
 
 injection_param_calculator_node:
   ros__parameters:
@@ -194,3 +190,10 @@ injection_param_calculator_node:
     velocity_lim_max: 50.0               # 最大初速度[m/s]
     injection_angle: 30.0                # 射出角度[deg]
     max_loop: 100                        # ニュートン法のループ制限回数
+
+sequencer_node:
+  ros__parameters:
+    select_algorithm: 0
+    seedling_order: ["S0", "S1", "S2", "S3"]
+    planting_order: ["P0", "P1", "P2", "P3", "P4", "P5", "P6", "P7"]
+    harvesting_order: ["H0", "H1", "H2", "H3", "H4", "H5", "H6", "H7", "H8", "H9", "H10", "H11"]
