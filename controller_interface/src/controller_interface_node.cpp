@@ -563,8 +563,8 @@ namespace controller_interface
                 //低速モード
                 if(is_slow_speed == true){
                     slow_velPlanner_linear_x.vel(static_cast<double>(values[1]));//unityとロボットにおける。xとyが違うので逆にしている。
-                    slow_velPlanner_linear_y.vel(-static_cast<double>(values[0]));
-                    velPlanner_angular_z.vel(-static_cast<double>(values[2]));
+                    slow_velPlanner_linear_y.vel(static_cast<double>(-values[0]));
+                    velPlanner_angular_z.vel(static_cast<double>(-values[2]));
                     //演算処理
                     slow_velPlanner_linear_x.cycle();
                     slow_velPlanner_linear_y.cycle();
