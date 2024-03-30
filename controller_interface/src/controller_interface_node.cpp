@@ -275,10 +275,10 @@ namespace controller_interface
             );
 
             check_controller_connection = this->create_wall_timer(
-                std::chrono::milliseconds(static_cast<int>(controller_ms * 1.5)),
+                std::chrono::milliseconds(static_cast<int>(controller_ms)),
                 [this] {
                     std::chrono::system_clock::time_point now_time = std::chrono::system_clock::now();
-                    if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_controller_time).count() > 100 * 1.5){
+                    if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_controller_time).count() > 100 * 3){
                         auto msg_emergency = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                         msg_emergency->canid = can_emergency_id;
                         msg_emergency->candlc = 1;
@@ -290,9 +290,9 @@ namespace controller_interface
             );
 
             check_mainboard_connection = this->create_wall_timer(
-                std::chrono::milliseconds(static_cast<int>(mainboard_ms * 1.5)),
+                std::chrono::milliseconds(static_cast<int>(mainboard_ms)),
                 [this] { 
-                    if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_mainboard_time).count() > 200 * 1.5){
+                    if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_mainboard_time).count() > 200 * 3){
                         is_emergency = true;
                         is_restart = false; 
                         auto msg_base_control = std::make_shared<controller_interface_msg::msg::BaseControl>();   
@@ -415,8 +415,6 @@ namespace controller_interface
             msg_base_control.is_slow_speed = is_slow_speed;
             msg_base_control.initial_state = initial_state;
             msg_base_control.is_injection_mech_stop_m = is_injection_mech_stop_m;
-
-            msg_emergency->candata[0] = is_emergency;
 
             if(msg->data=="g") _pub_canusb->publish(*msg_emergency);
 
