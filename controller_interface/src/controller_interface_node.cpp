@@ -278,7 +278,7 @@ namespace controller_interface
                 std::chrono::milliseconds(static_cast<int>(controller_ms)),
                 [this] {
                     std::chrono::system_clock::time_point now_time = std::chrono::system_clock::now();
-                    if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_controller_time).count() > 100 * 3){
+                    if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_controller_time).count() > 100 * 10){
                         auto msg_emergency = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                         msg_emergency->canid = can_emergency_id;
                         msg_emergency->candlc = 1;
@@ -292,7 +292,7 @@ namespace controller_interface
             check_mainboard_connection = this->create_wall_timer(
                 std::chrono::milliseconds(static_cast<int>(mainboard_ms)),
                 [this] { 
-                    if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_mainboard_time).count() > 200 * 3){
+                    if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_mainboard_time).count() > 200 * 10){
                         is_emergency = true;
                         is_restart = false; 
                         auto msg_base_control = std::make_shared<controller_interface_msg::msg::BaseControl>();   
@@ -560,6 +560,7 @@ namespace controller_interface
                 uint8_t _candata_joy[8];
                 //低速モード
                 if(is_slow_speed == true){
+                    // RCLCPP_INFO(this->get_logger(),"slow_mode");
                     slow_velPlanner_linear_x.vel(static_cast<double>(values[1]));//unityとロボットにおける。xとyが違うので逆にしている。
                     slow_velPlanner_linear_y.vel(static_cast<double>(-values[0]));
                     velPlanner_angular_z.vel(static_cast<double>(-values[2]));
@@ -583,8 +584,9 @@ namespace controller_interface
                     high_velPlanner_linear_x.vel(static_cast<double>(values[1]));//unityとロボットにおける。xとyが違うので逆にしている。
                     high_velPlanner_linear_y.vel(static_cast<double>(-values[0]));
                     velPlanner_angular_z.vel(static_cast<double>(-values[2]));
+                    // RCLCPP_INFO(this->get_logger(),"high_mode");
                     // cout<<values[1]<<", "<<values[0]<<", "<<values[2]<<endl;
-                    RCLCPP_INFO(this->get_logger(), "x:%f, y:%f, z:%f", values[1], values[0], values[2]);
+                    // RCLCPP_INFO(this->get_logger(), "x:%f, y:%f, z:%f", values[1], values[0], values[2]);
                     
 
                     high_velPlanner_linear_x.cycle();
