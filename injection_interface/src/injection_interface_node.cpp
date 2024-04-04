@@ -99,6 +99,18 @@ namespace injection_interface{
             //     }
             //     vel_list.push_back(vel);
             // }
+
+            std::ifstream ifs(ament_index_cpp::get_package_share_directory("main_executor") + "/config/injection_interface/injection_gain.cfg");
+            std::string str;
+            while(getline(ifs, str)){
+                std::string token;
+                std::istringstream stream(str);
+                int count = 0;
+                while(getline(stream, token, ' ')){
+                    if(count==1) injection_gain.push_back(std::stod(token));
+                    count++;
+                }
+            }
         }
 
         void InjectionInterface::_callback_is_backside(const std_msgs::msg::Bool::SharedPtr msg){
@@ -140,8 +152,14 @@ namespace injection_interface{
         void InjectionInterface::_callback_move_node(const std_msgs::msg::String::SharedPtr msg){
             // if(msg->data[0] == 'H') set_backspin_vel(msg->data);
             // else if(msg->data[0] == 'I') set_calculate_vel(false);
-            if(msg->data[0] == 'H') command_injection_pitch(linear_pitch[0]);
-            else if(msg->data[0] == 'I') command_injection_pitch(linear_pitch[1]);
+            if(msg->data[0] == 'H') {
+                command_injection_pitch(linear_pitch[0]);
+                injection_num = std::stoi(msg->data.substr(1,1));               
+            }
+            else if(msg->data[0] == 'I') {
+                command_injection_pitch(linear_pitch[1]);
+                injection_num = std::stoi(msg->data.substr(2,1)) + 12;
+            }
         }
 
         void InjectionInterface::set_calculate_vel(bool is_backside){
@@ -194,6 +212,7 @@ namespace injection_interface{
             injection_command->distance = diff.length();
             injection_command->height = target_height;
             injection_command->pitch = pitch;
+            injection_command->gain = injection_gain[injection_num];
             _pub_injection->publish(*injection_command);
             command_injection_turn();    
 

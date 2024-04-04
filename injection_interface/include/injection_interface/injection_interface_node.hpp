@@ -82,6 +82,7 @@ private:
     std::vector<double> strage_front;
     std::vector<double> linear_pitch;
     std::vector<double> linear_tf;
+    std::vector<double> injection_gain;
 
     //フィールド
     geometry_msgs::msg::Vector3 self_pose;
@@ -91,6 +92,7 @@ private:
     bool last_target;
     const std::string court_color_;
     double pitch = 0.0;
+    int injection_num  = 0;
 };
 
 }
