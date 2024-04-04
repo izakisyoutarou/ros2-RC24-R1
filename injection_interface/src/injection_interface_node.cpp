@@ -117,7 +117,6 @@ namespace injection_interface{
             last_target = is_backside;
 
             if(is_backside){
-                cout<<"backside_vel"<<endl;
                 switch (injection_num){
                 case 0:
                 case 1:
@@ -127,11 +126,13 @@ namespace injection_interface{
                 case 7:
                 case 8:
                 case 9:
+                    RCLCPP_INFO(this->get_logger(), "backside_vel_0");
                     target_pos.x = strage_backside_0[0];
                     target_pos.y = strage_backside_0[1];
                     target_height = strage_backside_0[2];            
                     break;
                 default:
+                    RCLCPP_INFO(this->get_logger(), "backside_vel_1");
                     target_pos.x = strage_backside_1[0];
                     target_pos.y = strage_backside_1[1];
                     target_height = strage_backside_1[2];
@@ -143,7 +144,7 @@ namespace injection_interface{
                 target_input = true;
             }
             else {
-                cout<<"frontside_vel"<<endl;
+                RCLCPP_INFO(this->get_logger(), "frontside_vel");
                 target_pos.x = strage_front[0];
                 target_pos.y = strage_front[1];
                 target_height = strage_front[2];
