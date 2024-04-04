@@ -175,9 +175,10 @@ spline_trajectories_node:
 injection_interface_node:
   ros__parameters:
     tf_injection2robot: [0.18, 0.0] #射出機構のTF[x, y]
-    # strage_backside: [8.60, 2.70, -0.42] #ストレージエリアの[x, y, 高さ]
-    strage_backside: [8.60, 3.40, -0.36] #ストレージエリアの[x, y, 高さ]
-    strage_front: [8.60, 1.65, -0.54]
+    #ストレージエリアの[x, y, 高さ]
+    strage_backside_0: [8.60, 2.70, -0.42] #H0,H1,H2,H3,H6,H7,H8,H9 
+    strage_backside_1: [8.60, 3.40, -0.36] #H4,H5,H10,H11
+    strage_front: [8.60, 1.65, -0.54] #IJ0,IJ1
     linear_pitch: [20.0, 30.0] #H,IJ
     linear_tf: [0.23237,0.17757] 
 
