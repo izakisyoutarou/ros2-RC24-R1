@@ -19,7 +19,6 @@ namespace injection_interface{
         linear_pitch(get_parameter("linear_pitch").as_double_array()),
         linear_tf(get_parameter("linear_tf").as_double_array()),
         court_color_(get_parameter("court_color").as_string()),
-        can_backspin_vel_id(get_parameter("canid.backspin_vel").as_int()),
         can_inject_pitch_id(get_parameter("canid.inject_pitch").as_int())
         
         {
@@ -47,18 +46,6 @@ namespace injection_interface{
                 std::bind(&InjectionInterface::_callback_move_target_pose, this, std::placeholders::_1)
             );
 
-            // _sub_backspin_vel = this->create_subscription<std_msgs::msg::Int16MultiArray>(
-            //     "backspin_vel",
-            //     _qos,
-            //     std::bind(&InjectionInterface::_callback_backspin_vel, this, std::placeholders::_1)
-            // );
-
-            // _sub_backspin = this->create_subscription<std_msgs::msg::Empty>(
-            //     "backspin",
-            //     _qos,
-            //     std::bind(&InjectionInterface::_callback_backspin, this, std::placeholders::_1)
-            // );
-
             _sub_move_node = this->create_subscription<std_msgs::msg::String>(
                 "move_node",
                 _qos,
@@ -82,23 +69,6 @@ namespace injection_interface{
                 strage_front[1] *= -1;
                 strage_backside[1] *= -1;
             }
-
-            // std::ifstream ifs(ament_index_cpp::get_package_share_directory("main_executor") + "/config/injection_interface/injection_vel.cfg");
-            // std::string str;
-            // while(getline(ifs, str)){
-            //     std::string token;
-            //     std::istringstream stream(str);
-            //     int count = 0;
-            //     Vel vel;
-            //     while(getline(stream, token, ' ')){
-            //         if(count==0) vel.name = token;
-            //         else if(count==1) vel.vel[0] = std::stoi(token);
-            //         else if(count==2) vel.vel[1] = std::stoi(token);
-            //         else if(count==3) vel.vel[2] = std::stoi(token);
-            //         count++;
-            //     }
-            //     vel_list.push_back(vel);
-            // }
 
             std::ifstream ifs(ament_index_cpp::get_package_share_directory("main_executor") + "/config/injection_interface/injection_gain.cfg");
             std::string str;
@@ -134,24 +104,7 @@ namespace injection_interface{
             move_target_pose.z = msg->z;
         }
 
-        // void InjectionInterface::_callback_backspin_vel(const std_msgs::msg::Int16MultiArray::SharedPtr msg){
-        //     target_pos.x = strage_backside[0];
-        //     target_pos.y = strage_backside[1];
-        //     vel[0] = msg->data[0];
-        //     vel[1] = msg->data[1];
-        //     vel[2] = msg->data[2];
-        //     command_backspin_vel();
-        //     command_injection_turn();
-        // }
-
-        // void InjectionInterface::_callback_backspin(const std_msgs::msg::Empty::SharedPtr msg){
-        //     command_backspin_vel();
-        //     command_injection_turn();
-        // }
-
         void InjectionInterface::_callback_move_node(const std_msgs::msg::String::SharedPtr msg){
-            // if(msg->data[0] == 'H') set_backspin_vel(msg->data);
-            // else if(msg->data[0] == 'I') set_calculate_vel(false);
             if(msg->data[0] == 'H') {
                 command_injection_pitch(linear_pitch[0]);
                 injection_num = std::stoi(msg->data.substr(1,1));               
@@ -193,8 +146,7 @@ namespace injection_interface{
                 is_correction_required = false;
                 robot_pose = self_pose;
             }
-            
-            //直動
+
             //ロボットの本体座標と射出機構のずれを補正した数字
             TwoVector injection_pos;
             if(is_backside){
@@ -215,32 +167,7 @@ namespace injection_interface{
             injection_command->gain = injection_gain[injection_num];
             _pub_injection->publish(*injection_command);
             command_injection_turn();    
-
-            //ローラー
-            // //ロボットの本体座標と射出機構のずれを補正した数字
-            // TwoVector injection_pos;
-            // injection_pos.x = robot_pose.x + tf_injection2robot[0]*cos(robot_pose.z) - tf_injection2robot[1]*sin(robot_pose.z);
-            // injection_pos.y = robot_pose.y + tf_injection2robot[0]*sin(robot_pose.z) + tf_injection2robot[1]*cos(robot_pose.z);
-            // TwoVector diff = target_pos - injection_pos;
-            // auto injection_command = std::make_shared<injection_interface_msg::msg::InjectionCommand>();
-            // injection_command->distance = diff.length();
-            // injection_command->height = target_height;
-            // _pub_injection->publish(*injection_command);
-            // command_injection_turn();    
         }
-
-        // void InjectionInterface::set_backspin_vel(std::string node){
-        //     cout<<"backspin_vel"<<endl;
-        //     for(int i = 0; i <= vel_list.size(); i++){
-        //         if(vel_list[i].name == node){
-        //             vel[0] = vel_list[i].vel[0];
-        //             vel[1] = vel_list[i].vel[1];
-        //             vel[2] = vel_list[i].vel[2];
-        //             break;
-        //         }
-        //     }
-        //     command_backspin_vel();
-        // }
 
         void InjectionInterface::command_injection_turn(){
             float self_z = self_pose.z;
@@ -249,18 +176,6 @@ namespace injection_interface{
             injection_angle->accurate_convergence = true;
             _pub_spin_position->publish(*injection_angle);
         }
-
-        // void InjectionInterface::command_backspin_vel(){
-        //     uint8_t _candata[8];
-        //     auto msg_backspin_vel = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-        //     msg_backspin_vel->canid = can_backspin_vel_id;
-        //     msg_backspin_vel->candlc = 6;
-        //     short_to_bytes(_candata, static_cast<short>(vel[0]));
-        //     short_to_bytes(_candata+2, static_cast<short>(vel[1]));
-        //     short_to_bytes(_candata+4, static_cast<short>(vel[2]));
-        //     for(int i=0; i<msg_backspin_vel->candlc; i++) msg_backspin_vel->candata[i] = _candata[i];
-        //     _pub_canusb->publish(*msg_backspin_vel);
-        // }
 
         void InjectionInterface::command_injection_pitch(double linear_pitch){
             pitch = linear_pitch;
