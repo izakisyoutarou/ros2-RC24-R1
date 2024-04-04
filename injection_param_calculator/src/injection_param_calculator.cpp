@@ -52,19 +52,20 @@ namespace injection_param_calculator{
         injection_command.distance = msg->distance;
         injection_command.height = msg->height;
         injection_command.pitch = msg->pitch;
+        injection_command.gain = msg->gain;
 
         isConvergenced = calculateVelocity();
         msg_isConvergenced->data = isConvergenced;
         
         uint8_t _candata[4];
-        float_to_bytes(_candata, static_cast<float>(velocity*vel_gain));
+        float_to_bytes(_candata, static_cast<float>(velocity*injection_command.gain));
         for (int i = 0; i < msg_injection->candlc; i++)msg_injection->candata[i] = _candata[i];
 
         //送信
         _pub_isConvergenced->publish(*msg_isConvergenced);
 
         if (isConvergenced){
-            RCLCPP_INFO(get_logger(), "計算が収束しました:%f",velocity*vel_gain);
+            RCLCPP_INFO(get_logger(), "計算が収束しました:%f",velocity*injection_command.gain );
             _pub_can->publish(*msg_injection);
         }
     }

@@ -275,10 +275,10 @@ namespace controller_interface
             );
 
             check_controller_connection = this->create_wall_timer(
-                std::chrono::milliseconds(static_cast<int>(controller_ms * 1.5)),
+                std::chrono::milliseconds(static_cast<int>(controller_ms)),
                 [this] {
                     std::chrono::system_clock::time_point now_time = std::chrono::system_clock::now();
-                    if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_controller_time).count() > 100 * 1.5){
+                    if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_controller_time).count() > 100 * 10){
                         auto msg_emergency = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                         msg_emergency->canid = can_emergency_id;
                         msg_emergency->candlc = 1;
@@ -290,9 +290,9 @@ namespace controller_interface
             );
 
             check_mainboard_connection = this->create_wall_timer(
-                std::chrono::milliseconds(static_cast<int>(mainboard_ms * 1.5)),
+                std::chrono::milliseconds(static_cast<int>(mainboard_ms)),
                 [this] { 
-                    if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_mainboard_time).count() > 200 * 1.5){
+                    if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_mainboard_time).count() > 200 * 10){
                         is_emergency = true;
                         is_restart = false; 
                         auto msg_base_control = std::make_shared<controller_interface_msg::msg::BaseControl>();   
@@ -375,17 +375,7 @@ namespace controller_interface
             //基板リセット
             else if(msg->data == "left") gamebtn.board_reset(_pub_canusb);
             else if(msg->data == "r1") gamebtn.injection_frontside_vel(_pub_is_backside);
-            // {
-            //     robotcontrol_flag = true;
-            //     gamebtn.injection_spining_start(move_node,_pub_backspin,_pub_is_backside,_pub_canusb);
-            //     is_injection_mech_stop_m = false;
-            // }
             else if(msg->data == "r2") gamebtn.injection_backside_vel(_pub_is_backside);
-            // {
-            //     robotcontrol_flag = true;
-            //     gamebtn.injection_spining_stop(_pub_canusb);
-            //     is_injection_mech_stop_m = true;
-            // }
             //手自動の切り替え
             else if(msg->data == "r3"){
                 robotcontrol_flag = true;
@@ -406,7 +396,6 @@ namespace controller_interface
             //射出情報
             else if(msg->data == "l3") gamebtn.initial_sequense(initial_pickup_state,_pub_initial_sequense);
 
-
             //base_controlへ代入
             msg_base_control.is_restart = is_restart;
             msg_base_control.is_emergency = is_emergency;
@@ -415,8 +404,6 @@ namespace controller_interface
             msg_base_control.is_slow_speed = is_slow_speed;
             msg_base_control.initial_state = initial_state;
             msg_base_control.is_injection_mech_stop_m = is_injection_mech_stop_m;
-
-            msg_emergency->candata[0] = is_emergency;
 
             if(msg->data=="g") _pub_canusb->publish(*msg_emergency);
 
@@ -562,6 +549,7 @@ namespace controller_interface
                 uint8_t _candata_joy[8];
                 //低速モード
                 if(is_slow_speed == true){
+
                     slow_velPlanner_linear_x.vel(static_cast<double>(values[1]));//unityとロボットにおける。xとyが違うので逆にしている。
                     slow_velPlanner_linear_y.vel(static_cast<double>(-values[0]));
                     velPlanner_angular_z.vel(static_cast<double>(-values[2]));
@@ -585,15 +573,10 @@ namespace controller_interface
                     high_velPlanner_linear_x.vel(static_cast<double>(values[1]));//unityとロボットにおける。xとyが違うので逆にしている。
                     high_velPlanner_linear_y.vel(static_cast<double>(-values[0]));
                     velPlanner_angular_z.vel(static_cast<double>(-values[2]));
-                    // cout<<values[1]<<", "<<values[0]<<", "<<values[2]<<endl;
-                    RCLCPP_INFO(this->get_logger(), "x:%f, y:%f, z:%f", values[1], values[0], values[2]);
-                    
 
                     high_velPlanner_linear_x.cycle();
                     high_velPlanner_linear_y.cycle();
                     velPlanner_angular_z.cycle();
-
-                    // cout<<high_velPlanner_linear_x.vel()<<", "<<high_velPlanner_linear_y.vel()<<", "<<velPlanner_angular_z.vel()<<endl;
 
                     float_to_bytes(_candata_joy, static_cast<float>(high_velPlanner_linear_x.vel()) * high_manual_linear_max_vel);
                     float_to_bytes(_candata_joy+4, static_cast<float>(high_velPlanner_linear_y.vel()) * high_manual_linear_max_vel);
