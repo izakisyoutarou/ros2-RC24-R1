@@ -195,8 +195,7 @@ namespace controller_interface
             _pub_base_control = this->create_publisher<controller_interface_msg::msg::BaseControl>("base_control",_qos);
             _pub_convergence = this->create_publisher<controller_interface_msg::msg::Convergence>("convergence" , _qos);
             _pub_color_information = this->create_publisher<controller_interface_msg::msg::Colorball>("color_information", _qos);
-            _pub_is_backside = this->create_publisher<std_msgs::msg::Bool>("is_backside", _qos);
-            _pub_backspin = this->create_publisher<std_msgs::msg::Empty>("backspin", _qos);
+            _pub_injection_calculate = this->create_publisher<std_msgs::msg::Empty>("injection_calculate", _qos);
 
             //sprine_pid
             pub_move_node = this->create_publisher<std_msgs::msg::String>("move_node", _qos);
@@ -277,33 +276,33 @@ namespace controller_interface
             check_controller_connection = this->create_wall_timer(
                 std::chrono::milliseconds(static_cast<int>(controller_ms)),
                 [this] {
-                    std::chrono::system_clock::time_point now_time = std::chrono::system_clock::now();
-                    if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_controller_time).count() > 100 * 10){
-                        auto msg_emergency = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                        msg_emergency->canid = can_emergency_id;
-                        msg_emergency->candlc = 1;
-                        msg_emergency->candata[0] = 1;
-                        _pub_canusb->publish(*msg_emergency);
-                        RCLCPP_INFO(get_logger(),"controller_connection_lost!!");
-                    }
+                    // std::chrono::system_clock::time_point now_time = std::chrono::system_clock::now();
+                    // if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_controller_time).count() > 100 * 10){
+                    //     auto msg_emergency = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                    //     msg_emergency->canid = can_emergency_id;
+                    //     msg_emergency->candlc = 1;
+                    //     msg_emergency->candata[0] = 1;
+                    //     _pub_canusb->publish(*msg_emergency);
+                    //     RCLCPP_INFO(get_logger(),"controller_connection_lost!!");
+                    // }
                 }
             );
 
             check_mainboard_connection = this->create_wall_timer(
                 std::chrono::milliseconds(static_cast<int>(mainboard_ms)),
                 [this] { 
-                    if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_mainboard_time).count() > 200 * 10){
-                        is_emergency = true;
-                        is_restart = false; 
-                        auto msg_base_control = std::make_shared<controller_interface_msg::msg::BaseControl>();   
-                        msg_base_control->is_restart = is_restart;
-                        msg_base_control->is_emergency = is_emergency;
-                        msg_base_control->is_move_autonomous = is_move_autonomous;
-                        msg_base_control->is_slow_speed = is_slow_speed;
-                        msg_base_control->initial_state = initial_state;
-                        _pub_base_control->publish(*msg_base_control);
-                        RCLCPP_INFO(get_logger(),"mainboard_connection_lost!!");
-                    }
+                    // if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_mainboard_time).count() > 200 * 10){
+                    //     is_emergency = true;
+                    //     is_restart = false; 
+                    //     auto msg_base_control = std::make_shared<controller_interface_msg::msg::BaseControl>();   
+                    //     msg_base_control->is_restart = is_restart;
+                    //     msg_base_control->is_emergency = is_emergency;
+                    //     msg_base_control->is_move_autonomous = is_move_autonomous;
+                    //     msg_base_control->is_slow_speed = is_slow_speed;
+                    //     msg_base_control->initial_state = initial_state;
+                    //     _pub_base_control->publish(*msg_base_control);
+                    //     RCLCPP_INFO(get_logger(),"mainboard_connection_lost!!");
+                    // }
                 }
             );
 
@@ -337,7 +336,6 @@ namespace controller_interface
             bool flag_restart = false;
             is_restart = false;
 
-            //緊急停止
             if(msg->data == "g"){
                 cout<<"emergency"<<endl;
                 robotcontrol_flag = true;
@@ -360,23 +358,16 @@ namespace controller_interface
                 is_seedlinghand_convergence = defalt_seedlinghand_convergence;
                 is_ballhand_convergence = defalt_ballhand_convergence;                
             }
-            //苗回収
             else if(msg->data == "a") gamebtn.seedling_collect_right(is_seedlinghand_convergence,_pub_canusb);          
             else if(msg->data == "b") gamebtn.seedling_collect_left(is_seedlinghand_convergence,_pub_canusb);               
-            //苗設置
             else if(msg->data == "x") gamebtn.seedling_install_right(is_seedlinghand_convergence,_pub_canusb);   
             else if(msg->data == "y") gamebtn.seedling_install_left(is_seedlinghand_convergence,_pub_canusb);   
-            //籾
-            else if(msg->data == "up") gamebtn.paddy_control(is_ballhand_convergence,_pub_canusb);           
-            //キャリブレーション
-            else if(msg->data == "down") gamebtn.calibrate(_pub_canusb);
-            //ステアリセット                
-            else if(msg->data == "right") gamebtn.steer_reset(_pub_canusb);
-            //基板リセット
+            else if(msg->data == "up") gamebtn.steer_reset(_pub_canusb);
+            else if(msg->data == "down") gamebtn.calibrate(_pub_canusb);                
             else if(msg->data == "left") gamebtn.board_reset(_pub_canusb);
-            else if(msg->data == "r1") gamebtn.injection_frontside_vel(_pub_is_backside);
-            else if(msg->data == "r2") gamebtn.injection_backside_vel(_pub_is_backside);
-            //手自動の切り替え
+            // else if(msg->data == "right") //sequence
+            else if(msg->data == "r1") gamebtn.injection(is_injection_convergence,is_injection_calculator_convergence,_pub_canusb); 
+            else if(msg->data == "r2") gamebtn.injection_calculate(_pub_injection_calculate);
             else if(msg->data == "r3"){
                 robotcontrol_flag = true;
                 if(is_move_autonomous == false){
@@ -388,13 +379,9 @@ namespace controller_interface
                     is_injection_autonomous = false;
                 }
             }
-            //射出
-            else if(msg->data == "l1") gamebtn.injection(is_injection_convergence,is_injection_calculator_convergence,_pub_canusb); 
-            // gamebtn.injection(is_injection_convergence,is_injection_mech_stop_m,_pub_canusb); 
-            //高速低速モードの切り替え
+            else if(msg->data == "l1") gamebtn.paddy_control(is_ballhand_convergence,_pub_canusb); 
             else if(msg->data == "l2") is_slow_speed = !is_slow_speed;
-            //射出情報
-            else if(msg->data == "l3") gamebtn.initial_sequense(initial_pickup_state,_pub_initial_sequense);
+            else if(msg->data == "l3") gamebtn.arm_expansion(_pub_canusb);
 
             //base_controlへ代入
             msg_base_control.is_restart = is_restart;
@@ -459,15 +446,7 @@ namespace controller_interface
         }
 
         void SmartphoneGamepad::callback_subpad(const std_msgs::msg::String::SharedPtr msg){
-            // if(msg->data == "a") gamebtn.seedling_collect_0(is_seedlinghand_convergence,_pub_canusb);
-            // else if(msg->data == "b") gamebtn.seedling_collect_1(is_seedlinghand_convergence,_pub_canusb);
-            // else if(msg->data == "up") gamebtn.seedling_install_0(is_seedlinghand_convergence,_pub_canusb);
-            // else if(msg->data == "right") gamebtn.seedling_install_1(is_seedlinghand_convergence,_pub_canusb);
-            if(msg->data == "down" && arm_expansion_flag){
-                gamebtn.arm_expansion(_pub_canusb);
-                arm_expansion_flag = false;
-            }
-            // else if(msg->data == "left") gamebtn.seedling_install_3(can_seedling_install_id,_pub_canusb);
+
         }
 
         //スタート地点情報をsubscribe

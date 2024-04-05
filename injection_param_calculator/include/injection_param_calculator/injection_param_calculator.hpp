@@ -21,18 +21,18 @@ namespace injection_param_calculator
         explicit InjectionParamCalculator(const std::string &name_space, const rclcpp::NodeOptions &options = rclcpp::NodeOptions());
 
     private:
-        rclcpp::Subscription<injection_interface_msg::msg::InjectionCommand>::SharedPtr _sub_injection_command;
-        rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr _sub_air_resistance;
-        rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr _sub_vel_gain;
+        rclcpp::Subscription<injection_interface_msg::msg::InjectionCommand>::SharedPtr _subscriber_injection_command;
+        rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr _subscriber_param;
+        rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr _subscriber_gain;
 
-        rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_can;
-        rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_isConvergenced;
+        rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _publisher_can;
+        rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _publisher_is_convergenced;
 
         rclcpp::QoS _qos = rclcpp::QoS(10);
 
-        void callback_injection(const injection_interface_msg::msg::InjectionCommand::SharedPtr msg);
-        void callback_sub_air_resistance(const std_msgs::msg::Float64::SharedPtr msg);
-        void callback_sub_vel_gain(const std_msgs::msg::Float64::SharedPtr msg);
+        void callback_injection_command(const injection_interface_msg::msg::InjectionCommand::SharedPtr msg);
+        void callback_param(const std_msgs::msg::Float64::SharedPtr msg);
+        void callback_gain(const std_msgs::msg::Float64::SharedPtr msg);
 
         bool calculateVelocity();
         double f(double v0);

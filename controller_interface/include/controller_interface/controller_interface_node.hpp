@@ -73,8 +73,7 @@ namespace controller_interface
             rclcpp::Publisher<controller_interface_msg::msg::BaseControl>::SharedPtr _pub_base_control;
             rclcpp::Publisher<controller_interface_msg::msg::Convergence>::SharedPtr _pub_convergence;
             rclcpp::Publisher<controller_interface_msg::msg::Colorball>::SharedPtr _pub_color_information;
-            rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_is_backside;
-            rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr _pub_backspin;
+            rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr _pub_injection_calculate;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _pub_coat_state;
 
             //ボールと苗の回収&設置
@@ -260,7 +259,7 @@ namespace controller_interface
             RecvUDP joy_main;
 
             Gamebtn gamebtn;
-            bool arm_expansion_flag = true;
+            bool arm_expansion_flag = false;
 
             std::chrono::system_clock::time_point get_controller_time;
             std::chrono::system_clock::time_point get_mainboard_time;
