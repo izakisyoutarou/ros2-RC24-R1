@@ -276,33 +276,33 @@ namespace controller_interface
             check_controller_connection = this->create_wall_timer(
                 std::chrono::milliseconds(static_cast<int>(controller_ms)),
                 [this] {
-                    // std::chrono::system_clock::time_point now_time = std::chrono::system_clock::now();
-                    // if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_controller_time).count() > 100 * 10){
-                    //     auto msg_emergency = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                    //     msg_emergency->canid = can_emergency_id;
-                    //     msg_emergency->candlc = 1;
-                    //     msg_emergency->candata[0] = 1;
-                    //     _pub_canusb->publish(*msg_emergency);
-                    //     RCLCPP_INFO(get_logger(),"controller_connection_lost!!");
-                    // }
+                    std::chrono::system_clock::time_point now_time = std::chrono::system_clock::now();
+                    if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_controller_time).count() > 100 * 10){
+                        auto msg_emergency = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                        msg_emergency->canid = can_emergency_id;
+                        msg_emergency->candlc = 1;
+                        msg_emergency->candata[0] = 1;
+                        _pub_canusb->publish(*msg_emergency);
+                        RCLCPP_INFO(get_logger(),"controller_connection_lost!!");
+                    }
                 }
             );
 
             check_mainboard_connection = this->create_wall_timer(
                 std::chrono::milliseconds(static_cast<int>(mainboard_ms)),
                 [this] { 
-                    // if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_mainboard_time).count() > 200 * 10){
-                    //     is_emergency = true;
-                    //     is_restart = false; 
-                    //     auto msg_base_control = std::make_shared<controller_interface_msg::msg::BaseControl>();   
-                    //     msg_base_control->is_restart = is_restart;
-                    //     msg_base_control->is_emergency = is_emergency;
-                    //     msg_base_control->is_move_autonomous = is_move_autonomous;
-                    //     msg_base_control->is_slow_speed = is_slow_speed;
-                    //     msg_base_control->initial_state = initial_state;
-                    //     _pub_base_control->publish(*msg_base_control);
-                    //     RCLCPP_INFO(get_logger(),"mainboard_connection_lost!!");
-                    // }
+                    if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_mainboard_time).count() > 200 * 10){
+                        is_emergency = true;
+                        is_restart = false; 
+                        auto msg_base_control = std::make_shared<controller_interface_msg::msg::BaseControl>();   
+                        msg_base_control->is_restart = is_restart;
+                        msg_base_control->is_emergency = is_emergency;
+                        msg_base_control->is_move_autonomous = is_move_autonomous;
+                        msg_base_control->is_slow_speed = is_slow_speed;
+                        msg_base_control->initial_state = initial_state;
+                        _pub_base_control->publish(*msg_base_control);
+                        RCLCPP_INFO(get_logger(),"mainboard_connection_lost!!");
+                    }
                 }
             );
 
