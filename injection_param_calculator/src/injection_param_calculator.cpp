@@ -19,59 +19,58 @@ namespace injection_param_calculator{
 
         {
 
-            _sub_injection_command = this->create_subscription<injection_interface_msg::msg::InjectionCommand>(
+            _subscriber_injection_command = this->create_subscription<injection_interface_msg::msg::InjectionCommand>(
                 "injection_command", _qos,
-                std::bind(&InjectionParamCalculator::callback_injection,this,std::placeholders::_1)
+                std::bind(&InjectionParamCalculator::callback_injection_command,this,std::placeholders::_1)
             );
 
-            _sub_air_resistance = this->create_subscription<std_msgs::msg::Float64>(
+            _subscriber_param = this->create_subscription<std_msgs::msg::Float64>(
                 "param", _qos,
-                std::bind(&InjectionParamCalculator::callback_sub_air_resistance,this,std::placeholders::_1)
+                std::bind(&InjectionParamCalculator::callback_param,this,std::placeholders::_1)
             );
 
-            _sub_vel_gain = this->create_subscription<std_msgs::msg::Float64>(
+            _subscriber_gain = this->create_subscription<std_msgs::msg::Float64>(
                 "gain", _qos,
-                std::bind(&InjectionParamCalculator::callback_sub_vel_gain,this,std::placeholders::_1)
+                std::bind(&InjectionParamCalculator::callback_gain,this,std::placeholders::_1)
             );
 
-            _pub_can = this->create_publisher<socketcan_interface_msg::msg::SocketcanIF>("can_tx", _qos);
-            _pub_isConvergenced = this->create_publisher<std_msgs::msg::Bool>("calculator_convergenced_", _qos);
-            RCLCPP_INFO(this->get_logger(), "create injection_param");
+            _publisher_can = this->create_publisher<socketcan_interface_msg::msg::SocketcanIF>("can_tx", _qos);
+            _publisher_is_convergenced = this->create_publisher<std_msgs::msg::Bool>("calculator_convergenced_", _qos);
 
         }
 
-    void InjectionParamCalculator::callback_injection(const injection_interface_msg::msg::InjectionCommand::SharedPtr msg)
+    void InjectionParamCalculator::callback_injection_command(const injection_interface_msg::msg::InjectionCommand::SharedPtr msg)
     {
         auto msg_injection = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
         msg_injection->canid = can_inject_vel_id;        
         msg_injection->candlc = 8;
 
-        auto msg_isConvergenced = std::make_shared<std_msgs::msg::Bool>();
-        bool isConvergenced = false;
+        auto msg_is_convergenced = std::make_shared<std_msgs::msg::Bool>();
+        bool is_convergenced = false;
 
         injection_command.distance = msg->distance;
         injection_command.height = msg->height;
         injection_command.pitch = msg->pitch;
         injection_command.gain = msg->gain;
 
-        isConvergenced = calculateVelocity();
-        msg_isConvergenced->data = isConvergenced;
+        is_convergenced = calculateVelocity();
+        msg_is_convergenced->data = is_convergenced;
         
         uint8_t _candata[4];
         float_to_bytes(_candata, static_cast<float>(velocity*injection_command.gain));
         for (int i = 0; i < msg_injection->candlc; i++)msg_injection->candata[i] = _candata[i];
 
         //送信
-        _pub_isConvergenced->publish(*msg_isConvergenced);
+        _publisher_is_convergenced->publish(*msg_is_convergenced);
 
-        if (isConvergenced){
+        if (is_convergenced){
             RCLCPP_INFO(get_logger(), "計算が収束しました:%f",velocity*injection_command.gain );
-            _pub_can->publish(*msg_injection);
+            _publisher_can->publish(*msg_injection);
         }
     }
 
     bool InjectionParamCalculator::calculateVelocity(){
-        bool isConvergenced = false;
+        bool is_convergenced = false;
         bool isAiming = false;
         int num_loop = 0;
         double old_velocity = 1;
@@ -81,19 +80,19 @@ namespace injection_param_calculator{
             if (fabs(new_velocity - old_velocity) < eps && 0 < new_velocity && new_velocity < velocity_lim_max){
                 velocity = new_velocity;
                 isAiming = true;
-                isConvergenced = true;
+                is_convergenced = true;
                 break;
             }
             old_velocity = new_velocity;
             num_loop++;
             if (num_loop > max_loop){
                 isAiming = false;
-                isConvergenced = false;
+                is_convergenced = false;
                 RCLCPP_INFO(get_logger(), "発散しました!");
                 break;
             }
         }
-        return isConvergenced;
+        return is_convergenced;
     }
 
     double InjectionParamCalculator::f(double v0){
@@ -114,12 +113,12 @@ namespace injection_param_calculator{
         return (f(v0 + eps) - f(v0 - eps)) / (2.0 * eps);
     }
 
-    void InjectionParamCalculator::callback_sub_air_resistance(const std_msgs::msg::Float64::SharedPtr msg){
+    void InjectionParamCalculator::callback_param(const std_msgs::msg::Float64::SharedPtr msg){
         air_resistance = msg->data;
         RCLCPP_INFO(get_logger(), "air:%f",air_resistance);
     }
 
-    void InjectionParamCalculator::callback_sub_vel_gain(const std_msgs::msg::Float64::SharedPtr msg){
+    void InjectionParamCalculator::callback_gain(const std_msgs::msg::Float64::SharedPtr msg){
         vel_gain = msg->data;
         RCLCPP_INFO(get_logger(), "gain:%f",vel_gain);
     }

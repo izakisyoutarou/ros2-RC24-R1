@@ -21,10 +21,10 @@ namespace injection_interface{
         can_inject_pitch_id(get_parameter("canid.inject_pitch").as_int())
         
         {
-            _subscriber_is_backside = this->create_subscription<std_msgs::msg::Bool>(
-                "is_backside",
+            _subscriber_injection_calculate = this->create_subscription<std_msgs::msg::Empty>(
+                "injection_calculate",
                 _qos,
-                std::bind(&InjectionInterface::_callback_is_backside, this, std::placeholders::_1)
+                std::bind(&InjectionInterface::_callback_injection_calculate, this, std::placeholders::_1)
             );
 
             _subscriber_is_move_tracking = this->create_subscription<std_msgs::msg::Bool>(
@@ -78,13 +78,13 @@ namespace injection_interface{
             }
         }
 
-        void InjectionInterface::_callback_is_backside(const std_msgs::msg::Bool::SharedPtr msg){
-            set_calculate_vel(msg->data);
+        void InjectionInterface::_callback_injection_calculate(const std_msgs::msg::Empty::SharedPtr msg){
+            set_calculate_vel();
         }
 
         void InjectionInterface::_callback_is_move_tracking(const std_msgs::msg::Bool::SharedPtr msg){
             is_move_tracking = msg->data;
-            if(is_correction_required && !msg->data) set_calculate_vel(last_target);
+            if(is_correction_required && !msg->data) set_calculate_vel();
         }
 
         void InjectionInterface::_callback_self_pose(const geometry_msgs::msg::Vector3::SharedPtr msg){
@@ -102,22 +102,20 @@ namespace injection_interface{
         void InjectionInterface::_callback_move_node(const std_msgs::msg::String::SharedPtr msg){
             if(msg->data[0] == 'H') {
                 command_injection_pitch(linear_pitch[0]);
-                injection_num = std::stoi(msg->data.substr(1,1));               
+                injection_num = std::stoi(msg->data.substr(1));              
             }
             else if(msg->data[0] == 'I') {
                 command_injection_pitch(linear_pitch[1]);
-                injection_num = std::stoi(msg->data.substr(2,1)) + 12;
+                injection_num = std::stoi(msg->data.substr(2)) + 12;
             }
         }
 
-        void InjectionInterface::set_calculate_vel(bool is_backside){
+        void InjectionInterface::set_calculate_vel(){
             bool target_input = false;
             TwoVector injection_pos; //ロボットの本体座標と射出機構のずれを補正した数字
             geometry_msgs::msg::Vector3 robot_pose;
-            last_target = is_backside;
 
-            if(is_backside){
-                switch (injection_num){
+            switch (injection_num){
                 case 0:
                 case 1:
                 case 2:
@@ -129,29 +127,36 @@ namespace injection_interface{
                     RCLCPP_INFO(this->get_logger(), "backside_vel_0");
                     target_pos.x = strage_backside_0[0];
                     target_pos.y = strage_backside_0[1];
-                    target_height = strage_backside_0[2];            
+                    target_height = strage_backside_0[2];
+                    injection_pos.x = robot_pose.x + linear_tf[0]*cos(robot_pose.z);
+                    injection_pos.y = robot_pose.y + linear_tf[0]*sin(robot_pose.z);
+                    command_injection_pitch(linear_pitch[0]);
+                    target_input = true;         
                     break;
-                default:
+                case 4:
+                case 5:
+                case 10:
+                case 11:
                     RCLCPP_INFO(this->get_logger(), "backside_vel_1");
                     target_pos.x = strage_backside_1[0];
                     target_pos.y = strage_backside_1[1];
                     target_height = strage_backside_1[2];
+                    injection_pos.x = robot_pose.x + linear_tf[0]*cos(robot_pose.z);
+                    injection_pos.y = robot_pose.y + linear_tf[0]*sin(robot_pose.z);
+                    command_injection_pitch(linear_pitch[0]);
+                    target_input = true;
                     break;
-                }
-                injection_pos.x = robot_pose.x + linear_tf[0]*cos(robot_pose.z);
-                injection_pos.y = robot_pose.y + linear_tf[0]*sin(robot_pose.z);
-                command_injection_pitch(linear_pitch[0]);
-                target_input = true;
-            }
-            else {
-                RCLCPP_INFO(this->get_logger(), "frontside_vel");
-                target_pos.x = strage_front[0];
-                target_pos.y = strage_front[1];
-                target_height = strage_front[2];
-                injection_pos.x = robot_pose.x + linear_tf[1]*cos(robot_pose.z);
-                injection_pos.y = robot_pose.y + linear_tf[1]*sin(robot_pose.z); 
-                command_injection_pitch(linear_pitch[1]);
-                target_input = true;
+                case 12:
+                case 13:
+                    RCLCPP_INFO(this->get_logger(), "frontside_vel");
+                    target_pos.x = strage_front[0];
+                    target_pos.y = strage_front[1];
+                    target_height = strage_front[2];
+                    injection_pos.x = robot_pose.x + linear_tf[1]*cos(robot_pose.z);
+                    injection_pos.y = robot_pose.y + linear_tf[1]*sin(robot_pose.z); 
+                    command_injection_pitch(linear_pitch[1]);
+                    target_input = true;
+                    break;
             }
             
             if(!target_input) {

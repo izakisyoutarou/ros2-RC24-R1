@@ -33,13 +33,13 @@ public:
     explicit InjectionInterface(const std::string& name_space, const rclcpp::NodeOptions& options = rclcpp::NodeOptions());
 
 private:
-    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _subscriber_is_backside;
+    rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr _subscriber_injection_calculate;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _subscriber_is_move_tracking;
     rclcpp::Subscription<geometry_msgs::msg::Vector3>::SharedPtr _subscriber_self_pose;
     rclcpp::Subscription<geometry_msgs::msg::Vector3>::SharedPtr _subscriber_move_target_pose;
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _subscriber_move_node;
 
-    void _callback_is_backside(const std_msgs::msg::Bool::SharedPtr msg);
+    void _callback_injection_calculate(const std_msgs::msg::Empty::SharedPtr msg);
     void _callback_is_move_tracking(const std_msgs::msg::Bool::SharedPtr msg);
     void _callback_self_pose(const geometry_msgs::msg::Vector3::SharedPtr msg);
     void _callback_move_target_pose(const geometry_msgs::msg::Vector3::SharedPtr msg);
@@ -49,7 +49,7 @@ private:
     rclcpp::Publisher<injection_interface_msg::msg::InjectionCommand>::SharedPtr _publisher_injection;
     rclcpp::Publisher<path_msg::msg::Turning>::SharedPtr _publisher_spin_position;
 
-    void set_calculate_vel(bool is_backside);
+    void set_calculate_vel();
 
     void command_calculation_vel();
     void command_injection_turn();
