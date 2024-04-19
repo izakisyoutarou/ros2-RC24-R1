@@ -356,12 +356,13 @@ namespace controller_interface
                 is_injection_calculator_convergence = defalt_injection_calculator_convergence;
                 is_injection_convergence = defalt_injection_convergence;
                 is_seedlinghand_convergence = defalt_seedlinghand_convergence;
-                is_ballhand_convergence = defalt_ballhand_convergence;                
+                is_ballhand_convergence = defalt_ballhand_convergence; 
+                arm_expansion_flag = false;               
             }
-            else if(msg->data == "a") gamebtn.seedling_collect_right(is_seedlinghand_convergence,_pub_canusb);          
-            else if(msg->data == "b") gamebtn.seedling_collect_left(is_seedlinghand_convergence,_pub_canusb);               
-            else if(msg->data == "x") gamebtn.seedling_install_right(is_seedlinghand_convergence,_pub_canusb);   
-            else if(msg->data == "y") gamebtn.seedling_install_left(is_seedlinghand_convergence,_pub_canusb);   
+            else if(msg->data == "a"&&arm_expansion_flag) gamebtn.seedling_collect_right(is_seedlinghand_convergence,_pub_canusb);          
+            else if(msg->data == "b"&&arm_expansion_flag) gamebtn.seedling_collect_left(is_seedlinghand_convergence,_pub_canusb);               
+            else if(msg->data == "x"&&arm_expansion_flag) gamebtn.seedling_install_right(is_seedlinghand_convergence,_pub_canusb);   
+            else if(msg->data == "y"&&arm_expansion_flag) gamebtn.seedling_install_left(is_seedlinghand_convergence,_pub_canusb);
             else if(msg->data == "up") gamebtn.steer_reset(_pub_canusb);
             else if(msg->data == "down") gamebtn.calibrate(_pub_canusb);                
             else if(msg->data == "left") gamebtn.board_reset(_pub_canusb);
@@ -381,7 +382,12 @@ namespace controller_interface
             }
             else if(msg->data == "l1") gamebtn.paddy_control(is_ballhand_convergence,_pub_canusb); 
             else if(msg->data == "l2") is_slow_speed = !is_slow_speed;
-            else if(msg->data == "l3") gamebtn.arm_expansion(_pub_canusb);
+            else if(msg->data == "l3") {
+                if(!arm_expansion_flag){
+                    gamebtn.arm_expansion(_pub_canusb);
+                    arm_expansion_flag = true;
+                }
+            }
 
             //base_controlへ代入
             msg_base_control.is_restart = is_restart;
@@ -479,11 +485,11 @@ namespace controller_interface
         }
 
         void SmartphoneGamepad::callback_seedling_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg){
-            is_seedlinghand_convergence = static_cast<bool>(msg->candata[1]);
+            is_seedlinghand_convergence = static_cast<bool>(msg->candata[0]);
         }
 
         void SmartphoneGamepad::callback_paddy_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg){
-            is_ballhand_convergence = static_cast<bool>(msg->candata[2]);
+            is_ballhand_convergence = static_cast<bool>(msg->candata[0]);
         }
 
         //splineをsubsclib
@@ -562,7 +568,7 @@ namespace controller_interface
                     for(int i=0; i<msg_linear->candlc; i++) msg_linear->candata[i] = _candata_joy[i];
                     float_to_bytes(_candata_joy, static_cast<float>(velPlanner_angular_z.vel()) * manual_angular_max_vel);
                     for(int i=0; i<msg_angular->candlc; i++) msg_angular->candata[i] = _candata_joy[i];
-                    
+
                     msg_gazebo->linear.x = high_velPlanner_linear_x.vel();
                     msg_gazebo->linear.y = high_velPlanner_linear_y.vel();
                     msg_gazebo->angular.z = velPlanner_angular_z.vel();
