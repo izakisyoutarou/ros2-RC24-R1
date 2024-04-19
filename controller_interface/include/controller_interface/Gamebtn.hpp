@@ -57,5 +57,4 @@ class Gamebtn{
         int seed_right_flag = 0;
         int seed_left_flag = 0;
         bool paddy_flag = true; 
-        bool arm_expansion_flag = false;
 };
