@@ -9,7 +9,7 @@ launch: #起動パラメータ
     initial_pose: [0.37, 1.24, 0.0]  #初期位置[x,y,yaw]
     2nd_initial_pose: [5.5, 0.35, 0.0]  #2つ目の初期位置[x,y,yaw]
     tf_laser2robot: [0.2835,0.0,0.0,  3.14159,0.0,0.0]  #ロボット->lidarのTF[x,y,z,r,p,y]
-    court_color: "red" #コート情報
+    court_color: "blue" #コート情報
 
     # 自動の並進  速度[m/s],加速度[m/s^2],加減速度[-m/s^2],躍度[m/s^3]
     linear_max_vel: 2.0
@@ -90,17 +90,17 @@ launch: #起動パラメータ
 controller_interface_node:
   ros__parameters:
     # 手動の高速　並進　速度[m/s],加速度[m/s^2],加減速度[-m/s^2]
-    high_linear_max_vel: 2.0
-    high_linear_max_acc: 3.0
-    high_linear_max_dec: 4.0
+    high_linear_max_vel: 0.8
+    high_linear_max_acc: 2.0
+    high_linear_max_dec: 2.0
     # 手動の低速　並進　速度[m/s],加速度[m/s^2],加減速度[-m/s^2]
-    slow_linear_max_vel: 1.0
+    slow_linear_max_vel: 0.5
     slow_linear_max_acc: 2.0
     slow_linear_max_dec: 3.0
     # 手動の回転  速度[deg/s],加速度[deg/s^2],加減速度[-deg/s^2]
     angular_max_vel: 90.0
-    angular_max_acc: 180.0
-    angular_max_dec: 180.0
+    angular_max_acc: 90.0
+    angular_max_dec: 90.0
     
     heartbeat_ms: 100 #ハートビート周期[ms]
     start_ms: 3000
