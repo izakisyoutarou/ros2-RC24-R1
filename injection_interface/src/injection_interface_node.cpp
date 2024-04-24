@@ -112,8 +112,10 @@ namespace injection_interface{
 
         void InjectionInterface::set_calculate_vel(){
             bool target_input = false;
-            TwoVector injection_pos; //ロボットの本体座標と射出機構のずれを補正した数字
+                        TwoVector injection_pos; //ロボットの本体座標と射出機構のずれを補正した数字
             geometry_msgs::msg::Vector3 robot_pose;
+            is_correction_required = false;
+            robot_pose = self_pose;
 
             switch (injection_num){
                 case 0:
@@ -162,15 +164,6 @@ namespace injection_interface{
             if(!target_input) {
                 RCLCPP_INFO(this->get_logger(), "射出位置の入力ができませんでした");
                 return;
-            }
-
-            if(is_move_tracking){
-                is_correction_required = true;
-                robot_pose = move_target_pose;
-            }
-            else{
-                is_correction_required = false;
-                robot_pose = self_pose;
             }
 
             diff = target_pos - injection_pos;
