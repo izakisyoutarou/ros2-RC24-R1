@@ -106,16 +106,16 @@ namespace injection_interface{
             }
             else if(msg->data[0] == 'I') {
                 command_injection_pitch(linear_pitch[1]);
-                injection_num = std::stoi(msg->data.substr(2)) + 12;
+                injection_num = 13;
             }
         }
 
         void InjectionInterface::set_calculate_vel(){
             bool target_input = false;
-                        TwoVector injection_pos; //ロボットの本体座標と射出機構のずれを補正した数字
+            TwoVector injection_pos; //ロボットの本体座標と射出機構のずれを補正した数字
             geometry_msgs::msg::Vector3 robot_pose;
             is_correction_required = false;
-            robot_pose = self_pose;
+            robot_pose = self_pose;     
 
             switch (injection_num){
                 case 0:
@@ -139,6 +139,7 @@ namespace injection_interface{
                 case 5:
                 case 10:
                 case 11:
+                case 12:
                     RCLCPP_INFO(this->get_logger(), "backside_vel_1");
                     target_pos.x = strage_backside_1[0];
                     target_pos.y = strage_backside_1[1];
@@ -148,7 +149,6 @@ namespace injection_interface{
                     command_injection_pitch(linear_pitch[0]);
                     target_input = true;
                     break;
-                case 12:
                 case 13:
                     RCLCPP_INFO(this->get_logger(), "frontside_vel");
                     target_pos.x = strage_front[0];
