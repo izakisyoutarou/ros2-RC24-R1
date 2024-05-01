@@ -58,6 +58,12 @@ Sequencer::Sequencer(const std::string &name_space, const rclcpp::NodeOptions &o
         std::bind(&Sequencer::callback_base_control, this, std::placeholders::_1)
     );
 
+    _subscription_is_start = this->create_subscription<std_msgs::msg::Empty>(
+        "is_start",
+        _qos,
+        std::bind(&Sequencer::callback_is_start, this, std::placeholders::_1)
+    );
+
     _publisher_in_process = this->create_publisher<std_msgs::msg::Bool>("in_process", _qos);
     _publisher_move_node = this->create_publisher<std_msgs::msg::String>("move_node", _qos);
     _publisher_is_backside = this->create_publisher<std_msgs::msg::Bool>("is_backside", _qos);
@@ -89,58 +95,69 @@ void Sequencer::callback_ball_collection(const std_msgs::msg::Bool::SharedPtr ms
 }
 
 void Sequencer::callback_convergence(const controller_interface_msg::msg::Convergence::SharedPtr msg){
+    int n  = 0;
+    if(sequence_mode == SEQUENCE_MODE::seedling && seedling_step < seedling_order.size()){
 
-    if(sequence_mode == SEQUENCE_MODE::seedling && seedling_step < 4){
-        int n  = 0;
-        if(sequence_process == n++) {
+        if(process == n++) {
             RCLCPP_INFO(this->get_logger(), "苗回収シーケンス[%s]_起動", seedling_order[seedling_step].c_str());
             command_move_node(seedling_order[seedling_step]);
-            sequence_process++;
-        }
-        else if(sequence_process == n++ && msg->spline_convergence){
-            RCLCPP_INFO(this->get_logger(), "苗回収シーケンス[%s]_終了", seedling_order[seedling_step].c_str());
-            seedling_step++;
-            set_in_process(false);
-            sequence_process = 0;
-            sequence_mode = SEQUENCE_MODE::stop;
-        }
+            process++;
+        } 
+        // else if(process == n++ && msg->spline_convergence){
+        //     //右か左かの選択
+        //     //回収
+        //     process++;
+        // }
+        // else if(process == n++ && msg->seedlinghand){
+        //     RCLCPP_INFO(this->get_logger(), "苗回収シーケンス[%s]_終了", seedling_order[seedling_step].c_str());
+        //     seedling_step++;
+        //     set_in_process(false);
+        //     process = 0;
+        //     sequence_mode = SEQUENCE_MODE::stop;
+        // }
     }
-
-    else if(sequence_mode == SEQUENCE_MODE::planting && planting_step < 8){
-        int n  = 0;
-        if(sequence_process == n++) {
+    else if(sequence_mode == SEQUENCE_MODE::planting && planting_step < planting_order.size()){
+        if(process == n++) {
             RCLCPP_INFO(this->get_logger(), "苗設置シーケンス[%s]_起動", planting_order[planting_step].c_str());
             command_move_node(planting_order[planting_step]);
-            sequence_process++;
+            process++;
         }
-        else if(sequence_process == n++ && msg->spline_convergence){
+        else if(process == n++ && msg->spline_convergence){
+            //右か左かの選択
+            //設置
+            process++;
+        }
+        else if(process == n++ && msg->spline_convergence){
             RCLCPP_INFO(this->get_logger(), "苗設置シーケンス[%s]_終了", planting_order[planting_step].c_str());
             planting_step++;
             set_in_process(false);
-            sequence_process = 0;
+            process = 0;
             sequence_mode = SEQUENCE_MODE::stop;
         }
     }
-
-    else if(sequence_mode == SEQUENCE_MODE::harvesting && harvesting_step < 12){
-        int n  = 0;
-        if(sequence_process == n++) {
+    else if(sequence_mode == SEQUENCE_MODE::harvesting && harvesting_step < harvesting_order.size()){
+        if(process == n++) {
             RCLCPP_INFO(this->get_logger(), "籾回収シーケンス[%s]_起動", harvesting_order[harvesting_step].c_str());
             command_move_node(harvesting_order[harvesting_step]);
-            sequence_process++;
+            process++;
         }
-        else if(sequence_process == n++ && msg->spline_convergence){
+        else if(process == n++ && msg->spline_convergence){
+            command_paddy_collect();
+            process++;
+        }
+        else if(process == n++ && msg->ballhand){
             RCLCPP_INFO(this->get_logger(), "籾回収シーケンス[%s]_終了", harvesting_order[harvesting_step].c_str());
             harvesting_step++;
             set_in_process(false);
-            sequence_process = 0;
+            process = 0;
             sequence_mode = SEQUENCE_MODE::stop;
         }
     }
-
     else if(sequence_mode == SEQUENCE_MODE::injection){
-        int n  = 0;
-        if(sequence_process == n++) {
+        if(process == n++){
+            RCLCPP_INFO(this->get_logger(), "射出シーケンス_起動"); 
+        }
+        if(process == n++) {
             RCLCPP_INFO(this->get_logger(), "射出シーケンス_起動");
             RCLCPP_INFO(this->get_logger(), "「移動開始」");
                 command_move_node("IJ");
@@ -148,42 +165,42 @@ void Sequencer::callback_convergence(const controller_interface_msg::msg::Conver
                 command_inject_spinning(true);
             RCLCPP_INFO(this->get_logger(), "「空籾速度演算開始」");           
                 command_is_backside(true);
-            sequence_process++;
+            process++;
         }
-        else if(sequence_process == n++ && msg->injection){
+        else if(process == n++ && msg->injection){
             RCLCPP_INFO(this->get_logger(), "「空籾装填」");
                 if(color_order[inject_step]) is_right = true;
                 else is_right = false;
-                if(is_right) command_paddy_install(0);
-                else command_paddy_install(1);
-            sequence_process++;
+                if(is_right) command_paddy_install();
+                else command_paddy_install();
+            process++;
         }
-        else if(sequence_process == n++ && msg->spline_convergence && msg->injection_calculator && msg->injection && msg->ballhand/* && 射出命令*/){
+        else if(process == n++ && msg->spline_convergence && msg->injection_calculator && msg->injection && msg->ballhand/* && 射出命令*/){
             RCLCPP_INFO(this->get_logger(), "「空籾射出」"); 
                 command_inject();
-            sequence_process++;
+            process++;
         } 
-        else if(sequence_process == n++ && !msg->injection){
+        else if(process == n++ && !msg->injection){
             RCLCPP_INFO(this->get_logger(), "「籾速度演算開始」");
                 command_is_backside(false);  
-            sequence_process++;
+            process++;
         }
-        else if(sequence_process == n++){
+        else if(process == n++){
             RCLCPP_INFO(this->get_logger(), "「籾装填」");
-                if(!is_right) command_paddy_install(1);
-                else command_paddy_install(0);
-            sequence_process++;
+                if(!is_right) command_paddy_install();
+                else command_paddy_install();
+            process++;
         }
-        else if(sequence_process == n++ && msg->spline_convergence && msg->injection_calculator && msg->injection && msg->ballhand/* && 射出命令*/){
+        else if(process == n++ && msg->spline_convergence && msg->injection_calculator && msg->injection && msg->ballhand/* && 射出命令*/){
             RCLCPP_INFO(this->get_logger(), "「籾射出」");
                 command_is_backside(false); 
-            sequence_process++;
+            process++;
         }
-        else if(sequence_process == n++ && !msg->injection){
+        else if(process == n++ && !msg->injection){
             RCLCPP_INFO(this->get_logger(), "「回転停止」");           
                 command_inject_spinning(false);
             RCLCPP_INFO(this->get_logger(), "射出シーケンス_終了");
-            sequence_process = 0;
+            process = 0;
             sequence_mode = SEQUENCE_MODE::stop;
         } 
     }
@@ -228,12 +245,16 @@ void Sequencer::callback_base_control(const controller_interface_msg::msg::BaseC
     }
 }
 
+void Sequencer::callback_is_start(const std_msgs::msg::Empty::SharedPtr msg){
+
+}
+
 void Sequencer::set_in_process(const bool flag){
     auto msg_in_process = std::make_shared<std_msgs::msg::Bool>();
     msg_in_process->data = flag;
     _publisher_in_process->publish(*msg_in_process);
     in_process = flag;
-    sequence_process = 0;
+    process = 0;
 }
 
 void Sequencer::command_move_node(const std::string node){
@@ -248,53 +269,36 @@ void Sequencer::command_is_backside(const bool flag){
     _publisher_is_backside->publish(*msg_is_backside);    
 };
 
-void Sequencer::command_canusb_empty(const int16_t id, const uint8_t dlc){
+void Sequencer::command_canusb_empty(const int16_t id){
     auto msg_canusb = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
     msg_canusb->canid = id;
-    msg_canusb->candlc = dlc;
+    msg_canusb->candlc = 0;
     _publisher_canusb->publish(*msg_canusb);  
 };
 
-void Sequencer::command_canusb_uint8(const int16_t id, const uint8_t dlc, const uint8_t data[8]){
+void Sequencer::command_canusb_uint8(const int16_t id, const uint8_t data){
     auto msg_canusb = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
     msg_canusb->canid = id;
-    msg_canusb->candlc = dlc;
-    for(int i = 0; i < dlc; i++) msg_canusb->candata[i] = data[i];
+    msg_canusb->candlc = 1;
+    msg_canusb->candata[0] = data;
     _publisher_canusb->publish(*msg_canusb);
 };
 
 void Sequencer::command_inject_spinning(const bool flag){
-    uint8_t data[8];
-    data[0] = flag; 
-    command_canusb_uint8(canid_inject_spinning, 1, data);
+    command_canusb_uint8(canid_inject_spinning, flag);
 };
 
 void Sequencer::command_inject(){
-    command_canusb_empty(canid_inject_spinning, 1);
+    command_canusb_empty(canid_inject_spinning);
 };
 
-void Sequencer::command_seedling_collect(const uint8_t num){
-    uint8_t data[8];
-    data[0] = num; 
-    command_canusb_uint8(canid_seedling_collect, 1, data);
-};
-
-void Sequencer::command_seedling_install(const uint8_t num){
-    uint8_t data[8];
-    data[0] = num; 
-    command_canusb_uint8(canid_seedling_install, 1, data);
-};
-
-void Sequencer::command_paddy_collect(const uint8_t num){
-    uint8_t data[8];
-    data[0] = num; 
-    command_canusb_uint8(canid_paddy_collect, 1, data);
-};
-
-void Sequencer::command_paddy_install(const uint8_t num){
-    uint8_t data[8];
-    data[0] = num; 
-    command_canusb_uint8(canid_paddy_install, 1, data);
-};
+void Sequencer::command_seedling_collect_right(){ command_canusb_uint8(canid_seedling_collect, 0); }
+void Sequencer::command_seedling_collect_left(){ command_canusb_uint8(canid_seedling_collect, 1); }
+void Sequencer::command_seedling_install_right_0(){ command_canusb_uint8(canid_seedling_install, 0); }
+void Sequencer::command_seedling_install_right_1(){ command_canusb_uint8(canid_seedling_install, 1); }
+void Sequencer::command_seedling_install_left_0(){ command_canusb_uint8(canid_seedling_install, 2); }
+void Sequencer::command_seedling_install_left_1(){ command_canusb_uint8(canid_seedling_install, 3); }
+void Sequencer::command_paddy_collect(){ command_canusb_empty(canid_paddy_collect); } 
+void Sequencer::command_paddy_install(){ command_canusb_empty(canid_paddy_install); }
 
 }  // namespace sequencer
