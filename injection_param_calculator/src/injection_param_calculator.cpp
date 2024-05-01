@@ -58,6 +58,7 @@ namespace injection_param_calculator{
         
         uint8_t _candata[4];
         float_to_bytes(_candata, static_cast<float>(velocity*injection_command.gain));
+        // float_to_bytes(_candata, static_cast<float>(velocity*vel_gain));
         for (int i = 0; i < msg_injection->candlc; i++)msg_injection->candata[i] = _candata[i];
 
         //送信
@@ -65,6 +66,7 @@ namespace injection_param_calculator{
 
         if (is_convergenced){
             RCLCPP_INFO(get_logger(), "計算が収束しました:%f",velocity*injection_command.gain );
+            // RCLCPP_INFO(get_logger(), "計算が収束しました:%f",velocity*vel_gain );
             _publisher_can->publish(*msg_injection);
         }
     }

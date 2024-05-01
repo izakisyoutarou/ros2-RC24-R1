@@ -96,7 +96,8 @@ namespace controller_interface
         
         //回収、射出機構のはじめの位置の値を取得
         initial_pickup_state(get_parameter("initial_pickup_state").as_string()),
-        initial_inject_state(get_parameter("initial_inject_state").as_string())
+        initial_inject_state(get_parameter("initial_inject_state").as_string()),
+        connection_check(get_parameter("connection_check").as_bool())
 
         {
             //収束の状態を確認するための周期
@@ -235,29 +236,29 @@ namespace controller_interface
             _pub_convergence->publish(*msg_convergence);
 
             //ハートビート
-            _pub_heartbeat = this->create_wall_timer(
-                std::chrono::milliseconds(heartbeat_ms),
-                [this] {
-                    auto msg_heartbeat = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                    msg_heartbeat->canid = can_heartbeat_id;
-                    msg_heartbeat->candlc = 0;
-                    _pub_canusb->publish(*msg_heartbeat);
-                }
-            );
+                _pub_heartbeat = this->create_wall_timer(
+                    std::chrono::milliseconds(heartbeat_ms),
+                    [this] {
+                        auto msg_heartbeat = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                        msg_heartbeat->canid = can_heartbeat_id;
+                        msg_heartbeat->candlc = 0;
+                        _pub_canusb->publish(*msg_heartbeat);
+                    }
+                );
 
-            //convergence
-            _pub_timer_convergence = this->create_wall_timer(
-                std::chrono::milliseconds(convergence_ms),
-                [this] {
-                    auto msg_convergence = std::make_shared<controller_interface_msg::msg::Convergence>();
-                    msg_convergence->spline_convergence = is_spline_convergence;
-                    msg_convergence->injection_calculator = is_injection_calculator_convergence;
-                    msg_convergence->injection = is_injection_convergence;
-                    msg_convergence->seedlinghand = is_seedlinghand_convergence;
-                    msg_convergence->ballhand = is_ballhand_convergence;
-                    _pub_convergence->publish(*msg_convergence);
-                }
-            );
+                //convergence
+                _pub_timer_convergence = this->create_wall_timer(
+                    std::chrono::milliseconds(convergence_ms),
+                    [this] {
+                        auto msg_convergence = std::make_shared<controller_interface_msg::msg::Convergence>();
+                        msg_convergence->spline_convergence = is_spline_convergence;
+                        msg_convergence->injection_calculator = is_injection_calculator_convergence;
+                        msg_convergence->injection = is_injection_convergence;
+                        msg_convergence->seedlinghand = is_seedlinghand_convergence;
+                        msg_convergence->ballhand = is_ballhand_convergence;
+                        _pub_convergence->publish(*msg_convergence);
+                    }
+                );
 
             _socket_timer = this->create_wall_timer(
                 std::chrono::milliseconds(this->get_parameter("interval_ms").as_int()),
@@ -273,38 +274,40 @@ namespace controller_interface
                 }
             );
 
-            check_controller_connection = this->create_wall_timer(
-                std::chrono::milliseconds(static_cast<int>(controller_ms)),
-                [this] {
-                    std::chrono::system_clock::time_point now_time = std::chrono::system_clock::now();
-                    if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_controller_time).count() > 100 * 10){
-                        auto msg_emergency = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                        msg_emergency->canid = can_emergency_id;
-                        msg_emergency->candlc = 1;
-                        msg_emergency->candata[0] = 1;
-                        _pub_canusb->publish(*msg_emergency);
-                        RCLCPP_INFO(get_logger(),"controller_connection_lost!!");
+            if(connection_check){
+                check_controller_connection = this->create_wall_timer(
+                    std::chrono::milliseconds(static_cast<int>(controller_ms)),
+                    [this] {
+                        std::chrono::system_clock::time_point now_time = std::chrono::system_clock::now();
+                        if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_controller_time).count() > 100 * 10){
+                            auto msg_emergency = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                            msg_emergency->canid = can_emergency_id;
+                            msg_emergency->candlc = 1;
+                            msg_emergency->candata[0] = 1;
+                            _pub_canusb->publish(*msg_emergency);
+                            RCLCPP_INFO(get_logger(),"controller_connection_lost!!");
+                        }
                     }
-                }
-            );
+                );
 
-            check_mainboard_connection = this->create_wall_timer(
-                std::chrono::milliseconds(static_cast<int>(mainboard_ms)),
-                [this] { 
-                    if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_mainboard_time).count() > 200 * 10){
-                        is_emergency = true;
-                        is_restart = false; 
-                        auto msg_base_control = std::make_shared<controller_interface_msg::msg::BaseControl>();   
-                        msg_base_control->is_restart = is_restart;
-                        msg_base_control->is_emergency = is_emergency;
-                        msg_base_control->is_move_autonomous = is_move_autonomous;
-                        msg_base_control->is_slow_speed = is_slow_speed;
-                        msg_base_control->initial_state = initial_state;
-                        _pub_base_control->publish(*msg_base_control);
-                        RCLCPP_INFO(get_logger(),"mainboard_connection_lost!!");
+                check_mainboard_connection = this->create_wall_timer(
+                    std::chrono::milliseconds(static_cast<int>(mainboard_ms)),
+                    [this] { 
+                        // if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_mainboard_time).count() > 500 * 10){
+                        //     is_emergency = true;
+                        //     is_restart = false; 
+                        //     auto msg_base_control = std::make_shared<controller_interface_msg::msg::BaseControl>();   
+                        //     msg_base_control->is_restart = is_restart;
+                        //     msg_base_control->is_emergency = is_emergency;
+                        //     msg_base_control->is_move_autonomous = is_move_autonomous;
+                        //     msg_base_control->is_slow_speed = is_slow_speed;
+                        //     msg_base_control->initial_state = initial_state;
+                        //     _pub_base_control->publish(*msg_base_control);
+                        //     RCLCPP_INFO(get_logger(),"mainboard_connection_lost!!");
+                        // }
                     }
-                }
-            );
+                );
+            }
 
             //計画機にリミットを設定する
             high_velPlanner_linear_x.limit(high_limit_linear);
@@ -356,12 +359,13 @@ namespace controller_interface
                 is_injection_calculator_convergence = defalt_injection_calculator_convergence;
                 is_injection_convergence = defalt_injection_convergence;
                 is_seedlinghand_convergence = defalt_seedlinghand_convergence;
-                is_ballhand_convergence = defalt_ballhand_convergence;                
+                is_ballhand_convergence = defalt_ballhand_convergence; 
+                arm_expansion_flag = false;               
             }
-            else if(msg->data == "a") gamebtn.seedling_collect_right(is_seedlinghand_convergence,_pub_canusb);          
-            else if(msg->data == "b") gamebtn.seedling_collect_left(is_seedlinghand_convergence,_pub_canusb);               
-            else if(msg->data == "x") gamebtn.seedling_install_right(is_seedlinghand_convergence,_pub_canusb);   
-            else if(msg->data == "y") gamebtn.seedling_install_left(is_seedlinghand_convergence,_pub_canusb);   
+            else if(msg->data == "a"&&arm_expansion_flag) gamebtn.seedling_collect_right(is_seedlinghand_convergence,_pub_canusb);          
+            else if(msg->data == "b"&&arm_expansion_flag) gamebtn.seedling_collect_left(is_seedlinghand_convergence,_pub_canusb);               
+            else if(msg->data == "x"&&arm_expansion_flag) gamebtn.seedling_install_right(is_seedlinghand_convergence,_pub_canusb);   
+            else if(msg->data == "y"&&arm_expansion_flag) gamebtn.seedling_install_left(is_seedlinghand_convergence,_pub_canusb);
             else if(msg->data == "up") gamebtn.steer_reset(_pub_canusb);
             else if(msg->data == "down") gamebtn.calibrate(_pub_canusb);                
             else if(msg->data == "left") gamebtn.board_reset(_pub_canusb);
@@ -381,7 +385,12 @@ namespace controller_interface
             }
             else if(msg->data == "l1") gamebtn.paddy_control(is_ballhand_convergence,_pub_canusb); 
             else if(msg->data == "l2") is_slow_speed = !is_slow_speed;
-            else if(msg->data == "l3") gamebtn.arm_expansion(_pub_canusb);
+            else if(msg->data == "l3") {
+                if(!arm_expansion_flag){
+                    gamebtn.arm_expansion(_pub_canusb);
+                    arm_expansion_flag = true;
+                }
+            }
 
             //base_controlへ代入
             msg_base_control.is_restart = is_restart;
@@ -479,11 +488,11 @@ namespace controller_interface
         }
 
         void SmartphoneGamepad::callback_seedling_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg){
-            is_seedlinghand_convergence = static_cast<bool>(msg->candata[1]);
+            is_seedlinghand_convergence = static_cast<bool>(msg->candata[0]);
         }
 
         void SmartphoneGamepad::callback_paddy_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg){
-            is_ballhand_convergence = static_cast<bool>(msg->candata[2]);
+            is_ballhand_convergence = static_cast<bool>(msg->candata[0]);
         }
 
         //splineをsubsclib
@@ -562,7 +571,7 @@ namespace controller_interface
                     for(int i=0; i<msg_linear->candlc; i++) msg_linear->candata[i] = _candata_joy[i];
                     float_to_bytes(_candata_joy, static_cast<float>(velPlanner_angular_z.vel()) * manual_angular_max_vel);
                     for(int i=0; i<msg_angular->candlc; i++) msg_angular->candata[i] = _candata_joy[i];
-                    
+
                     msg_gazebo->linear.x = high_velPlanner_linear_x.vel();
                     msg_gazebo->linear.y = high_velPlanner_linear_y.vel();
                     msg_gazebo->angular.z = velPlanner_angular_z.vel();
