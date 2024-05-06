@@ -24,19 +24,29 @@ public:
 
 private:
 
-    rclcpp::Subscription<controller_interface_msg::msg::Convergence>::SharedPtr _subscription_convergence;
-    // rclcpp::Subscription<controller_interface_msg::msg::Colorball>::SharedPtr _subscription_color_information;
-    rclcpp::Subscription<controller_interface_msg::msg::BaseControl>::SharedPtr _subscription_base_control;
+    enum class SEQUENCE_MODE{
+        stop,
+        seedling,
+        planting,
+        harvesting,
+        injection
+    } sequence_mode = SEQUENCE_MODE::stop;
 
+    rclcpp::Subscription<controller_interface_msg::msg::Convergence>::SharedPtr _subscription_convergence;
+    rclcpp::Subscription<controller_interface_msg::msg::BaseControl>::SharedPtr _subscription_base_control;
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _subscription_target_node;
+    // rclcpp::Subscription<controller_interface_msg::msg::Colorball>::SharedPtr _subscription_color_information;
+    
     void callback_convergence(const controller_interface_msg::msg::Convergence::SharedPtr msg);
-    // void callback_color_information(const controller_interface_msg::msg::Colorball::SharedPtr msg);
     void callback_base_control(const controller_interface_msg::msg::BaseControl::SharedPtr msg);
+    void callback_target_node(const std_msgs::msg::String::SharedPtr msg);
+    // void callback_color_information(const controller_interface_msg::msg::Colorball::SharedPtr msg);
 
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr _publisher_move_node;
     rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _publisher_canusb;
 
+    void command_sequence(SEQUENCE_MODE sequence);
     void command_move_node(const std::string node);
-    void command_is_backside(const bool flag);
     
     void command_canusb_empty(const int16_t id);
     void command_canusb_uint8(const int16_t id, const uint8_t data);
@@ -61,13 +71,8 @@ private:
     const int16_t canid_paddy_collect;
     const int16_t canid_paddy_install;
 
-    enum class SEQUENCE_MODE{
-        stop,
-        seedling,
-        planting,
-        harvesting,
-        injection
-    } sequence_mode = SEQUENCE_MODE::stop;
+    std::string target_node = "";
+    int progress = 0;
 
 };
 
