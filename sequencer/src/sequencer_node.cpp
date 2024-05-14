@@ -73,18 +73,18 @@ void Sequencer::callback_convergence(const controller_interface_msg::msg::Conver
         // }        
     }
     else if(sequence_mode == SEQUENCE_MODE::harvesting){
-        if(progress == n++){             
-            command_move_node(std::to_string(std::stoi(msg->data.substr(1)) % 6 + 3));
-            progress++;
-        } 
-        else if(progress == n++ && !msg->spline_convergence){
-            command_move_node(target_data);  
-            progress++;      
-        }
-        else if(progress == n++ && !msg->spline_convergence){
-            command_paddy_collect(); 
-            command_sequence(SEQUENCE_MODE::stop);    
-        } 
+        // if(progress == n++){             
+        //     command_move_node(std::to_string(std::stoi(msg->data.substr(1)) % 6 + 3));
+        //     progress++;
+        // } 
+        // else if(progress == n++ && !msg->spline_convergence){
+        //     command_move_node(target_data);  
+        //     progress++;      
+        // }
+        // else if(progress == n++ && !msg->spline_convergence){
+        //     command_paddy_collect(); 
+        //     command_sequence(SEQUENCE_MODE::stop);    
+        // } 
     }
     else if(sequence_mode == SEQUENCE_MODE::injection){
         
