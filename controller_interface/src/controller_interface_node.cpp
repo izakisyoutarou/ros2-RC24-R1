@@ -207,7 +207,7 @@ namespace controller_interface
                         auto msg_heartbeat = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
                         msg_heartbeat->canid = can_heartbeat_id;
                         msg_heartbeat->candlc = 0;
-                        // _pub_canusb->publish(*msg_heartbeat);
+                        _pub_canusb->publish(*msg_heartbeat);
                     }
                 );
 
