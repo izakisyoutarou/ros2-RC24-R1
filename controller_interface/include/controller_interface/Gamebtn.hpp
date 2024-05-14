@@ -21,13 +21,11 @@ class Gamebtn{
             int16_t calibrate;
             int16_t reset;
             int16_t inject;
-            int16_t inject_spinning;
             int16_t seedling_collect;
             int16_t seedling_install;
             int16_t paddy_collect;
             int16_t paddy_install;
             int16_t steer_reset;
-
             int16_t arm_expansion;
             int16_t inject_calibration;
         };

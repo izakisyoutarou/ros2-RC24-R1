@@ -40,10 +40,8 @@ launch: #起動パラメータ
       steer_reset: 0x130
       #200番台(上物)
       #射出
-      inject_spinning: 0x200
       inject: 0x201
       inject_vel: 0x202
-      backspin_vel: 0x203
       inject_convergence: 0x204
       inject_pitch: 0x205
       inject_calibration: 0x206
@@ -57,19 +55,12 @@ launch: #起動パラメータ
       paddy_collect: 0x220
       paddy_install: 0x221
       paddy_convergence: 0x222
-      #デジタルボタン
-      main_digital_button: 0x230
-      sub_digital_button: 0x231
         
     port:
       joy_main: 50000
-      pole_share: 53000
-      spline_state: 55000
-      robot_state: 57000
       
     ip:
       r1_pc: "192.168.1.2"
-      r2_pc: "192.168.1.3"
     
     #周期
     convergence_ms: 100
@@ -103,16 +94,9 @@ controller_interface_node:
     angular_max_dec: 500.0
     
     heartbeat_ms: 100 #ハートビート周期[ms]
-    start_ms: 3000
     interval_ms: 6
     controller_ms: 100
     mainboard_ms: 200
-    
-    defalt_color_information_flag: false
-
-    initial_pickup_state: "A"
-    initial_inject_state: "B"
-
     connection_check: false
 
 rasnac_localization:
@@ -179,10 +163,3 @@ injection_param_calculator_node:
     velocity_lim_max: 15.0               # 最大初速度[m/s]
     injection_angle: 30.0                # 射出角度[deg]
     max_loop: 100                        # ニュートン法のループ制限回数
-
-sequencer_node:
-  ros__parameters:
-    select_algorithm: 0
-    seedling_order: ["S0", "S1", "S2"]
-    planting_order: ["P0", "P1", "P2", "P3", "P4", "P5"]
-    harvesting_order: ["H0", "H1", "H2", "H3", "H4", "H5", "H6", "H7", "H8", "H9", "H10", "H11"]

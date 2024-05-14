@@ -21,12 +21,6 @@ Sequencer::Sequencer(const std::string &name_space, const rclcpp::NodeOptions &o
         std::bind(&Sequencer::callback_convergence, this, std::placeholders::_1)
     );
 
-    // _subscription_color_information = this->create_subscription<controller_interface_msg::msg::Colorball>(
-    //     "color_information",
-    //     _qos,
-    //     std::bind(&Sequencer::callback_color_information, this, std::placeholders::_1)
-    // );
-
     _subscription_base_control = this->create_subscription<controller_interface_msg::msg::BaseControl>(
         "base_control",
         _qos,
@@ -46,82 +40,83 @@ Sequencer::Sequencer(const std::string &name_space, const rclcpp::NodeOptions &o
 
 void Sequencer::callback_convergence(const controller_interface_msg::msg::Convergence::SharedPtr msg){
     int n  = 0;
-    if(sequence_mode == SEQUENCE_MODE::seedling){
+    if(sequence_mode == SEQUENCE_MODE::planting){
         // if(progress == n++){
-        //     command_move_node(target_node);
+        //     command_move_node('A');
+        //     progress++;
+        // } 
+        // else if(progress == n++ && tof[0] && msg->seedlinghand){
+        //     command_move_node('B');
         //     progress++;
         // }
-        // else if(progress == n++ && !msg->spline_convergence){
-        //     command_seedling_collect_left();
+        // else if(progress == n++ && tof[1] && && msg->seedlinghand){
+        //     command_move_node('C');
         //     progress++;
         // }
-        // else if(progress == n++ && msg->seedlinghand){
-        //     command_sequence(SEQUENCE_MODE::stop);
-        // }
-    }
-    else if(sequence_mode == SEQUENCE_MODE::planting){
-        // if(progress == n++){
-        //     command_move_node(target_node);
-        //     progress++;
-        // }
-        // else if(progress == n++ && !msg->spline_convergence){
+        // else if(progress == n++ && way_point = 'C'){
         //     command_seedling_install_left_0();
         //     progress++;
         // }
-        // else if(progress == n++ && msg->seedlinghand){
-        //     command_sequence(SEQUENCE_MODE::stop);
-        // }        
+        // else if(progress == n++ && && msg->seedlinghand){
+        //     command_move_node('D');
+        //     progress++;       
+        // }
+        // else if(progress == n++ && way_point = 'D'){
+        //     command_seedling_install_left_1();
+        //     progress++;
+        // }
+        // else if(progress == n++ && && msg->seedlinghand){
+        //     command_move_node('E');
+        //     progress++;       
+        // }
+        // else if(progress == n++ && way_point = 'E'){
+        //     command_seedling_install_right_0();
+        //     progress++;
+        // }
+        // else if(progress == n++ && && msg->seedlinghand){
+        //     command_move_node('F');
+        //     progress++;       
+        // }
+        // else if(progress == n++ && way_point = 'F'){
+        //     command_seedling_install_right_1();
+        //     progress++;
+        // }
+        // else if(progress == n++ && && msg->seedlinghand){
+        //     command_move_node('G');
+        //     progress++;       
+        // }
+        // else if(progress == n++ && tof[0] && msg->seedlinghand){
+        //     command_move_node('H');
+        //     progress++;
+        // }
+        // else if(progress == n++ && way_point = 'H'){
+        //     command_seedling_install_left_0();
+        //     progress++;
+        // }
+        // else if(progress == n++ && && msg->seedlinghand){
+        //     command_move_node('I');
+        //     progress++;       
+        // }
+        // else if(progress == n++ && way_point = 'I'){
+        //     command_seedling_install_left_1();
+        //     progress++;
+        // }
+        // else if(progress == n++ && && msg->seedlinghand){
+        //     command_move_node('IJ');
+        //     command_sequence(SEQUENCE_MODE::stop);       
+        // }
     }
     else if(sequence_mode == SEQUENCE_MODE::harvesting){
         // if(progress == n++){             
         //     command_move_node(std::to_string(std::stoi(msg->data.substr(1)) % 6 + 3));
         //     progress++;
         // } 
-        // else if(progress == n++ && !msg->spline_convergence){
+        // else if(progress == n++ && way_point[0] == 'b){
         //     command_move_node(target_data);  
-        //     progress++;      
-        // }
-        // else if(progress == n++ && !msg->spline_convergence){
-        //     command_paddy_collect(); 
         //     command_sequence(SEQUENCE_MODE::stop);    
         // } 
     }
-    else if(sequence_mode == SEQUENCE_MODE::injection){
-        
-    }
 }
-
-// void Sequencer::callback_color_information(const controller_interface_msg::msg::Colorball::SharedPtr msg){
-//     if(select_algorithm == 0){
-//         int count = 0;
-//         bool color = false;
-//         std::queue<int> own_color;
-//         std::queue<int> purple_color;
-//         for(int i = 6; i < 12; i++){
-//             if(msg->color_info[i]) own_color.push(i);
-//             else purple_color.push(i);
-//         }
-//         for(int i = 0; i < 6; i++){
-//             color = msg->color_info[i];
-//             harvesting_order[count] = "H" + std::to_string(i);
-//             color_order[count] = msg->color_info[i];
-//             count++;
-//             if(color) {
-//                 harvesting_order[count] = "H" + std::to_string(purple_color.front());
-//                 color_order[count] = msg->color_info[purple_color.front()];
-//                 purple_color.pop();
-//             }
-//             else {
-//                 harvesting_order[count] = "H" + std::to_string(own_color.front());
-//                 color_order[count] = msg->color_info[own_color.front()];
-//                 own_color.pop();        
-//             }
-//             count++;
-//         }
-//         RCLCPP_INFO(this->get_logger(), "籾の回収順");
-//         for(int i = 0; i < 12; i++) RCLCPP_INFO(this->get_logger(), "%s,%d", harvesting_order[i].c_str(),color_order[i]);
-//     }
-// }
 
 void Sequencer::callback_base_control(const controller_interface_msg::msg::BaseControl::SharedPtr msg){
     if(msg->is_restart){
@@ -131,10 +126,7 @@ void Sequencer::callback_base_control(const controller_interface_msg::msg::BaseC
 
 void Sequencer::callback_target_node(const std_msgs::msg::String::SharedPtr msg){
     if(sequence_mode == SEQUENCE_MODE::stop){
-        if(msg->data[0] == 'S') command_sequence(SEQUENCE_MODE::seedling);
-        else if(msg->data[0] == 'P') command_sequence(SEQUENCE_MODE::planting);
-        else if(msg->data[0] == 'H') command_sequence(SEQUENCE_MODE::harvesting);
-        else if(msg->data[0] == 'I') command_sequence(SEQUENCE_MODE::injection);
+        if(msg->data[0] == 'H') command_sequence(SEQUENCE_MODE::harvesting);
         target_node = msg->data;
     }
 };

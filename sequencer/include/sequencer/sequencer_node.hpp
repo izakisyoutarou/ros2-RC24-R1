@@ -26,21 +26,17 @@ private:
 
     enum class SEQUENCE_MODE{
         stop,
-        seedling,
         planting,
-        harvesting,
-        injection
+        harvesting
     } sequence_mode = SEQUENCE_MODE::stop;
 
     rclcpp::Subscription<controller_interface_msg::msg::Convergence>::SharedPtr _subscription_convergence;
     rclcpp::Subscription<controller_interface_msg::msg::BaseControl>::SharedPtr _subscription_base_control;
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _subscription_target_node;
-    // rclcpp::Subscription<controller_interface_msg::msg::Colorball>::SharedPtr _subscription_color_information;
-    
+
     void callback_convergence(const controller_interface_msg::msg::Convergence::SharedPtr msg);
     void callback_base_control(const controller_interface_msg::msg::BaseControl::SharedPtr msg);
     void callback_target_node(const std_msgs::msg::String::SharedPtr msg);
-    // void callback_color_information(const controller_interface_msg::msg::Colorball::SharedPtr msg);
 
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr _publisher_move_node;
     rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _publisher_canusb;
@@ -62,7 +58,6 @@ private:
     void command_paddy_collect();
     void command_paddy_install();
 
-    //QoS
     rclcpp::QoS _qos = rclcpp::QoS(10);
 
     const int16_t canid_inject;
@@ -73,6 +68,9 @@ private:
 
     std::string target_node = "";
     int progress = 0;
+
+    bool tof[3] = {};
+    std::string way_point = "";
 
 };
 
