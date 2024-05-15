@@ -185,6 +185,7 @@ namespace controller_interface
             msg_base_control.is_move_autonomous = defalt_move_autonomous_flag;
             msg_base_control.is_injection_autonomous = defalt_injection_autonomous_flag;
             msg_base_control.is_slow_speed= defalt_slow_speed_flag;
+            msg_base_control.initial_state= "O";
             _pub_base_control->publish(msg_base_control);
 
             auto msg_emergency = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
@@ -265,11 +266,8 @@ namespace controller_interface
 
         void SmartphoneGamepad::callback_main_pad(const std_msgs::msg::String::SharedPtr msg)    {
 
-
-
-
-
             uint8_t _candata_btn[8];
+            msg_base_control.is_restart = false;
 
             if(msg->data == "g"){
                 cout<<"emergency"<<endl;

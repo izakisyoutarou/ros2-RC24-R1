@@ -108,11 +108,11 @@ void Gamebtn::seedling_install_right1(bool is_seedlinghand_convergence, rclcpp::
 void Gamebtn::seedling_install_left(bool is_seedlinghand_convergence, rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
     if(is_seedlinghand_convergence){
         if(seed_left_flag == 1){
-            seedling_install_left0(is_seedlinghand_convergence,_pub_canusb);
+            seedling_install_left1(is_seedlinghand_convergence,_pub_canusb);
             seed_left_flag = 2;
         }
         else if(seed_left_flag == 2){
-            seedling_install_left1(is_seedlinghand_convergence,_pub_canusb);
+            seedling_install_left0(is_seedlinghand_convergence,_pub_canusb);
             seed_left_flag = 0;
         }
     }
