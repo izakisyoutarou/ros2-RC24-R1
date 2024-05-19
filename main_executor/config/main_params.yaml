@@ -107,7 +107,7 @@ rasnac_localization:
     odom_weight_angler: 4.0e-4
     voxel_size: 0.06
     trial_num: 50
-    inlier_dist_threshold: 0.013
+    inlier_dist_threshold: 0.015
     inlier_length_threshold: 0.5 #インライアのしきい値
     second_ransac: false         #2回ransacするか
     robot_type: "R1"
@@ -124,8 +124,8 @@ spline_pid_node:
     linear_pos_integral_gain: 0.01  #並進位置ズレの積分ゲイン
 
     angular_planner_gain: 1.0 #回転速度計画機ゲイン
-    angular_pos_gain: 2.5 #回転位置ズレのゲイン
-    angular_pos_integral_gain: 0.02  #回転位置ズレの積分ゲイン
+    angular_pos_gain: 1.8 #回転位置ズレのゲイン
+    angular_pos_integral_gain: 0.01  #回転位置ズレの積分ゲイン
 
     linear_pos_tolerance: 0.01  #並進到達位置の許容誤差[m]
     angular_pos_tolerance: 1.0  #回転到達位置の許容誤差[deg]
