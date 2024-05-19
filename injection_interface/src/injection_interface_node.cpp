@@ -100,13 +100,15 @@ namespace injection_interface{
         }
 
         void InjectionInterface::_callback_move_node(const std_msgs::msg::String::SharedPtr msg){
-            if(msg->data[0] == 'H') {
-                command_injection_pitch(linear_pitch[0]);
-                injection_num = std::stoi(msg->data.substr(1));              
-            }
-            else if(msg->data[0] == 'I') {
-                command_injection_pitch(linear_pitch[1]);
-                injection_num = 13;
+            if(msg->data.length() >= 2){
+                if(msg->data[0] == 'H') {
+                    command_injection_pitch(linear_pitch[0]);
+                    injection_num = std::stoi(msg->data.substr(1));              
+                }
+                else if(msg->data[0] == 'I') {
+                    command_injection_pitch(linear_pitch[1]);
+                    injection_num = 13;
+                }
             }
         }
 
