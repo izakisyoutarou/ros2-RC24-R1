@@ -41,80 +41,80 @@ Sequencer::Sequencer(const std::string &name_space, const rclcpp::NodeOptions &o
 void Sequencer::callback_convergence(const controller_interface_msg::msg::Convergence::SharedPtr msg){
     int n  = 0;
     if(sequence_mode == SEQUENCE_MODE::planting){
-        // if(progress == n++){
-        //     command_move_node('A');
-        //     progress++;
-        // } 
-        // else if(progress == n++ && tof[0] && msg->seedlinghand){
-        //     command_move_node('B');
-        //     progress++;
-        // }
-        // else if(progress == n++ && tof[1] && && msg->seedlinghand){
-        //     command_move_node('C');
-        //     progress++;
-        // }
-        // else if(progress == n++ && way_point = 'C'){
-        //     command_seedling_install_left_0();
-        //     progress++;
-        // }
-        // else if(progress == n++ && && msg->seedlinghand){
-        //     command_move_node('D');
-        //     progress++;       
-        // }
-        // else if(progress == n++ && way_point = 'D'){
-        //     command_seedling_install_left_1();
-        //     progress++;
-        // }
-        // else if(progress == n++ && && msg->seedlinghand){
-        //     command_move_node('E');
-        //     progress++;       
-        // }
-        // else if(progress == n++ && way_point = 'E'){
-        //     command_seedling_install_right_0();
-        //     progress++;
-        // }
-        // else if(progress == n++ && && msg->seedlinghand){
-        //     command_move_node('F');
-        //     progress++;       
-        // }
-        // else if(progress == n++ && way_point = 'F'){
-        //     command_seedling_install_right_1();
-        //     progress++;
-        // }
-        // else if(progress == n++ && && msg->seedlinghand){
-        //     command_move_node('G');
-        //     progress++;       
-        // }
-        // else if(progress == n++ && tof[0] && msg->seedlinghand){
-        //     command_move_node('H');
-        //     progress++;
-        // }
-        // else if(progress == n++ && way_point = 'H'){
-        //     command_seedling_install_left_0();
-        //     progress++;
-        // }
-        // else if(progress == n++ && && msg->seedlinghand){
-        //     command_move_node('I');
-        //     progress++;       
-        // }
-        // else if(progress == n++ && way_point = 'I'){
-        //     command_seedling_install_left_1();
-        //     progress++;
-        // }
-        // else if(progress == n++ && && msg->seedlinghand){
-        //     command_move_node('IJ');
-        //     command_sequence(SEQUENCE_MODE::stop);       
-        // }
+        if(progress == n++){
+            command_move_node('A');
+            progress++;
+        } 
+        else if(progress == n++ && tof[0] && msg->seedlinghand){
+            command_move_node('B');
+            progress++;
+        }
+        else if(progress == n++ && tof[1] && msg->seedlinghand){
+            command_move_node('C');
+            progress++;
+        }
+        else if(progress == n++ && way_point = 'C'){
+            command_seedling_install_left_0();
+            progress++;
+        }
+        else if(progress == n++ && && msg->seedlinghand){
+            command_move_node('D');
+            progress++;       
+        }
+        else if(progress == n++ && way_point = 'D'){
+            command_seedling_install_left_1();
+            progress++;
+        }
+        else if(progress == n++ && && msg->seedlinghand){
+            command_move_node('E');
+            progress++;       
+        }
+        else if(progress == n++ && way_point = 'E'){
+            command_seedling_install_right_0();
+            progress++;
+        }
+        else if(progress == n++ && && msg->seedlinghand){
+            command_move_node('F');
+            progress++;       
+        }
+        else if(progress == n++ && way_point = 'F'){
+            command_seedling_install_right_1();
+            progress++;
+        }
+        else if(progress == n++ && && msg->seedlinghand){
+            command_move_node('G');
+            progress++;       
+        }
+        else if(progress == n++ && tof[0] && msg->seedlinghand){
+            command_move_node('H');
+            progress++;
+        }
+        else if(progress == n++ && way_point = 'H'){
+            command_seedling_install_left_0();
+            progress++;
+        }
+        else if(progress == n++ && && msg->seedlinghand){
+            command_move_node('I');
+            progress++;       
+        }
+        else if(progress == n++ && way_point = 'I'){
+            command_seedling_install_left_1();
+            progress++;
+        }
+        else if(progress == n++ && && msg->seedlinghand){
+            command_move_node('IJ');
+            command_sequence(SEQUENCE_MODE::stop);       
+        }
     }
     else if(sequence_mode == SEQUENCE_MODE::harvesting){
-        // if(progress == n++){             
-        //     command_move_node(std::to_string(std::stoi(msg->data.substr(1)) % 6 + 3));
-        //     progress++;
-        // } 
-        // else if(progress == n++ && way_point[0] == 'b){
-        //     command_move_node(target_data);  
-        //     command_sequence(SEQUENCE_MODE::stop);    
-        // } 
+        if(progress == n++){             
+            command_move_node(std::to_string(std::stoi(msg->data.substr(1)) % 6 + 3));
+            progress++;
+        } 
+        else if(progress == n++ && way_point[0] == 'b'){
+            command_move_node(target_data);  
+            command_sequence(SEQUENCE_MODE::stop);    
+        } 
     }
 }
 
