@@ -4,19 +4,17 @@
 #include <chrono>
 #include <iostream>
 #include <future>
-
-using namespace utils;
+#include <boost/format.hpp>
 
 namespace controller_interface
 {
-    #define BUFFER_NUM 3
-    #define BUFSIZE 1024
+
     using std::string;
 
     DualSense::DualSense(const rclcpp::NodeOptions &options) : DualSense("", options){}
     DualSense::DualSense(const std::string &name_space, const rclcpp::NodeOptions &options)
         : rclcpp::Node("controller_interface_node", name_space, options),
-        //足回り
+        
         high_limit_linear(DBL_MAX,
         get_parameter("high_linear_max_vel").as_double(),
         get_parameter("high_linear_max_acc").as_double(),
@@ -33,107 +31,117 @@ namespace controller_interface
         high_manual_linear_max_vel(static_cast<float>(get_parameter("high_linear_max_vel").as_double())),
         slow_manual_linear_max_vel(static_cast<float>(get_parameter("slow_linear_max_vel").as_double())),
         manual_angular_max_vel(dtor(static_cast<float>(get_parameter("angular_max_vel").as_double()))),
-        //ロボットの状態
+
         defalt_restart_flag(get_parameter("defalt_restart_flag").as_bool()),
         defalt_emergency_flag(get_parameter("defalt_emergency_flag").as_bool()),
         defalt_move_autonomous_flag(get_parameter("defalt_move_autonomous_flag").as_bool()),
         defalt_injection_autonomous_flag(get_parameter("defalt_injection_autonomous_flag").as_bool()),
         defalt_slow_speed_flag(get_parameter("defalt_slow_speed_flag").as_bool()),
+
         defalt_spline_convergence(get_parameter("defalt_spline_convergence").as_bool()),
         defalt_injection_calculator_convergence(get_parameter("defalt_injection_calculator_convergence").as_bool()),
         defalt_injection_convergence(get_parameter("defalt_injection_convergence").as_bool()),
         defalt_seedlinghand_convergence(get_parameter("defalt_seedlinghand_convergence").as_bool()),
         defalt_ballhand_convergence(get_parameter("defalt_ballhand_convergence").as_bool()),
 
-        udp_port_state(get_parameter("port.robot_state").as_int()),
-        //canid
         can_emergency_id(get_parameter("canid.emergency").as_int()),
         can_heartbeat_id(get_parameter("canid.heartbeat").as_int()),
         can_restart_id(get_parameter("canid.restart").as_int()),
         can_calibrate_id(get_parameter("canid.calibrate").as_int()),
+        can_reset_id(get_parameter("canid.reset").as_int()),
+        can_emergency_state_id(get_parameter("canid.emergency_state").as_int()),
         can_linear_id(get_parameter("canid.linear").as_int()),
         can_angular_id(get_parameter("canid.angular").as_int()),
-        can_main_button_id(get_parameter("canid.main_digital_button").as_int()),
-        can_sub_button_id(get_parameter("canid.sub_digital_button").as_int()),
+        can_steer_reset_id(get_parameter("canid.steer_reset").as_int()),
         can_inject_id(get_parameter("canid.inject").as_int()),
-        can_inject_spinning_id(get_parameter("canid.inject_spinning").as_int()),
+        can_inject_convergence_id(get_parameter("canid.inject_convergence").as_int()),
+        can_inject_calibration_id(get_parameter("canid.inject_calibration").as_int()),
         can_seedling_collect_id(get_parameter("canid.seedling_collect").as_int()),
         can_seedling_install_id(get_parameter("canid.seedling_install").as_int()),
+        can_seedling_convergence_id(get_parameter("canid.seedling_convergence").as_int()),
         can_paddy_collect_id(get_parameter("canid.paddy_collect").as_int()),
         can_paddy_install_id(get_parameter("canid.paddy_install").as_int()),
-        can_steer_reset_id(get_parameter("canid.steer_reset").as_int()),
-        can_reset_id(get_parameter("canid.reset").as_int()),
-        //ipアドレスの取得
-        r1_pc(get_parameter("ip.r1_pc").as_string()),
-        r2_pc(get_parameter("ip.r2_pc").as_string()),
-        //回収、射出機構のはじめの位置の値を取得
-        initial_pickup_state(get_parameter("initial_pickup_state").as_string()),
-        initial_inject_state(get_parameter("initial_inject_state").as_string())
+        can_paddy_convergence_id(get_parameter("canid.paddy_convergence").as_int()),
+        can_arm_expansion_id(get_parameter("canid.arm_expansion").as_int()),
+
+        connection_check(get_parameter("connection_check").as_bool())
+
         {
+
             const auto heartbeat_ms = this->get_parameter("heartbeat_ms").as_int();
             const auto convergence_ms = this->get_parameter("convergence_ms").as_int();
+            const auto controller_ms = this->get_parameter("controller_ms").as_int();
+            const auto mainboard_ms = this->get_parameter("mainboard_ms").as_int();
 
-            //controllerからsub
-            _sub_dualsense_main = this->create_subscription<sensor_msgs::msg::Joy>(
+            gamebtn.canid.calibrate = can_calibrate_id;
+            gamebtn.canid.reset = can_reset_id;
+            gamebtn.canid.steer_reset = can_steer_reset_id;
+            gamebtn.canid.inject = can_inject_id;
+            gamebtn.canid.paddy_collect = can_paddy_collect_id;
+            gamebtn.canid.paddy_install = can_paddy_install_id;
+            gamebtn.canid.seedling_collect = can_seedling_collect_id;
+            gamebtn.canid.seedling_install = can_seedling_install_id;
+            gamebtn.canid.arm_expansion = can_arm_expansion_id;
+            gamebtn.canid.inject_calibration = can_inject_calibration_id;
+
+            _sub_dualsense = this->create_subscription<sensor_msgs::msg::Joy>(
                 "/joy",
                 _qos,
-                std::bind(&DualSense::callback_dualsense_main, this, std::placeholders::_1)
+                std::bind(&DualSense::callback_dualsense, this, std::placeholders::_1)
             );
-            //mainからsub
-            _sub_main_injection_possible = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
-                "can_rx_203",
+
+            _sub_emergency_state = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
+                "can_rx_"+ (boost::format("%x") % can_emergency_state_id).str(),
                 _qos,
-                std::bind(&DualSense::callback_main_injection_possible, this, std::placeholders::_1)
+                std::bind(&DualSense::callback_emergency_state, this, std::placeholders::_1)
             );
-            _sub_main_Seedlinghand_possible = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
-                "can_rx_212",
+            _sub_inject_convergence = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
+                "can_rx_"+ (boost::format("%x") %  can_inject_convergence_id).str(),
                 _qos,
-                std::bind(&DualSense::callback_main_Seedlinghand_possible, this, std::placeholders::_1)
+                std::bind(&DualSense::callback_inject_convergence, this, std::placeholders::_1)
             );
-            _sub_main_ballhand_possible = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
-                "can_rx_222",
+            _sub_seedling_convergence = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
+                "can_rx_"+ (boost::format("%x") %  can_seedling_convergence_id).str(),
                 _qos,
-                std::bind(&DualSense::callback_main_ballhand_possible, this, std::placeholders::_1)
+                std::bind(&DualSense::callback_seedling_convergence, this, std::placeholders::_1)
             );
-            //spline_pidからsub
-            _sub_spline = this->create_subscription<std_msgs::msg::Bool>(
+            _sub_paddy_convergence = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
+                "can_rx_"+ (boost::format("%x") %  can_paddy_convergence_id).str(),
+                _qos,
+                std::bind(&DualSense::callback_paddy_convergence, this, std::placeholders::_1)
+            );
+
+            _sub_is_move_tracking = this->create_subscription<std_msgs::msg::Bool>(
                 "is_move_tracking",
                 _qos,
-                std::bind(&DualSense::callback_spline, this, std::placeholders::_1)
+                std::bind(&DualSense::callback_is_move_tracking, this, std::placeholders::_1)
             );
 
-            //injection_param_calculatorからsub
-            _sub_injection_calculator = this->create_subscription<std_msgs::msg::Bool>(
+            _sub_calculator_convergence = this->create_subscription<std_msgs::msg::Bool>(
                 "calculator_convergenced_",
                 _qos,
-                std::bind(&DualSense::callback_injection_calculator, this, std::placeholders::_1)
+                std::bind(&DualSense::callback_calculator_convergence, this, std::placeholders::_1)
+            );
+            _sub_inject_calibration = this->create_subscription<std_msgs::msg::Empty>(
+                "Injection_Calibration",
+                _qos,
+                std::bind(&DualSense::callback_inject_calibration, this, std::placeholders::_1)
             );
 
-            //canusbへpub
-            //txは送信でrxは受信
             _pub_canusb = this->create_publisher<socketcan_interface_msg::msg::SocketcanIF>("can_tx", _qos);
-            //injectionへpub
-            //各nodeへ共有。
             _pub_base_control = this->create_publisher<controller_interface_msg::msg::BaseControl>("base_control",_qos);
             _pub_convergence = this->create_publisher<controller_interface_msg::msg::Convergence>("convergence" , _qos);
-            _pub_color_ball = this->create_publisher<controller_interface_msg::msg::Colorball>("color_information", _qos);
-            _pub_injection = this->create_publisher<std_msgs::msg::Bool>("is_backside", _qos);
-
-            _pub_cmd_vel = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel",_qos);
-
-            auto msg_base_control = std::make_shared<controller_interface_msg::msg::BaseControl>();
-            //get_parametorで取得したパラメータをrc23pkgsのmsgに格納
-            msg_base_control->is_restart = defalt_restart_flag;
-            msg_base_control->is_emergency = defalt_emergency_flag;
-            msg_base_control->is_move_autonomous = defalt_move_autonomous_flag;
-            msg_base_control->is_injection_autonomous = defalt_injection_autonomous_flag;
-            msg_base_control->is_slow_speed = defalt_slow_speed_flag;
-            this->is_reset = defalt_restart_flag;
-            this->is_emergency = defalt_emergency_flag;
-            this->is_move_autonomous = defalt_move_autonomous_flag;
-            this->is_injection_autonomous = defalt_injection_autonomous_flag;
-            this->is_slow_speed = defalt_slow_speed_flag;
-            _pub_base_control->publish(*msg_base_control);
+            _pub_injection_calculate = this->create_publisher<std_msgs::msg::Empty>("injection_calculate", _qos);
+            pub_move_node = this->create_publisher<std_msgs::msg::String>("move_node", _qos);
+            _pub_gazebo = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", _qos);
+            
+            msg_base_control.is_restart = defalt_restart_flag;
+            msg_base_control.is_emergency = defalt_emergency_flag;
+            msg_base_control.is_move_autonomous = defalt_move_autonomous_flag;
+            msg_base_control.is_injection_autonomous = defalt_injection_autonomous_flag;
+            msg_base_control.is_slow_speed= defalt_slow_speed_flag;
+            msg_base_control.initial_state= "O";
+            _pub_base_control->publish(msg_base_control);
 
             auto msg_emergency = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
             msg_emergency->canid = can_emergency_id;
@@ -141,30 +149,18 @@ namespace controller_interface
             msg_emergency->candata[0] = defalt_emergency_flag;
             _pub_canusb->publish(*msg_emergency);
 
-            //収束を確認するmsgの宣言
-            auto msg_convergence = std::make_shared<controller_interface_msg::msg::Convergence>();
-            //get_parametorで取得したパラメータをrc23pkgsのmsgに格納
-            msg_convergence->spline_convergence = defalt_spline_convergence;
-            msg_convergence->injection_calculator = defalt_injection_calculator_convergence;
-            msg_convergence->injection = defalt_injection_convergence;
-            msg_convergence->seedlinghand = defalt_seedlinghand_convergence;
-            msg_convergence->ballhand = defalt_ballhand_convergence;
-
-            this->spline_convergence = defalt_spline_convergence;
-            this->injection_calculator = defalt_injection_calculator_convergence;
-            this->injection = defalt_injection_convergence;
-            this->seedlinghand = defalt_seedlinghand_convergence;
-            this->ballhand = defalt_ballhand_convergence;
-            _pub_convergence->publish(*msg_convergence);
+            msg_convergence.spline_convergence = defalt_spline_convergence;
+            msg_convergence.injection_calculator = defalt_injection_calculator_convergence;
+            msg_convergence.injection = defalt_injection_convergence;
+            msg_convergence.seedlinghand = defalt_seedlinghand_convergence;
+            msg_convergence.ballhand = defalt_ballhand_convergence;
+            _pub_convergence->publish(msg_convergence);
 
             //ハートビート
-            //コントローラの鼓動
-            //一定周期で処理をしている。この場合は100ms間隔で処理をしている
             _pub_heartbeat = this->create_wall_timer(
                 std::chrono::milliseconds(heartbeat_ms),
                 [this] {
-                    auto msg_heartbeat = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                    //get_parametorで取得したパラメータをrc23pkgsのmsgに格納
+                    auto msg_heartbeat = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();  
                     msg_heartbeat->canid = can_heartbeat_id;
                     msg_heartbeat->candlc = 0;
                     _pub_canusb->publish(*msg_heartbeat);
@@ -172,321 +168,144 @@ namespace controller_interface
             );
 
             //convergence
-            //収束状況
-            //一定周期で処理をしている。この場合は100ms間隔で処理をしている
             _pub_timer_convergence = this->create_wall_timer(
                 std::chrono::milliseconds(convergence_ms),
                 [this] {
-                    auto msg_convergence = std::make_shared<controller_interface_msg::msg::Convergence>();
-                    //get_parametorで取得したパラメータをrc24pkgsのmsgに格納
-                    msg_convergence->spline_convergence = is_spline_convergence;
-                    msg_convergence->injection_calculator = is_injection_calculator_convergence;
-                    msg_convergence->injection = is_injection_convergence;
-                    msg_convergence->seedlinghand = is_seedlinghand_convergence;
-                    msg_convergence->ballhand = is_ballhand_convergence;
-                    _pub_convergence->publish(*msg_convergence);
+                    _pub_convergence->publish(msg_convergence);
                 }
             );
-            // //一定周期で処理をしている。この場合は3000ms間隔で処理をしている
-            // _start_timer = this->create_wall_timer(
-            //     std::chrono::milliseconds(this->get_parameter("start_ms").as_int()),
-            //     [this] {
-            //         if(start_flag)
-            //         {
-            //             const string initial_inject_state_with_null = initial_inject_state + '\0';
-            //             //c_strがポインタを返すためアスタリスクをつける
-            //             const char* char_ptr2 = initial_inject_state_with_null.c_str();
-            //             //reinterpret_castでポインタ型の変換
-            //             //char_ptr2をconst unsigned charに置き換える
-            //             const unsigned char* inject = reinterpret_cast<const unsigned char*>(char_ptr2);
-            //             //commandクラスのudp通信で一番最初に回収するデータをコントローラーに送り、コントローラ側で処理が行われる
-            //             command.state_num_R1(inject, r1_pc,udp_port_state);
-            //             start_flag = false;
-            //         }
-            //     }
-            // );
 
             Joystick_timer = this->create_wall_timer(
                 std::chrono::milliseconds(this->get_parameter("interval_ms").as_int()),
                 std::bind(&DualSense::callback_Joystick, this) 
             );
 
-            //計画機
+            if(connection_check){
+                check_mainboard_connection = this->create_wall_timer(
+                    std::chrono::milliseconds(static_cast<int>(mainboard_ms)),
+                    [this] { 
+                        if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - get_mainboard_time).count() > 500 * 10){
+                            msg_base_control.is_restart = false;
+                            msg_base_control.is_emergency = true;
+                            _pub_base_control->publish(msg_base_control);
+                            RCLCPP_INFO(get_logger(),"mainboard_connection_lost!!");
+                        }
+                    }
+                );
+            }
+
+            //計画機にリミットを設定する
+            high_velPlanner_linear_x.limit(high_limit_linear);
+            high_velPlanner_linear_y.limit(high_limit_linear);
+
             slow_velPlanner_linear_x.limit(slow_limit_linear);
             slow_velPlanner_linear_y.limit(slow_limit_linear);
+
             velPlanner_angular_z.limit(limit_angular);
-
-            upedge_autonomous_main(0);
-            upedge_emergency_main(0);
-            upedge_restart_main(0);
-            upedge_autonomous_sub(0);
-            upedge_emergency_sub(0);
-            upedge_restart_sub(0);
-
         }
-        void DualSense::callback_dualsense_main(const sensor_msgs::msg::Joy::SharedPtr msg)
-        {
-            //リスタートの処理
-            //msg_restartにリスタートする際のcanidとcandlcのパラメータを格納
-            auto msg_restart = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-            msg_restart->canid = can_restart_id;
-            msg_restart->candlc = 0;
 
-            //緊急停止の処理
-            //msg_emergencyにリスタートする際のcanidとcandlcのパラメータを格納
-            auto msg_emergency = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-            msg_emergency->canid = can_emergency_id;
-            msg_emergency->candlc = 1;
-
-            uint8_t _candata_btn[8];
-            //base_control(手自動、緊急、リスタート)が押されたらpubする
-
-            //resertがtureをpubした後にfalseをpubする
-            bool flag_restart = false;
-            bool move_node_flag = false;
-            bool emergency_lock = false;
-            bool restart_lock = false;
-
-            //dualsenseのボタン配列メモ
-            //button:  0:cross  1:circle  2:triangle  3:square  4:L1  5:R1  6:L2  7:R2  8:create  9:option  10:ps  11:joyL  12:joyR
-            //axes:  0:joyL_x  1:joyL_y  2:L2  3:joyR_x  4:joyR_y  5:R2  6:Left(1),Right(-1)  7:Up(1),Down(-1)
-            
-            //button[12](joyR(押し込み))は足回りの手自動の切り替え。is_move_autonomousを使って、トグルになるようにしてる。ERの上物からもらう必要はない。
-            // if(upedge_r3_main(msg->buttons[12]))//joyR(押し込み)
-            // {
-            //     robotcontrol_flag = true;
-            //     if(is_move_autonomous == false){
-            //         is_move_autonomous = true;
-            //     }else{
-            //         is_move_autonomous = false;
-            //     }
-            // }
-            //button[8](create)は緊急。is_emergencyを使って、トグルになるようにしてる。
-            if(upedge_emergency_main(msg->buttons[8]))//create
-            {
-                robotcontrol_flag = true;
-                is_emergency = true;
-                emergency_lock = true;
+        void DualSense::callback_dualsense(const sensor_msgs::msg::Joy::SharedPtr msg){
+            for(int i = 0; i < 13; i++) buttons[i] = upedge_buttons[i](msg->buttons[i]);
+            for(int i = 0; i < 7; i++) axes[i] = msg->axes[i];
+            if(axes[LR] == 1.0){
+                LRUD[left] = true;
+                LRUD[right] = false;
             }
-            //button[9](option)はリスタート。緊急と手自動のboolをfalseにしてリセットしている。
-            if(upedge_restart_main(msg->buttons[9]))//option
-            {
-                if(!move_node_lock){
-                    move_node_lock = true;
-                }
-                robotcontrol_flag = true;
-                flag_restart = true;
-                is_emergency = false;
-                is_injection_mech_stop_m = false;
-                is_move_autonomous = defalt_move_autonomous_flag;
-                is_injection_autonomous = defalt_injection_autonomous_flag;
-                is_slow_speed = defalt_slow_speed_flag;
-
-                move_node_string = "";
-                restart_lock = true;
+            else if(axes[LR] == -1.0){
+                LRUD[left] = false;
+                LRUD[right] = true;
+            }
+            else {
+                LRUD[left] = false;
+                LRUD[right] = false;
             }
 
-            is_reset = msg->buttons[9];//option
-            //basecontrolへの代入
+            if(axes[UD] == 1.0){
+                LRUD[up] = true;
+                LRUD[down] = false;
+            }
+            else if(axes[UD] == -1.0){
+                LRUD[up] = false;
+                LRUD[down] = true;
+            }
+            else {
+                LRUD[up] = false;
+                LRUD[down] = false;
+            }
+            for(int i = 0; i < 4; i++) LRUD[i] = upedge_LRUD[i](LRUD[i]);
 
-            msg_base_control.is_restart = is_reset;
-            msg_base_control.is_emergency = is_emergency;
-            msg_base_control.is_move_autonomous = defalt_move_autonomous_flag;
-            msg_base_control.is_injection_autonomous = is_injection_autonomous;
-            msg_base_control.is_slow_speed = is_slow_speed;
-            msg_base_control.initial_state = initial_state;
-            msg_base_control.is_injection_mech_stop_m = is_injection_mech_stop_m;
+            msg_base_control.is_restart = false;
 
-            //射出
-            if(upedge_r1_main(msg->buttons[5])){    //R1
-                RCLCPP_INFO(this->get_logger(), "r1");
-                if(is_injection_convergence){
-                    auto msg_inject = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                    msg_inject->canid = can_inject_id;
-                    msg_inject->candlc = 0;
-                    _pub_canusb->publish(*msg_inject);
-                }
-            }
-            //回転停止
-            if(upedge_r2_main(msg->buttons[7])){    //R2
-                RCLCPP_INFO(this->get_logger(), "r2");
-                auto msg_inject_spinning = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                msg_inject_spinning->canid = can_inject_spinning_id;
-                msg_inject_spinning->candlc = 1;
-                msg_inject_spinning->candata[0] = false;
-                _pub_canusb->publish(*msg_inject_spinning);
-                is_injection_mech_stop_m = true;
-            }
-            //射出パラメータ&回転開始
-            if(upedge_l1_main(msg->buttons[4])){    //L1
-                if(is_backside){
-                    RCLCPP_INFO(this->get_logger(), "l1");
-                    auto msg_injection = std::make_shared<std_msgs::msg::Bool>();
-                    msg_injection->data = true;
-                    _pub_injection->publish(*msg_injection);
-                    auto msg_inject_spinning = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                    msg_inject_spinning->canid = can_inject_spinning_id;
-                    msg_inject_spinning->candlc = 1;
-                    msg_inject_spinning->candata[0] = false;
-                    _pub_canusb->publish(*msg_inject_spinning);
-                    is_injection_mech_stop_m = false;
-                    is_backside = false;
-                }
-                else {
-                    RCLCPP_INFO(this->get_logger(), "l2");
-                    auto msg_injection = std::make_shared<std_msgs::msg::Bool>();
-                    msg_injection->data = false;
-                    _pub_injection->publish(*msg_injection);
-                    auto msg_inject_spinning = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                    msg_inject_spinning->canid = can_inject_spinning_id;
-                    msg_inject_spinning->candlc = 1;
-                    msg_inject_spinning->candata[0] = true;
-                    _pub_canusb->publish(*msg_inject_spinning);
-                    is_injection_mech_stop_m = false;
-                    is_backside = true;
-                }
-            }
-            if(upedge_l2_main(msg->buttons[6])){    //L2
-                if(is_slow_speed){
-                    is_slow_speed = false;
-                }
-                else{
-                    is_slow_speed = true;
-                }
-            }
-            //ステアリセット
-            if(upedge_axes7_main_up(msg->axes[7] == 1)){   //UP
-                RCLCPP_INFO(this->get_logger(), "up");
-                auto msg_steer_reset = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                msg_steer_reset->canid = can_steer_reset_id;
-                msg_steer_reset->candlc = 0;
-                _pub_canusb->publish(*msg_steer_reset);
-            }
-
-            //キャリブレーション
-            if(upedge_axes7_main_down(msg->axes[7] == -1)){     //down
-                RCLCPP_INFO(this->get_logger(), "down");
-                auto msg_calibrate = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                msg_calibrate->canid = can_calibrate_id;
-                msg_calibrate->candlc = 0;
-                _pub_canusb->publish(*msg_calibrate);
-            }
-            //main基板リセット
-            if(upedge_axes6_main_left(msg->axes[6] == 1)){     //left     
-                RCLCPP_INFO(this->get_logger(), "left");
-                auto msg_main_reset = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                msg_main_reset->canid = can_reset_id;
-                msg_main_reset->candlc = 1;
-                msg_main_reset->candata[0] = 0;
-                _pub_canusb->publish(*msg_main_reset);
-            }
-            //IO基板リセット
-            if(upedge_axes6_main_right(msg->axes[6] == -1)){      //right
-                RCLCPP_INFO(this->get_logger(), "right");
-                auto msg_io_reset = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                msg_io_reset->canid = can_reset_id;
-                msg_io_reset->candlc = 1;
-                msg_io_reset->candata[0] = 1;
-                _pub_canusb->publish(*msg_io_reset);
-            }
-            //右ハンド籾の装填
-            if(upedge_circle_main(msg->buttons[1])){    //circle
-                RCLCPP_INFO(this->get_logger(), "circle");
-                if(is_ballhand_convergence){
-                    auto msg_paddy_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                    msg_paddy_install->candlc = 1;
-                    msg_paddy_install->candata[0] = true;
-                    msg_paddy_install->canid = can_paddy_install_id;
-                    _pub_canusb->publish(*msg_paddy_install);
-                }
-            }
-            //左ハンド籾の装填
-            if(upedge_cross_main(msg->buttons[0])){     //cross
-                RCLCPP_INFO(this->get_logger(), "cross");
-                if(is_ballhand_convergence){
-                    auto msg_paddy_install = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                    msg_paddy_install->candlc = 1;
-                    msg_paddy_install->candata[0] = false;
-                    msg_paddy_install->canid = can_paddy_install_id;
-                    _pub_canusb->publish(*msg_paddy_install);
-                }
-            }
-            //右ハンド籾の回収
-            if(upedge_triangle_main(msg->buttons[2])){  //triangle
-                RCLCPP_INFO(this->get_logger(), "triangle");
-                if(is_ballhand_convergence){
-                    auto msg_paddy_collect = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                    msg_paddy_collect->candlc = 1;
-                    msg_paddy_collect->candata[0] = true;
-                    msg_paddy_collect->canid = can_paddy_collect_id;
-                    _pub_canusb->publish(*msg_paddy_collect);
-                }
-            }
-            //左ハンド籾の回収
-            if(upedge_square_main(msg->buttons[3])){    //square
-                RCLCPP_INFO(this->get_logger(), "square");
-                if(is_ballhand_convergence){
-                    auto msg_paddy_collect = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
-                    msg_paddy_collect->candlc = 1;
-                    msg_paddy_collect->candata[0] = false;
-                    msg_paddy_collect->canid = can_paddy_collect_id;
-                    _pub_canusb->publish(*msg_paddy_collect);
-                }
-            }
-            // if(upedge_l3_main(msg->buttons[11]))//joyL(押し込み)
-            // {
-            //     //c_strがポインタ型を返すためアスタリスクをつける
-            //     const char* char_ptr = initial_pickup_state.c_str();
-            //     //reinterpret_castでポインタ型の変換
-            //     //char_ptr1をconst unsigned charに置き換える
-            //     const unsigned char* pickup = reinterpret_cast<const unsigned char*>(char_ptr);
-            //     //commandクラスのudp通信で一番最初に回収するデータをコントローラーに送り、コントローラ側で処理が行われる
-            //     command.state_num_R1(pickup, r1_pc,udp_port_state);
-            //     //同じ処理が連続で起きないようにfalseでもとの状態に戻す
-            //     start_flag = true;
-            //     move_node_flag = true;
-            // }
-            if(emergency_lock)//create
-            {
+            if(buttons[ps5_buttons::create]){
+                cout<<"emergency"<<endl;
+                auto msg_emergency = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                msg_emergency->canid = can_emergency_id;
+                msg_emergency->candlc = 1;
+                msg_emergency->candata[0] = true;
                 _pub_canusb->publish(*msg_emergency);
             }
-            if(restart_lock)
-            {
+            else if(buttons[ps5_buttons::option]){
+                cout<<"restart"<<endl;
+                auto msg_emergency = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                msg_emergency->canid = can_emergency_id;
+                msg_emergency->candlc = 1;
+                auto msg_restart = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+                msg_restart->canid = can_restart_id;
+                msg_restart->candlc = 0;
+                msg_base_control.is_move_autonomous = defalt_move_autonomous_flag;
+                msg_base_control.is_slow_speed= defalt_slow_speed_flag;
+                msg_convergence.spline_convergence = defalt_spline_convergence;
+                msg_convergence.injection_calculator = defalt_injection_calculator_convergence;
+                msg_convergence.injection  = defalt_injection_convergence;
+                msg_convergence.seedlinghand = defalt_seedlinghand_convergence;
+                msg_convergence.ballhand = defalt_ballhand_convergence; 
+                arm_expansion_flag = false;
+                msg_base_control.is_restart = true;
                 _pub_canusb->publish(*msg_restart);
                 _pub_canusb->publish(*msg_emergency);
+                _pub_base_control->publish(msg_base_control);         
             }
-            if(robotcontrol_flag){
+            else if(buttons[ps5_buttons::circle] && arm_expansion_flag) gamebtn.seedling_collect_right(msg_convergence.seedlinghand,_pub_canusb);          
+            else if(buttons[ps5_buttons::cross] && arm_expansion_flag) gamebtn.seedling_collect_left(msg_convergence.seedlinghand,_pub_canusb);               
+            else if(buttons[ps5_buttons::triangle] && arm_expansion_flag) gamebtn.seedling_install_right(msg_convergence.seedlinghand,_pub_canusb);   
+            else if(buttons[ps5_buttons::square] && arm_expansion_flag) gamebtn.seedling_install_left(msg_convergence.seedlinghand,_pub_canusb);
+            else if(LRUD[ps5_LRUD::up]) gamebtn.steer_reset(_pub_canusb);
+            else if(LRUD[ps5_LRUD::down]) gamebtn.calibrate(_pub_canusb);                
+            else if(LRUD[ps5_LRUD::left]) gamebtn.board_reset(_pub_canusb);
+            // else if(LRUD[ps5_LRUD::right]) //sequence
+            else if(buttons[ps5_buttons::r1]) gamebtn.injection(msg_convergence.injection ,msg_convergence.injection_calculator,_pub_canusb); 
+            else if(buttons[ps5_buttons::r2]) gamebtn.injection_calculate(_pub_injection_calculate);
+            else if(buttons[ps5_buttons::r3]){
+                if(msg_base_control.is_move_autonomous == false) msg_base_control.is_move_autonomous = true;
+                else msg_base_control.is_move_autonomous = false;
                 _pub_base_control->publish(msg_base_control);
             }
-            if(flag_restart == true)
-            {
-                msg_base_control.is_restart = false;
+            else if(buttons[ps5_buttons::l1]) gamebtn.paddy_control(msg_convergence.ballhand,_pub_canusb); 
+            else if(buttons[ps5_buttons::l2]) {
+                msg_base_control.is_slow_speed = !msg_base_control.is_slow_speed;
                 _pub_base_control->publish(msg_base_control);
             }
-            //スティック情報
-            analog_l_x_main = msg->axes[0];     //Joy_Left_X
-            analog_l_y_main = msg->axes[1];     //Joy_Left_Y
-            analog_r_x_main = msg->axes[3];     //Joy_Right_X
-            analog_r_y_main = msg->axes[4];     //Joy_Right_X
+            else if(buttons[ps5_buttons::l3]) {
+                gamebtn.arm_expansion(_pub_canusb);
+                arm_expansion_flag = true;
+            }
+        }
 
-        }void DualSense::callback_Joystick()
+        void DualSense::callback_Joystick()
         {
             auto msg_linear = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
             msg_linear->canid = can_linear_id;
             msg_linear->candlc = 8;
-
             auto msg_angular = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
             msg_angular->canid = can_angular_id;
             msg_angular->candlc = 4;
-
             auto msg_gazebo = std::make_shared<geometry_msgs::msg::Twist>();
-
             uint8_t _candata_joy[8];
 
-            if(is_slow_speed){
-                slow_velPlanner_linear_x.vel(static_cast<double>(analog_l_y_main));//unityとロボットにおける。xとyが違うので逆にしている。
-                slow_velPlanner_linear_y.vel(static_cast<double>(analog_l_x_main));
-                velPlanner_angular_z.vel(static_cast<double>(analog_r_x_main));
+            if(msg_base_control.is_slow_speed){
+                slow_velPlanner_linear_x.vel(axes[ps5_axes::ly]);
+                slow_velPlanner_linear_y.vel(axes[ps5_axes::lx]);
+                velPlanner_angular_z.vel(axes[ps5_axes::rx]);
 
                 slow_velPlanner_linear_x.cycle();
                 slow_velPlanner_linear_y.cycle();
@@ -499,18 +318,14 @@ namespace controller_interface
                 float_to_bytes(_candata_joy, static_cast<float>(velPlanner_angular_z.vel()) * manual_angular_max_vel);
                 for(int i=0; i<msg_angular->candlc; i++) msg_angular->candata[i] = _candata_joy[i];
 
-                _pub_canusb->publish(*msg_linear);
-                _pub_canusb->publish(*msg_angular);
-
                 msg_gazebo->linear.x = slow_velPlanner_linear_x.vel();
                 msg_gazebo->linear.y = slow_velPlanner_linear_y.vel();
                 msg_gazebo->angular.z = velPlanner_angular_z.vel();
-                _pub_cmd_vel->publish(*msg_gazebo);
             }
             else{
-                high_velPlanner_linear_x.vel(static_cast<double>(analog_l_y_main));//unityとロボットにおける。xとyが違うので逆にしている。
-                high_velPlanner_linear_y.vel(static_cast<double>(analog_l_x_main));
-                velPlanner_angular_z.vel(static_cast<double>(analog_r_x_main));
+                high_velPlanner_linear_x.vel(axes[ps5_axes::ly]);
+                high_velPlanner_linear_y.vel(axes[ps5_axes::lx]);
+                velPlanner_angular_z.vel(axes[ps5_axes::rx]);
 
                 high_velPlanner_linear_x.cycle();
                 high_velPlanner_linear_y.cycle();
@@ -523,51 +338,47 @@ namespace controller_interface
                 float_to_bytes(_candata_joy, static_cast<float>(velPlanner_angular_z.vel()) * manual_angular_max_vel);
                 for(int i=0; i<msg_angular->candlc; i++) msg_angular->candata[i] = _candata_joy[i];
 
-                _pub_canusb->publish(*msg_linear);
-                _pub_canusb->publish(*msg_angular);
-
                 msg_gazebo->linear.x = high_velPlanner_linear_x.vel();
                 msg_gazebo->linear.y = high_velPlanner_linear_y.vel();
                 msg_gazebo->angular.z = velPlanner_angular_z.vel();
-                _pub_cmd_vel->publish(*msg_gazebo);
+
+            }
+
+            _pub_canusb->publish(*msg_linear);
+            _pub_canusb->publish(*msg_angular);
+            _pub_gazebo->publish(*msg_gazebo);
+        }
+
+        void DualSense::callback_inject_calibration(const std_msgs::msg::Empty::SharedPtr msg){
+            gamebtn.inject_calibration(_pub_canusb);
+        }
+
+        void DualSense::callback_emergency_state(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg){
+            get_mainboard_time = std::chrono::system_clock::now();
+            if(msg_base_control.is_emergency != static_cast<bool>(msg->candata[0])) {
+                msg_base_control.is_emergency = static_cast<bool>(msg->candata[0]);
+                _pub_base_control->publish(msg_base_control);
             }
         }
 
-
-
-        //コントローラから射出情報をsubsclib
-        void DualSense::callback_main_injection_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg)
-        {
-            ///mainから射出可能司令のsub。上物の収束状況。
-            is_injection_convergence = static_cast<bool>(msg->candata[0]);
+        void DualSense::callback_inject_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg){
+            msg_convergence.injection  = static_cast<bool>(msg->candata[0]);
         }
 
-        void DualSense::callback_main_Seedlinghand_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg)
-        {
-            ///mainから射出可能司令のsub。上物の収束状況。
-            is_seedlinghand_convergence = static_cast<bool>(msg->candata[1]);
+        void DualSense::callback_seedling_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg){
+            msg_convergence.seedlinghand = static_cast<bool>(msg->candata[0]);
         }
 
-        void DualSense::callback_main_ballhand_possible(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg)
-        {
-            ///mainから射出可能司令のsub。上物の収束状況。
-            is_ballhand_convergence = static_cast<bool>(msg->candata[2]);
+        void DualSense::callback_paddy_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg){
+            msg_convergence.ballhand = static_cast<bool>(msg->candata[0]);
         }
 
-        //splineからの情報をsubsclib
-        void DualSense::callback_spline(const std_msgs::msg::Bool::SharedPtr msg)
-        {
-            //spline_pidから足回り収束のsub。足回りの収束状況。
-            is_spline_convergence = msg->data;
-            
+        void DualSense::callback_is_move_tracking(const std_msgs::msg::Bool::SharedPtr msg){
+            msg_convergence.spline_convergence = msg->data;           
         }
 
-        //injection_param_calculatorの情報をsubscribe
-        //この関数が2つあるのは射出機構が2つあるため
-        void DualSense::callback_injection_calculator(const std_msgs::msg::Bool::SharedPtr msg)
-        {
-            RCLCPP_INFO(this->get_logger(), "false");
-             //injection_calculatorから上モノ指令値計算収束のsub。上物の指令値の収束情報。
-            is_injection_calculator_convergence = msg->data;
+        void DualSense::callback_calculator_convergence(const std_msgs::msg::Bool::SharedPtr msg){
+            msg_convergence.injection_calculator = msg->data;
         }
+       
 }
