@@ -205,8 +205,15 @@ namespace controller_interface
         }
 
         void DualSense::callback_dualsense(const sensor_msgs::msg::Joy::SharedPtr msg){
-            for(int i = 0; i < 13; i++) buttons[i] = upedge_buttons[i](msg->buttons[i]);
-            for(int i = 0; i < 7; i++) axes[i] = msg->axes[i];
+            for(int i = 0; i < 13; i++) {
+                buttons[i] = upedge_buttons[i](msg->buttons[i]);
+                // RCLCPP_INFO(get_logger(),"%d : %d",i,buttons[i]);
+            }
+            for(int i = 0; i < 8; i++) {
+                axes[i] = msg->axes[i];
+                // RCLCPP_INFO(get_logger(),"%d : %f",i,axes[i]);
+            }
+            
             if(axes[LR] == 1.0){
                 LRUD[left] = true;
                 LRUD[right] = false;
@@ -232,7 +239,10 @@ namespace controller_interface
                 LRUD[up] = false;
                 LRUD[down] = false;
             }
-            for(int i = 0; i < 4; i++) LRUD[i] = upedge_LRUD[i](LRUD[i]);
+            for(int i = 0; i < 4; i++) {
+                LRUD[i] = upedge_LRUD[i](LRUD[i]);
+                // RCLCPP_INFO(get_logger(),"%d : %d",i,LRUD[i]);
+            }
 
             msg_base_control.is_restart = false;
 

@@ -2,7 +2,6 @@
 #include <rcl/rcl.h>
 #include <iostream>
 #include "controller_interface/dualsense_interface_node.hpp"
-#include "controller_interface/unity_interface_node.hpp"
 #include "injection_interface/injection_interface_node.hpp"
 #include "injection_param_calculator/injection_param_calculator.hpp"
 #include "ransac_localization/ransac_localization.hpp"
