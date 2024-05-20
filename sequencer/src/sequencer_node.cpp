@@ -126,7 +126,8 @@ void Sequencer::callback_base_control(const controller_interface_msg::msg::BaseC
 
 void Sequencer::callback_target_node(const std_msgs::msg::String::SharedPtr msg){
     if(sequence_mode == SEQUENCE_MODE::stop){
-        if(msg->data[0] == 'H') command_sequence(SEQUENCE_MODE::harvesting);
+        if(msg->data[0] == 'A') command_sequence(SEQUENCE_MODE::planting);
+        else if(msg->data[0] == 'H') command_sequence(SEQUENCE_MODE::harvesting);
         target_node = msg->data;
     }
 };
