@@ -12,10 +12,10 @@
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/empty.hpp"
+#include "std_msgs/msg/u_int8.hpp"
 //他のpkg
 #include "utilities/can_utils.hpp"
 #include "utilities/utils.hpp"
-#include "socket_udp.hpp"
 #include "trapezoidal_velocity_planner.hpp"
 #include "controller_interface/Gamebtn.hpp"
 
@@ -46,12 +46,15 @@ namespace controller_interface
             rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_is_move_tracking;
             rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_calculator_convergence;
             rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr _sub_inject_calibration;
+
+            rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_move_autonomous;
             
             rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb;
             rclcpp::Publisher<controller_interface_msg::msg::BaseControl>::SharedPtr _pub_base_control;
             rclcpp::Publisher<controller_interface_msg::msg::Convergence>::SharedPtr _pub_convergence;
             rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr _pub_injection_calculate;
-            rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_move_node;
+            rclcpp::Publisher<std_msgs::msg::String>::SharedPtr _pub_target_node;
+            rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr _pub_is_start;
             rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr _pub_gazebo;
 
             rclcpp::TimerBase::SharedPtr _pub_heartbeat;
@@ -70,6 +73,7 @@ namespace controller_interface
             void callback_is_move_tracking(const std_msgs::msg::Bool::SharedPtr msg);
             void callback_calculator_convergence(const std_msgs::msg::Bool::SharedPtr msg);
             void callback_inject_calibration(const std_msgs::msg::Empty::SharedPtr msg);
+            void callback_move_autonomous(const std_msgs::msg::Bool::SharedPtr msg);
             void callback_Joystick();
 
             VelPlanner high_velPlanner_linear_x;
@@ -118,6 +122,7 @@ namespace controller_interface
             const int16_t can_paddy_convergence_id;
             const int16_t can_arm_expansion_id;
             const int16_t can_inject_calibration_id;
+            const int16_t can_led_id;
 
             const bool connection_check;
             bool arm_expansion_flag = false;

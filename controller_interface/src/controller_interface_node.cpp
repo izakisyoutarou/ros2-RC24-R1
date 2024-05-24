@@ -342,9 +342,9 @@ namespace controller_interface
 
         void SmartphoneGamepad::callback_screen_mainpad(const std_msgs::msg::String::SharedPtr msg){
             if(msg->data.length() <= 3){
-                auto msg_move_node = std::make_shared<std_msgs::msg::String>();
-                msg_move_node->data = msg->data;
-                _pub_target_node->publish(*msg_move_node);
+                auto msg_target_node = std::make_shared<std_msgs::msg::String>();
+                msg_target_node->data = msg->data;
+                _pub_target_node->publish(*msg_target_node);
             } 
         }
 

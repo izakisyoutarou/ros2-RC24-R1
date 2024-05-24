@@ -63,7 +63,7 @@ namespace controller_interface
         can_paddy_install_id(get_parameter("canid.paddy_install").as_int()),
         can_paddy_convergence_id(get_parameter("canid.paddy_convergence").as_int()),
         can_arm_expansion_id(get_parameter("canid.arm_expansion").as_int()),
-
+        can_led_id(get_parameter("canid.led").as_int()),
         connection_check(get_parameter("connection_check").as_bool())
 
         {
@@ -127,13 +127,19 @@ namespace controller_interface
                 _qos,
                 std::bind(&DualSense::callback_inject_calibration, this, std::placeholders::_1)
             );
+            _sub_move_autonomous = this->create_subscription<std_msgs::msg::Bool>(
+                "move_autonomous",
+                _qos,
+                std::bind(&DualSense::callback_move_autonomous, this, std::placeholders::_1)
+            );
 
             _pub_canusb = this->create_publisher<socketcan_interface_msg::msg::SocketcanIF>("can_tx", _qos);
             _pub_base_control = this->create_publisher<controller_interface_msg::msg::BaseControl>("base_control",_qos);
             _pub_convergence = this->create_publisher<controller_interface_msg::msg::Convergence>("convergence" , _qos);
             _pub_injection_calculate = this->create_publisher<std_msgs::msg::Empty>("injection_calculate", _qos);
-            pub_move_node = this->create_publisher<std_msgs::msg::String>("move_node", _qos);
+            _pub_target_node = this->create_publisher<std_msgs::msg::String>("target_node", _qos);
             _pub_gazebo = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", _qos);
+            _pub_is_start = this->create_publisher<std_msgs::msg::UInt8>("is_start", _qos);
             
             msg_base_control.is_restart = defalt_restart_flag;
             msg_base_control.is_emergency = defalt_emergency_flag;
@@ -205,14 +211,9 @@ namespace controller_interface
         }
 
         void DualSense::callback_dualsense(const sensor_msgs::msg::Joy::SharedPtr msg){
-            for(int i = 0; i < 13; i++) {
-                buttons[i] = upedge_buttons[i](msg->buttons[i]);
-                // RCLCPP_INFO(get_logger(),"%d : %d",i,buttons[i]);
-            }
-            for(int i = 0; i < 8; i++) {
-                axes[i] = msg->axes[i];
-                // RCLCPP_INFO(get_logger(),"%d : %f",i,axes[i]);
-            }
+            for(int i = 0; i < 13; i++) buttons[i] = upedge_buttons[i](msg->buttons[i]);
+
+            for(int i = 0; i < 8; i++) axes[i] = msg->axes[i];
             
             if(axes[LR] == 1.0){
                 LRUD[left] = true;
@@ -239,10 +240,8 @@ namespace controller_interface
                 LRUD[up] = false;
                 LRUD[down] = false;
             }
-            for(int i = 0; i < 4; i++) {
-                LRUD[i] = upedge_LRUD[i](LRUD[i]);
-                // RCLCPP_INFO(get_logger(),"%d : %d",i,LRUD[i]);
-            }
+            for(int i = 0; i < 4; i++) LRUD[i] = upedge_LRUD[i](LRUD[i]);
+  
 
             msg_base_control.is_restart = false;
 
@@ -282,18 +281,24 @@ namespace controller_interface
             else if(LRUD[ps5_LRUD::up]) gamebtn.steer_reset(_pub_canusb);
             else if(LRUD[ps5_LRUD::down]) gamebtn.calibrate(_pub_canusb);                
             else if(LRUD[ps5_LRUD::left]) gamebtn.board_reset(_pub_canusb);
-            // else if(LRUD[ps5_LRUD::right]) //sequence
+            else if(LRUD[ps5_LRUD::right]){
+                auto msg_is_start = std::make_shared<std_msgs::msg::UInt8>();
+                msg_is_start->data = 0;
+                _pub_is_start->publish(*msg_is_start);
+            }
             else if(buttons[ps5_buttons::r1]) gamebtn.injection(msg_convergence.injection ,msg_convergence.injection_calculator,_pub_canusb); 
             else if(buttons[ps5_buttons::r2]) gamebtn.injection_calculate(_pub_injection_calculate);
             else if(buttons[ps5_buttons::r3]){
-                if(msg_base_control.is_move_autonomous == false) msg_base_control.is_move_autonomous = true;
-                else msg_base_control.is_move_autonomous = false;
+                msg_base_control.is_move_autonomous = !msg_base_control.is_move_autonomous;
                 _pub_base_control->publish(msg_base_control);
+                 if(msg_base_control.is_move_autonomous) gamebtn.led(3,_pub_canusb);
             }
             else if(buttons[ps5_buttons::l1]) gamebtn.paddy_control(msg_convergence.ballhand,_pub_canusb); 
             else if(buttons[ps5_buttons::l2]) {
                 msg_base_control.is_slow_speed = !msg_base_control.is_slow_speed;
                 _pub_base_control->publish(msg_base_control);
+                if(!msg_base_control.is_move_autonomous && !msg_base_control.is_slow_speed) gamebtn.led(1,_pub_canusb);
+                else if(!msg_base_control.is_move_autonomous && msg_base_control.is_slow_speed)gamebtn.led(2,_pub_canusb);
             }
             else if(buttons[ps5_buttons::l3]) {
                 gamebtn.arm_expansion(_pub_canusb);
@@ -369,6 +374,7 @@ namespace controller_interface
                 msg_base_control.is_emergency = static_cast<bool>(msg->candata[0]);
                 _pub_base_control->publish(msg_base_control);
             }
+            if(msg_base_control.is_emergency)gamebtn.led(0,_pub_canusb);
         }
 
         void DualSense::callback_inject_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg){
@@ -391,4 +397,8 @@ namespace controller_interface
             msg_convergence.injection_calculator = msg->data;
         }
        
+        void DualSense::callback_move_autonomous(const std_msgs::msg::Bool::SharedPtr msg){
+            msg_base_control.is_move_autonomous = msg->data;
+            _pub_base_control->publish(msg_base_control);
+        }
 }

@@ -61,7 +61,6 @@ Sequencer::Sequencer(const std::string &name_space, const rclcpp::NodeOptions &o
 }
 
 void Sequencer::callback_convergence(const controller_interface_msg::msg::Convergence::SharedPtr msg){
-    //command_move_autonomous(true);nodalse
     int n  = 0;
     if(sequence_mode == SEQUENCE_MODE::planting){
         if(sequence_count == 1){
