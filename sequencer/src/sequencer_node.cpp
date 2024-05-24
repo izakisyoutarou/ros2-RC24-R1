@@ -67,6 +67,7 @@ void Sequencer::callback_convergence(const controller_interface_msg::msg::Conver
         if(sequence_count == 1){
             if(progress == n++){
                 command_move_autonomous(true);
+                command_arm_expansion();
                 progress++;
             }
             else if(progress == n++){
