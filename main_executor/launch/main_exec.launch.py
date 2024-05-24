@@ -6,6 +6,7 @@ from launch import LaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import Node
+from launch.actions import Shutdown
 
 def generate_launch_description():
     # パラメータファイルのパス設定
@@ -51,6 +52,15 @@ def generate_launch_description():
         output='screen'
     )
 
+    #joyノードの作成
+    joy = Node(
+        package='joy_linux',
+        executable='joy_linux_node',
+        parameters = [{'dev':'/dev/input/js0'}],     
+        output='screen',
+        on_exit=Shutdown()
+    )
+
     # 起動エンティティクラスの作成
     launch_discription = LaunchDescription()
 
@@ -61,7 +71,9 @@ def generate_launch_description():
         launch_discription.add_entity(urg_launch)
     if(launch_params['trajectory_planner'] is True):
         launch_discription.add_entity(trajectory_planner_node)
+    if(launch_params['dualsense'] is True):
+        launch_discription.add_entity(joy)
         
     launch_discription.add_entity(main_exec_node)
-
+    
     return launch_discription

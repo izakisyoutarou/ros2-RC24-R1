@@ -28,6 +28,7 @@ class Gamebtn{
             int16_t steer_reset;
             int16_t arm_expansion;
             int16_t inject_calibration;
+            int16_t led;
         };
         CANID canid;
         //mainコントローラー物理ボタン
@@ -50,9 +51,11 @@ class Gamebtn{
         void initial_sequense(std::string initial_pickup_state,rclcpp::Publisher<std_msgs::msg::String>::SharedPtr _pub_initial_sequense);
         void arm_expansion(rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb);
         void inject_calibration(rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb);
+        void led(uint8_t led_num, rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb);
 
     private:
         int seed_right_flag = 0;
         int seed_left_flag = 0;
         bool paddy_flag = true; 
+        int pre_num = 100;
 };

@@ -108,11 +108,11 @@ void Gamebtn::seedling_install_right1(bool is_seedlinghand_convergence, rclcpp::
 void Gamebtn::seedling_install_left(bool is_seedlinghand_convergence, rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
     if(is_seedlinghand_convergence){
         if(seed_left_flag == 1){
-            seedling_install_left0(is_seedlinghand_convergence,_pub_canusb);
+            seedling_install_left1(is_seedlinghand_convergence,_pub_canusb);
             seed_left_flag = 2;
         }
         else if(seed_left_flag == 2){
-            seedling_install_left1(is_seedlinghand_convergence,_pub_canusb);
+            seedling_install_left0(is_seedlinghand_convergence,_pub_canusb);
             seed_left_flag = 0;
         }
     }
@@ -185,4 +185,15 @@ void Gamebtn::inject_calibration(rclcpp::Publisher<socketcan_interface_msg::msg:
     msg_inject_calibration->canid = canid.inject_calibration;
     msg_inject_calibration->candlc = 1;
     _pub_canusb->publish(*msg_inject_calibration);
+}
+
+void Gamebtn::led(uint8_t led_num, rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
+    if(pre_num != led_num){
+        auto msg_led = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+        msg_led->canid = canid.led;
+        msg_led->candlc = 1;
+        msg_led->candata[0] = led_num;
+        _pub_canusb->publish(*msg_led);
+        pre_num = led_num;
+    }
 }

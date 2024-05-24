@@ -22,9 +22,11 @@ find_package(controller_interface_msg REQUIRED)
 find_package(utilities REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(socketcan_interface_msg REQUIRED)
 
 add_library(controller_interface_node
+  src/dualsense_interface_node.cpp
   src/controller_interface_node.cpp
   src/unity_interface_node.cpp
   src/Gamebtn.cpp
@@ -40,6 +42,7 @@ ament_target_dependencies(controller_interface_node
   utilities
   std_msgs
   geometry_msgs
+  sensor_msgs
   socketcan_interface_msg
   controller_interface_msg
 )
@@ -87,6 +90,7 @@ ament_export_dependencies(
   utilities
   std_msgs
   geometry_msgs
+  sensor_msgs
   socketcan_interface_msg
   controller_interface_msg
 )

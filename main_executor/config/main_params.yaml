@@ -3,13 +3,14 @@ launch: #起動パラメータ
     slcan: true
     scan: true
     trajectory_planner: true
+    dualsense: false
 
 /**:  #ワイルドカード(ここのパラメータは全ノードから読める: <名前に注意>)
   ros__parameters:
     initial_pose: [0.37, 1.24, 0.0]  #初期位置[x,y,yaw]
     2nd_initial_pose: [5.5, 0.35, 0.0]  #2つ目の初期位置[x,y,yaw]
     tf_laser2robot: [0.2835,0.0,0.0,  3.14159,0.0,0.0]  #ロボット->lidarのTF[x,y,z,r,p,y]
-    court_color: "blue" #コート情報
+    court_color: "red" #コート情報
 
     # 自動の並進  速度[m/s],加速度[m/s^2],加減速度[-m/s^2],躍度[m/s^3]
     linear_max_vel: 2.0
@@ -17,7 +18,7 @@ launch: #起動パラメータ
     linear_max_dec: 2.0
     linear_max_jer: 0.0
     # 回転  速度[deg/s],加速度[deg/s^2],加減速度[-deg/s^2],躍度[deg/s^3]
-    angular_max_vel: 120.0
+    angular_max_vel: 140.0
     angular_max_acc: 360.0
     angular_max_dec: 360.0
     angular_max_jer: 0.0
@@ -49,12 +50,14 @@ launch: #起動パラメータ
       seedling_collect: 0x210
       seedling_install: 0x211
       seedling_convergence: 0x212
-      #苗アーム展開
       arm_expansion: 0x213
+      arm_up: 0x214
       #籾
       paddy_collect: 0x220
       paddy_install: 0x221
       paddy_convergence: 0x222
+
+      led: 0x230
         
     port:
       joy_main: 50000
@@ -66,17 +69,17 @@ launch: #起動パラメータ
     convergence_ms: 100
     base_state_communication_ms: 50
     #リスタート、緊急、足回りの手自動、上物の手自動、手動の射角、ボタンのカラー情報
-    defalt_restart_flag: false
-    defalt_emergency_flag: false
+    defalt_restart_flag: true
+    defalt_emergency_flag: true
     defalt_move_autonomous_flag: true
     defalt_injection_autonomous_flag: false
     defalt_slow_speed_flag: false
     #収束の初期値
-    defalt_spline_convergence: false
-    defalt_injection_calculator_convergence: false
-    defalt_injection_convergence: false
-    defalt_seedlinghand_convergence: false
-    defalt_ballhand_convergence: false
+    defalt_spline_convergence: true
+    defalt_injection_calculator_convergence: true
+    defalt_injection_convergence: true
+    defalt_seedlinghand_convergence: true
+    defalt_ballhand_convergence: true
 
 controller_interface_node:
   ros__parameters:
@@ -105,9 +108,9 @@ rasnac_localization:
     laser_weight: 1.0        #lidarの重み->値を大きくするとlidarが優先される
     odom_weight_liner: 2.0e-3     #値が大きくなると共分散が小さくなる
     odom_weight_angler: 4.0e-4
-    voxel_size: 0.06
-    trial_num: 50
-    inlier_dist_threshold: 0.016
+    voxel_size: 0.03
+    trial_num: 60
+    inlier_dist_threshold: 0.014
     inlier_length_threshold: 0.5 #インライアのしきい値
     second_ransac: false         #2回ransacするか
     robot_type: "R1"
@@ -120,15 +123,16 @@ spline_pid_node:
 
     linear_planner_gain: 1.2 #並進速度計画機ゲイン
     linear_pos_gain: 3.0 #並進位置ズレのゲイン
-    linear_pos_diff_gain: 1.0
+    linear_pos_diff_gain: 0.7
     linear_pos_integral_gain: 0.01  #並進位置ズレの積分ゲイン
 
     angular_planner_gain: 1.0 #回転速度計画機ゲイン
-    angular_pos_gain: 1.7 #回転位置ズレのゲイン
-    angular_pos_integral_gain: 0.02  #回転位置ズレの積分ゲイン
+    angular_pos_gain: 2.0 #回転位置ズレのゲイン
+    angular_pos_integral_gain: 0.01  #回転位置ズレの積分ゲイン
 
-    linear_pos_tolerance: 0.01  #並進到達位置の許容誤差[m]
-    angular_pos_tolerance: 1.0  #回転到達位置の許容誤差[deg]
+    linear_pos_tolerance: 0.015  #並進到達位置の許容誤差[m]
+    angular_pos_tolerance: 1.5  #回転到達位置の許容誤差[deg]
+    waypoint_tolerance: [0.1, 0.1, 3.0]
 
 spin_turn_node:
   ros__parameters:
@@ -153,6 +157,7 @@ injection_interface_node:
     strage_front: [8.60, 1.65, -0.54] #IJ0,IJ1
     linear_pitch: [20.0, 30.0] #H,IJ
     linear_tf: [0.23237,0.17757] 
+    injectionpoint_tolerance: [0.2, 0.2, 3.0]
 
 injection_param_calculator_node:
   ros__parameters:

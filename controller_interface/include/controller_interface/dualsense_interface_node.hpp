@@ -7,125 +7,90 @@
 #include "controller_interface_msg/msg/base_control.hpp"
 #include "controller_interface_msg/msg/convergence.hpp"
 #include "controller_interface_msg/msg/colorball.hpp"
+#include "sensor_msgs/msg/joy.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/empty.hpp"
 #include "std_msgs/msg/u_int8.hpp"
-#include "controller_interface/Gamebtn.hpp"
 //他のpkg
 #include "utilities/can_utils.hpp"
 #include "utilities/utils.hpp"
-#include "socket_udp.hpp"
 #include "trapezoidal_velocity_planner.hpp"
+#include "controller_interface/Gamebtn.hpp"
 
-#include "visibility_control.h"
+#include "my_visibility.h"
+
+using namespace utils;
 
 namespace controller_interface
 {
     using VelPlanner = velocity_planner::trapezoidal_velocity_planner::TrapezoidalVelocityPlanner;
     using VelPlannerLimit = velocity_planner::trapezoidal_velocity_planner::Limit_t;
 
-    class SmartphoneGamepad : public rclcpp::Node
+    class DualSense : public rclcpp::Node
     {
         public:
             CONTROLLER_INTERFACE_PUBLIC
-            explicit SmartphoneGamepad(const rclcpp::NodeOptions& options = rclcpp::NodeOptions());
+            explicit DualSense(const rclcpp::NodeOptions& options = rclcpp::NodeOptions());
             
             CONTROLLER_INTERFACE_PUBLIC
-            explicit SmartphoneGamepad(const std::string& name_space, const rclcpp::NodeOptions& options = rclcpp::NodeOptions());
+            explicit DualSense(const std::string& name_space, const rclcpp::NodeOptions& options = rclcpp::NodeOptions());
 
         private:
-            //R1_mainのcontrollerから
-            rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_main_pad;
-            rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_screen_pad;
-            rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr _sub_inject_calibration;
-            rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr _sub_connection_state; 
-
-            //R1_subのcontrollerから
-            rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_pad;
-
-            //mainボードから
+            rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr _sub_dualsense;
+            rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_emergency_state;
             rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_inject_convergence;
             rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_paddy_convergence;
             rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_seedling_convergence;
-            rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_emergency_state;
-
-            //spline_pidから
             rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_is_move_tracking;
-
-            //injection_param_calculatorから
             rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_calculator_convergence;
+            rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr _sub_inject_calibration;
 
             rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_move_autonomous;
-
-            //CanUsbへ
+            
             rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb;
-
-            //各nodeと共有
             rclcpp::Publisher<controller_interface_msg::msg::BaseControl>::SharedPtr _pub_base_control;
             rclcpp::Publisher<controller_interface_msg::msg::Convergence>::SharedPtr _pub_convergence;
             rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr _pub_injection_calculate;
-
-            //gazebo_simulator用のpub
+            rclcpp::Publisher<std_msgs::msg::String>::SharedPtr _pub_target_node;
+            rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr _pub_is_start;
             rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr _pub_gazebo;
 
-            //sprine_pid
-            rclcpp::Publisher<std_msgs::msg::String>::SharedPtr _pub_target_node;
-
-            rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr _pub_is_start;
-
-            //timer
             rclcpp::TimerBase::SharedPtr _pub_heartbeat;
             rclcpp::TimerBase::SharedPtr _pub_timer_convergence;
-            rclcpp::TimerBase::SharedPtr _socket_timer;
-            rclcpp::TimerBase::SharedPtr _pub_state_communication_timer;
             rclcpp::TimerBase::SharedPtr check_controller_connection;
             rclcpp::TimerBase::SharedPtr check_mainboard_connection;
+            rclcpp::TimerBase::SharedPtr Joystick_timer;
 
-            //QoS
             rclcpp::QoS _qos = rclcpp::QoS(10);
-            
-            //controller_mainからのcallback
-            void callback_main_pad(const std_msgs::msg::String::SharedPtr msg);
-            void callback_screen_mainpad(const std_msgs::msg::String::SharedPtr msg);
-            void callback_inject_calibration(const std_msgs::msg::Empty::SharedPtr msg);
-            void callback_connection_state(const std_msgs::msg::Empty::SharedPtr msg);
 
-            //controller_subからのcallback
-            void callback_subpad(const std_msgs::msg::String::SharedPtr msg);
-            void callback_screen_subpad(const std_msgs::msg::String::SharedPtr msg);
-            
-            //mainからのcallback
+            void callback_dualsense(const sensor_msgs::msg::Joy::SharedPtr msg);
             void callback_emergency_state(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
             void callback_inject_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
             void callback_seedling_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
             void callback_paddy_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
-
-            //splineからのcallback
             void callback_is_move_tracking(const std_msgs::msg::Bool::SharedPtr msg);
-
-            //injection_param_calculatorからのcallback
             void callback_calculator_convergence(const std_msgs::msg::Bool::SharedPtr msg);
-
+            void callback_inject_calibration(const std_msgs::msg::Empty::SharedPtr msg);
             void callback_move_autonomous(const std_msgs::msg::Bool::SharedPtr msg);
+            void callback_Joystick();
 
-            void _recv_callback();
+            VelPlanner high_velPlanner_linear_x;
+            VelPlanner high_velPlanner_linear_y;
+            const VelPlannerLimit high_limit_linear;
 
-            void _recv_joy_main(const unsigned char data[16]);
+            VelPlanner slow_velPlanner_linear_x;
+            VelPlanner slow_velPlanner_linear_y;
+            const VelPlannerLimit slow_limit_linear;
 
-            //メッセージ型の宣言
-            controller_interface_msg::msg::BaseControl msg_base_control;
-            controller_interface_msg::msg::Convergence msg_convergence;           
+            VelPlanner velPlanner_angular_z;
+            const VelPlannerLimit limit_angular;
 
-            //robotcontrol_flagはtrueのときpublishできる
-            bool robotcontrol_flag = false;
-
-            //初期化指定用
             const float high_manual_linear_max_vel;
             const float slow_manual_linear_max_vel;
             const float manual_angular_max_vel;
-            
+
             const bool defalt_restart_flag;
             const bool defalt_move_autonomous_flag;
             const bool defalt_injection_autonomous_flag;
@@ -159,27 +124,60 @@ namespace controller_interface
             const int16_t can_inject_calibration_id;
             const int16_t can_led_id;
 
-            //計画機
-            VelPlanner high_velPlanner_linear_x;
-            VelPlanner high_velPlanner_linear_y;
-            const VelPlannerLimit high_limit_linear;
-
-            VelPlanner slow_velPlanner_linear_x;
-            VelPlanner slow_velPlanner_linear_y;
-            const VelPlannerLimit slow_limit_linear;
-
-            VelPlanner velPlanner_angular_z;
-            const VelPlannerLimit limit_angular;
-
-            RecvUDP joy_main;
+            const bool connection_check;
+            bool arm_expansion_flag = false;
 
             Gamebtn gamebtn;
-            bool arm_expansion_flag = false;
+
+            controller_interface_msg::msg::BaseControl msg_base_control;
+            controller_interface_msg::msg::Convergence msg_convergence;  
 
             std::chrono::system_clock::time_point get_controller_time;
             std::chrono::system_clock::time_point get_mainboard_time;
 
-            const bool connection_check;
+            //dualsenseのボタン配列メモ
+            //buttons:  0:cross  1:circle  2:triangle  3:square  4:L1  5:R1  6:L2  7:R2  8:create  9:option  10:ps  11:joyL  12:joyR
+            //axes:  0:joyL_x  1:joyL_y  2:L2  3:joyR_x  4:joyR_y  5:R2  6:Left(1),Right(-1)  7:Up(1),Down(-1)
+            
+            UpEdge upedge_buttons[13];
+            UpEdge upedge_LRUD[4];
+            bool buttons[13] = {};
+            bool LRUD[4] = {};
+            double axes[7] = {};
 
+            enum ps5_buttons{
+                cross,
+                circle,
+                triangle,
+                square,
+                l1,
+                r1,
+                l2,
+                r2,
+                create,
+                option,
+                ps,
+                l3,
+                r3               
+            };
+
+            enum ps5_axes{
+                lx,
+                ly,
+                L2,
+                rx,
+                ry,
+                R2,
+                LR,
+                UD             
+            };
+    
+            enum ps5_LRUD{
+                left,
+                right,
+                up,
+                down           
+            };
+            
     };
 }
