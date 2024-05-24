@@ -17,7 +17,7 @@ launch: #起動パラメータ
     linear_max_dec: 2.0
     linear_max_jer: 0.0
     # 回転  速度[deg/s],加速度[deg/s^2],加減速度[-deg/s^2],躍度[deg/s^3]
-    angular_max_vel: 120.0
+    angular_max_vel: 140.0
     angular_max_acc: 360.0
     angular_max_dec: 360.0
     angular_max_jer: 0.0
@@ -49,12 +49,14 @@ launch: #起動パラメータ
       seedling_collect: 0x210
       seedling_install: 0x211
       seedling_convergence: 0x212
-      #苗アーム展開
       arm_expansion: 0x213
+      arm_up: 0x214
       #籾
       paddy_collect: 0x220
       paddy_install: 0x221
       paddy_convergence: 0x222
+
+      led: 0x230
         
     port:
       joy_main: 50000
@@ -105,9 +107,9 @@ rasnac_localization:
     laser_weight: 1.0        #lidarの重み->値を大きくするとlidarが優先される
     odom_weight_liner: 2.0e-3     #値が大きくなると共分散が小さくなる
     odom_weight_angler: 4.0e-4
-    voxel_size: 0.06
-    trial_num: 50
-    inlier_dist_threshold: 0.015
+    voxel_size: 0.03
+    trial_num: 60
+    inlier_dist_threshold: 0.014
     inlier_length_threshold: 0.5 #インライアのしきい値
     second_ransac: false         #2回ransacするか
     robot_type: "R1"
@@ -124,11 +126,12 @@ spline_pid_node:
     linear_pos_integral_gain: 0.01  #並進位置ズレの積分ゲイン
 
     angular_planner_gain: 1.0 #回転速度計画機ゲイン
-    angular_pos_gain: 1.8 #回転位置ズレのゲイン
+    angular_pos_gain: 2.0 #回転位置ズレのゲイン
     angular_pos_integral_gain: 0.01  #回転位置ズレの積分ゲイン
 
-    linear_pos_tolerance: 0.01  #並進到達位置の許容誤差[m]
-    angular_pos_tolerance: 1.0  #回転到達位置の許容誤差[deg]
+    linear_pos_tolerance: 0.015  #並進到達位置の許容誤差[m]
+    angular_pos_tolerance: 1.5  #回転到達位置の許容誤差[deg]
+    waypoint_tolerance: [0.5, 0.5, 3.0]
 
 spin_turn_node:
   ros__parameters:
