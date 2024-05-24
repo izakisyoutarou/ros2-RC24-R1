@@ -183,7 +183,9 @@ namespace controller_interface
 
             Joystick_timer = this->create_wall_timer(
                 std::chrono::milliseconds(this->get_parameter("interval_ms").as_int()),
-                std::bind(&DualSense::callback_Joystick, this) 
+                [this]{
+                    if(!msg_base_control.is_move_autonomous)callback_Joystick();
+                }
             );
 
             if(connection_check){
