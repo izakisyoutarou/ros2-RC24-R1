@@ -186,3 +186,14 @@ void Gamebtn::inject_calibration(rclcpp::Publisher<socketcan_interface_msg::msg:
     msg_inject_calibration->candlc = 1;
     _pub_canusb->publish(*msg_inject_calibration);
 }
+
+void Gamebtn::led(uint8_t led_num, rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
+    if(pre_num != led_num){
+        auto msg_led = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+        msg_led->canid = canid.led;
+        msg_led->candlc = 1;
+        msg_led->candata[0] = led_num;
+        _pub_canusb->publish(*msg_led);
+        pre_num = led_num;
+    }
+}

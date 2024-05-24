@@ -79,6 +79,7 @@ namespace controller_interface
         can_paddy_install_id(get_parameter("canid.paddy_install").as_int()),
         can_paddy_convergence_id(get_parameter("canid.paddy_convergence").as_int()),
         can_arm_expansion_id(get_parameter("canid.arm_expansion").as_int()),
+        can_led_id(get_parameter("canid.led").as_int()),
         
         connection_check(get_parameter("connection_check").as_bool())
 
@@ -100,6 +101,7 @@ namespace controller_interface
             gamebtn.canid.seedling_install = can_seedling_install_id;
             gamebtn.canid.arm_expansion = can_arm_expansion_id;
             gamebtn.canid.inject_calibration = can_inject_calibration_id;
+            gamebtn.canid.led = can_led_id;
             
             //controller_mainからsub
             _sub_main_pad = this->create_subscription<std_msgs::msg::String>(
@@ -167,6 +169,12 @@ namespace controller_interface
                 std::bind(&SmartphoneGamepad::callback_inject_calibration, this, std::placeholders::_1)
             );
 
+            _sub_move_autonomous = this->create_subscription<std_msgs::msg::Bool>(
+                "move_autonomous",
+                _qos,
+                std::bind(&SmartphoneGamepad::callback_move_autonomous, this, std::placeholders::_1)
+            );
+
             //canusbへpub
             _pub_canusb = this->create_publisher<socketcan_interface_msg::msg::SocketcanIF>("can_tx", _qos);
             //各nodeへ共有。
@@ -175,11 +183,13 @@ namespace controller_interface
             _pub_injection_calculate = this->create_publisher<std_msgs::msg::Empty>("injection_calculate", _qos);
 
             //sprine_pid
-            pub_move_node = this->create_publisher<std_msgs::msg::String>("move_node", _qos);
+            _pub_target_node = this->create_publisher<std_msgs::msg::String>("target_node", _qos);
 
             //gazebo用のpub
             _pub_gazebo = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", _qos);
             
+            _pub_is_start = this->create_publisher<std_msgs::msg::UInt8>("is_start", _qos);
+
             msg_base_control.is_restart = defalt_restart_flag;
             msg_base_control.is_emergency = defalt_emergency_flag;
             msg_base_control.is_move_autonomous = defalt_move_autonomous_flag;
@@ -305,18 +315,24 @@ namespace controller_interface
             else if(msg->data == "up") gamebtn.steer_reset(_pub_canusb);
             else if(msg->data == "down") gamebtn.calibrate(_pub_canusb);                
             else if(msg->data == "left") gamebtn.board_reset(_pub_canusb);
-            // else if(msg->data == "right") //sequence
+            else if(msg->data == "right") {
+                auto msg_is_start = std::make_shared<std_msgs::msg::UInt8>();
+                msg_is_start->data = 0;
+                _pub_is_start->publish(*msg_is_start);
+            }
             else if(msg->data == "r1") gamebtn.injection(msg_convergence.injection ,msg_convergence.injection_calculator,_pub_canusb); 
             else if(msg->data == "r2") gamebtn.injection_calculate(_pub_injection_calculate);
             else if(msg->data == "r3"){
-                if(msg_base_control.is_move_autonomous == false) msg_base_control.is_move_autonomous = true;
-                else msg_base_control.is_move_autonomous = false;
+                msg_base_control.is_move_autonomous = !msg_base_control.is_move_autonomous;
                 _pub_base_control->publish(msg_base_control);
+                 if(msg_base_control.is_move_autonomous) gamebtn.led(3,_pub_canusb);
             }
             else if(msg->data == "l1") gamebtn.paddy_control(msg_convergence.ballhand,_pub_canusb); 
             else if(msg->data == "l2") {
                 msg_base_control.is_slow_speed = !msg_base_control.is_slow_speed;
                 _pub_base_control->publish(msg_base_control);
+                if(!msg_base_control.is_move_autonomous && !msg_base_control.is_slow_speed) gamebtn.led(1,_pub_canusb);
+                else if(!msg_base_control.is_move_autonomous && msg_base_control.is_slow_speed)gamebtn.led(2,_pub_canusb);
             }
             else if(msg->data == "l3") {
                     gamebtn.arm_expansion(_pub_canusb);
@@ -328,7 +344,7 @@ namespace controller_interface
             if(msg->data.length() <= 3){
                 auto msg_move_node = std::make_shared<std_msgs::msg::String>();
                 msg_move_node->data = msg->data;
-                pub_move_node->publish(*msg_move_node);
+                _pub_target_node->publish(*msg_move_node);
             } 
         }
 
@@ -354,6 +370,7 @@ namespace controller_interface
                 msg_base_control.is_emergency = static_cast<bool>(msg->candata[0]);
                 _pub_base_control->publish(msg_base_control);
             }
+            if(msg_base_control.is_emergency)gamebtn.led(0,_pub_canusb);
         }
 
         //射出情報をsubsclib
@@ -377,6 +394,11 @@ namespace controller_interface
         //injection_param_calculatorをsubscribe
         void SmartphoneGamepad::callback_calculator_convergence(const std_msgs::msg::Bool::SharedPtr msg){
             msg_convergence.injection_calculator = msg->data;
+        }
+
+        void SmartphoneGamepad::callback_move_autonomous(const std_msgs::msg::Bool::SharedPtr msg){
+            msg_base_control.is_move_autonomous = msg->data;
+            _pub_base_control->publish(msg_base_control);
         }
 
         //スティックの値をsubscribしている

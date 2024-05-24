@@ -10,6 +10,7 @@ find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_ros REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(controller_interface_msg REQUIRED)
 find_package(socketcan_interface_msg REQUIRED)
 
@@ -29,6 +30,7 @@ target_include_directories(sequencer_node PUBLIC
 ament_target_dependencies(sequencer_node
   rclcpp
   std_msgs
+  geometry_msgs
   controller_interface_msg
   socketcan_interface_msg
 )
