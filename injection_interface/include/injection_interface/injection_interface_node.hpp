@@ -13,6 +13,7 @@
 #include "injection_interface_msg/msg/injection_command.hpp"
 #include "path_msg/msg/turning.hpp"
 #include "socketcan_interface_msg/msg/socketcan_if.hpp"
+#include "controller_interface_msg/msg/base_control.hpp"
 
 #include "utilities/two_vector.hpp"
 #include "utilities/utils.hpp"
@@ -37,13 +38,15 @@ private:
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _subscriber_is_move_tracking;
     rclcpp::Subscription<geometry_msgs::msg::Vector3>::SharedPtr _subscriber_self_pose;
     rclcpp::Subscription<geometry_msgs::msg::Vector3>::SharedPtr _subscriber_move_target_pose;
-    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _subscriber_move_node;
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _subscriber_target_node;
+    rclcpp::Subscription<controller_interface_msg::msg::BaseControl>::SharedPtr _subscription_base_control;
 
     void _callback_injection_calculate(const std_msgs::msg::Empty::SharedPtr msg);
     void _callback_is_move_tracking(const std_msgs::msg::Bool::SharedPtr msg);
     void _callback_self_pose(const geometry_msgs::msg::Vector3::SharedPtr msg);
     void _callback_move_target_pose(const geometry_msgs::msg::Vector3::SharedPtr msg);
-    void _callback_move_node(const std_msgs::msg::String::SharedPtr msg);
+    void _callback_target_node(const std_msgs::msg::String::SharedPtr msg);
+    void _subscriber_callback_base_control(const controller_interface_msg::msg::BaseControl::SharedPtr msg);
     
     rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _publisher_canusb;
     rclcpp::Publisher<injection_interface_msg::msg::InjectionCommand>::SharedPtr _publisher_injection;
@@ -81,6 +84,22 @@ private:
     std::string node = "";
     TwoVector diff;
     double target_height = 0.0;
+
+    struct Node{
+        std::string name;
+        double x;
+        double y;
+        double z;
+    };
+
+    std::vector<Node> node_list;
+
+    std::string injection_point = "";
+
+    std::vector<double>  injectionpoint_tolerance;
+    std::string old_injectionpoint = "";
+
+    bool is_move_autonomous = false;
 };
 
 }

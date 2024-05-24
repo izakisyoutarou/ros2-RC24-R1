@@ -18,7 +18,8 @@ namespace injection_interface{
         strage_front(get_parameter("strage_front").as_double_array()),
         linear_pitch(get_parameter("linear_pitch").as_double_array()),
         linear_tf(get_parameter("linear_tf").as_double_array()),
-        can_inject_pitch_id(get_parameter("canid.inject_pitch").as_int())
+        can_inject_pitch_id(get_parameter("canid.inject_pitch").as_int()),
+        injectionpoint_tolerance(get_parameter("injectionpoint_tolerance").as_double_array())
         
         {
             _subscriber_injection_calculate = this->create_subscription<std_msgs::msg::Empty>(
@@ -45,10 +46,16 @@ namespace injection_interface{
                 std::bind(&InjectionInterface::_callback_move_target_pose, this, std::placeholders::_1)
             );
 
-            _subscriber_move_node = this->create_subscription<std_msgs::msg::String>(
-                "move_node",
+            _subscriber_target_node = this->create_subscription<std_msgs::msg::String>(
+                "target_node",
                 _qos,
-                std::bind(&InjectionInterface::_callback_move_node, this, std::placeholders::_1)
+                std::bind(&InjectionInterface::_callback_target_node, this, std::placeholders::_1)
+            );
+
+            _subscription_base_control = this->create_subscription<controller_interface_msg::msg::BaseControl>(
+                "base_control",
+                _qos,
+                std::bind(&InjectionInterface::_subscriber_callback_base_control, this, std::placeholders::_1)
             );
 
             _publisher_injection = this->create_publisher<injection_interface_msg::msg::InjectionCommand>("injection_command", 10);
@@ -65,16 +72,32 @@ namespace injection_interface{
             strage_backside_0[1] *= coord_sign;
             strage_backside_1[1] *= coord_sign;
 
-            std::ifstream ifs(ament_index_cpp::get_package_share_directory("main_executor") + "/config/injection_interface/injection_gain.cfg");
-            std::string str;
-            while(getline(ifs, str)){
+            std::ifstream ifs0(ament_index_cpp::get_package_share_directory("main_executor") + "/config/injection_interface/injection_gain.cfg");
+            std::string str0;
+            while(getline(ifs0, str0)){
                 std::string token;
-                std::istringstream stream(str);
+                std::istringstream stream(str0);
                 int count = 0;
                 while(getline(stream, token, ' ')){
                     if(count==1) injection_gain.push_back(std::stod(token));
                     count++;
                 }
+            }
+
+            std::ifstream ifs1(ament_index_cpp::get_package_share_directory("main_executor") + "/config/spline_pid/nodelist.cfg");
+            std::string str1;
+            while(getline(ifs1, str1)){
+                std::string token;
+                std::istringstream stream(str1);
+                int count = 0;
+                Node node;
+                while(getline(stream, token, ' ')){
+                    if(count==0) node.name = token;
+                    else if(count==1) node.x = std::stold(token);
+                    else if(count==2) node.y = std::stold(token) * coord_sign;
+                    count++;
+                }
+                node_list.push_back(node);
             }
         }
 
@@ -91,6 +114,24 @@ namespace injection_interface{
             self_pose.x = msg->x;
             self_pose.y = msg->y;
             self_pose.z = msg->z;
+            for(int i = 0; i < node_list.size(); i++){
+                if(abs(node_list[i].x - self_pose.x) <= injectionpoint_tolerance[0] && abs(node_list[i].y - self_pose.y) <= injectionpoint_tolerance[1]){
+                    if(old_injectionpoint ==  node_list[i].name) break;
+                    RCLCPP_INFO(get_logger(),"%s",node_list[i].name.c_str());
+                    injection_point = node_list[i].name;
+                    old_injectionpoint = injection_point;
+                    if(injection_point.length() >= 2 && !is_move_autonomous){
+                        if(injection_point[0] == 'H') {
+                            command_injection_pitch(linear_pitch[0]);
+                            injection_num = std::stoi(injection_point.substr(1));              
+                        }
+                        else if(injection_point[0] == 'I') {
+                            command_injection_pitch(linear_pitch[1]);
+                            injection_num = 13;
+                        }
+                    }
+                }
+            }
         }
 
         void InjectionInterface::_callback_move_target_pose(const geometry_msgs::msg::Vector3::SharedPtr msg){
@@ -99,7 +140,7 @@ namespace injection_interface{
             move_target_pose.z = msg->z;
         }
 
-        void InjectionInterface::_callback_move_node(const std_msgs::msg::String::SharedPtr msg){
+        void InjectionInterface::_callback_target_node(const std_msgs::msg::String::SharedPtr msg){
             if(msg->data.length() >= 2){
                 if(msg->data[0] == 'H') {
                     command_injection_pitch(linear_pitch[0]);
@@ -199,6 +240,10 @@ namespace injection_interface{
             msg_injection_pitch->candlc = 4;
             for(int i=0; i<msg_injection_pitch->candlc; i++) msg_injection_pitch->candata[i] = _candata[i];
             _publisher_canusb->publish(*msg_injection_pitch);
+        }
+
+        void InjectionInterface::_subscriber_callback_base_control(const controller_interface_msg::msg::BaseControl::SharedPtr msg){
+            is_move_autonomous = msg->is_move_autonomous;
         }
 
 }  // namespace injection_interface
