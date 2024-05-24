@@ -51,6 +51,7 @@ def generate_launch_description():
         parameters= [config_file_path],
         output='screen'
     )
+
     #joyノードの作成
     joy = Node(
         package='joy_linux',
@@ -70,8 +71,9 @@ def generate_launch_description():
         launch_discription.add_entity(urg_launch)
     if(launch_params['trajectory_planner'] is True):
         launch_discription.add_entity(trajectory_planner_node)
+    if(launch_params['dualsense'] is True):
+        launch_discription.add_entity(joy)
         
     launch_discription.add_entity(main_exec_node)
-    launch_discription.add_entity(joy)
     
     return launch_discription

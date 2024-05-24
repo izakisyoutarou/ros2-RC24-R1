@@ -69,7 +69,7 @@ void Sequencer::callback_convergence(const controller_interface_msg::msg::Conver
                 command_arm_expansion();
                 progress++;
             }
-            else if(progress == n++){
+            else if(progress == n++ && move_autonomous){
                 command_move_node("a0");
                 progress++;
             }
@@ -84,10 +84,6 @@ void Sequencer::callback_convergence(const controller_interface_msg::msg::Conver
         }
         else if(sequence_count == 2){
             if(progress == n++){
-                command_move_autonomous(true);
-                progress++;
-            }
-            else if(progress == n++){
                 if(court_color == "blue") command_seedling_collect_left();
                 else if(court_color == "red") command_seedling_collect_right();
                 progress++;
@@ -98,6 +94,9 @@ void Sequencer::callback_convergence(const controller_interface_msg::msg::Conver
             }
             else if(progress == n++ && timer()){
                 command_move_autonomous(true);
+                progress++;
+            }
+            else if(progress == n++ && move_autonomous){
                 command_move_node("a1");
                 progress++;
             }
@@ -112,10 +111,6 @@ void Sequencer::callback_convergence(const controller_interface_msg::msg::Conver
         }
         else if(sequence_count == 3){
             if(progress == n++){
-                command_move_autonomous(true);
-                progress++;
-            }
-            else if(progress == n++){
                 if(court_color == "blue") command_seedling_collect_right();
                 else if(court_color == "red") command_seedling_collect_left();
                 progress++;
@@ -126,6 +121,9 @@ void Sequencer::callback_convergence(const controller_interface_msg::msg::Conver
             }
             else if(progress == n++ && timer()){
                 command_move_autonomous(true);
+                progress++;
+            }
+            else if(progress == n++ && move_autonomous){
                 command_move_node("C");
                 progress++;
             }
@@ -188,16 +186,19 @@ void Sequencer::callback_convergence(const controller_interface_msg::msg::Conver
         }
         else if(sequence_count == 4){
             if(progress == n++){
-                command_move_autonomous(true);
-                progress++;
-            }
-            else if(progress == n++){
                 if(court_color == "blue") command_seedling_collect_left();
                 else if(court_color == "red") command_seedling_collect_right();
                 progress++;
             }
             else if(progress == n++ && msg->seedlinghand){
+                timer(300);
+                progress++;
+            }
+            else if(progress == n++ && timer()){
                 command_move_autonomous(true);
+                progress++;
+            }
+            else if(progress == n++ && move_autonomous){
                 command_move_node("H");
                 progress++;
             }
@@ -252,6 +253,7 @@ void Sequencer::callback_base_control(const controller_interface_msg::msg::BaseC
         sequence_mode = SEQUENCE_MODE::stop;
         sequence_count = 0;
     }
+    move_autonomous = msg->is_move_autonomous;
 }
 
 void Sequencer::callback_target_node(const std_msgs::msg::String::SharedPtr msg){

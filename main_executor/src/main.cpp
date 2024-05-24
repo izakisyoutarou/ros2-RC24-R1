@@ -1,6 +1,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rcl/rcl.h>
 #include <iostream>
+#include "controller_interface/controller_interface_node.hpp"
+#include "controller_interface/unity_interface_node.hpp"
 #include "controller_interface/dualsense_interface_node.hpp"
 #include "injection_interface/injection_interface_node.hpp"
 #include "injection_param_calculator/injection_param_calculator.hpp"
@@ -18,8 +20,10 @@ int main(int argc, char * argv[]){
     rclcpp::NodeOptions nodes_option;
     nodes_option.allow_undeclared_parameters(true);
     nodes_option.automatically_declare_parameters_from_overrides(true);
-    
-    auto controller_node = std::make_shared<controller_interface::DualSense>(nodes_option); 
+
+    auto controller_node = std::make_shared<controller_interface::SmartphoneGamepad>(nodes_option);
+    // auto controller_node = std::make_shared<controller_interface::DualSense>(nodes_option); 
+    auto untiy_node = std::make_shared<controller_interface::Unity>(nodes_option);
     auto injection_interface_node = std::make_shared<injection_interface::InjectionInterface>(nodes_option);
     auto injection_param_calculator_node = std::make_shared<injection_param_calculator::InjectionParamCalculator>(nodes_option);
     auto ransac_localization = std::make_shared<self_localization::ransaclocalization>(nodes_option);

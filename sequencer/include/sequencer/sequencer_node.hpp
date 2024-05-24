@@ -105,6 +105,7 @@ private:
 
     int sequence_count = 0;
 
+    bool move_autonomous = false;
 };
 
 }  // namespace sequencer
