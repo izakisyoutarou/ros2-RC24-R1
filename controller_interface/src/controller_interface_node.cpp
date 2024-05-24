@@ -323,8 +323,7 @@ namespace controller_interface
             else if(msg->data == "r1") gamebtn.injection(msg_convergence.injection ,msg_convergence.injection_calculator,_pub_canusb); 
             else if(msg->data == "r2") gamebtn.injection_calculate(_pub_injection_calculate);
             else if(msg->data == "r3"){
-                if(msg_base_control.is_move_autonomous == false) msg_base_control.is_move_autonomous = true;
-                else msg_base_control.is_move_autonomous = false;
+                msg_base_control.is_move_autonomous = !msg_base_control.is_move_autonomous;
                 _pub_base_control->publish(msg_base_control);
                  if(msg_base_control.is_move_autonomous) gamebtn.led(3,_pub_canusb);
             }
