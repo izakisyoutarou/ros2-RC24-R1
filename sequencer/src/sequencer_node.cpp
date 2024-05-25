@@ -251,6 +251,16 @@ void Sequencer::callback_convergence(const controller_interface_msg::msg::Conver
             command_sequence(SEQUENCE_MODE::stop);    
         } 
     }
+    else if(sequence_mode == SEQUENCE_MODE::comeback){
+            if(progress == n++){
+                command_move_autonomous(true);
+                progress++;
+            }
+            else if(progress == n++ && move_autonomous){
+                command_move_interrupt_node("a8");
+                command_sequence(SEQUENCE_MODE::stop);    
+            }
+    }
 }
 
 void Sequencer::callback_base_control(const controller_interface_msg::msg::BaseControl::SharedPtr msg){
@@ -275,7 +285,7 @@ void Sequencer::callback_target_node(const std_msgs::msg::String::SharedPtr msg)
         command_arm_up();
         command_move_node(target_node);  
     }
-    else if(msg->data == "a9") command_move_interrupt_node("a9");
+    else if(msg->data == "a8") command_sequence(SEQUENCE_MODE::comeback);
     else command_move_node(target_node);  
 };
 
