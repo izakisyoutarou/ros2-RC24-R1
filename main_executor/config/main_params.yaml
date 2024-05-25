@@ -10,12 +10,12 @@ launch: #起動パラメータ
     initial_pose: [0.37, 1.24, 0.0]  #初期位置[x,y,yaw]
     2nd_initial_pose: [5.5, 0.35, 0.0]  #2つ目の初期位置[x,y,yaw]
     tf_laser2robot: [0.2835,0.0,0.0,  3.14159,0.0,0.0]  #ロボット->lidarのTF[x,y,z,r,p,y]
-    court_color: "red" #コート情報
+    court_color: "blue" #コート情報
 
     # 自動の並進  速度[m/s],加速度[m/s^2],加減速度[-m/s^2],躍度[m/s^3]
-    linear_max_vel: 2.0
-    linear_max_acc: 2.0
-    linear_max_dec: 2.0
+    linear_max_vel: 3.0
+    linear_max_acc: 2.5
+    linear_max_dec: 2.5
     linear_max_jer: 0.0
     # 回転  速度[deg/s],加速度[deg/s^2],加減速度[-deg/s^2],躍度[deg/s^3]
     angular_max_vel: 140.0
@@ -84,11 +84,11 @@ launch: #起動パラメータ
 controller_interface_node:
   ros__parameters:
     # 手動の高速　並進　速度[m/s],加速度[m/s^2],加減速度[-m/s^2]
-    high_linear_max_vel: 1.5
+    high_linear_max_vel: 1.0
     high_linear_max_acc: 10.0
     high_linear_max_dec: 10.0
     # 手動の低速　並進　速度[m/s],加速度[m/s^2],加減速度[-m/s^2]
-    slow_linear_max_vel: 1.0
+    slow_linear_max_vel: 0.5
     slow_linear_max_acc: 10.0
     slow_linear_max_dec: 10.0
     # 手動の回転  速度[deg/s],加速度[deg/s^2],加減速度[-deg/s^2]
@@ -126,13 +126,18 @@ spline_pid_node:
     linear_pos_diff_gain: 0.7
     linear_pos_integral_gain: 0.01  #並進位置ズレの積分ゲイン
 
+    #linear_planner_gain: 1.5 #並進速度計画機ゲイン
+    #linear_pos_gain: 5.0 #並進位置ズレのゲイン
+    #linear_pos_diff_gain: 0.7
+    #linear_pos_integral_gain: 0.01  #並進位置ズレの積分ゲイン
+
     angular_planner_gain: 1.0 #回転速度計画機ゲイン
-    angular_pos_gain: 2.0 #回転位置ズレのゲイン
+    angular_pos_gain: 3.0 #回転位置ズレのゲイン
     angular_pos_integral_gain: 0.01  #回転位置ズレの積分ゲイン
 
     linear_pos_tolerance: 0.015  #並進到達位置の許容誤差[m]
     angular_pos_tolerance: 1.5  #回転到達位置の許容誤差[deg]
-    waypoint_tolerance: [0.1, 0.1, 3.0]
+    waypoint_tolerance: [0.05, 0.05, 2.5]
 
 spin_turn_node:
   ros__parameters:

@@ -117,7 +117,6 @@ namespace injection_interface{
             for(int i = 0; i < node_list.size(); i++){
                 if(abs(node_list[i].x - self_pose.x) <= injectionpoint_tolerance[0] && abs(node_list[i].y - self_pose.y) <= injectionpoint_tolerance[1]){
                     if(old_injectionpoint ==  node_list[i].name) break;
-                    RCLCPP_INFO(get_logger(),"%s",node_list[i].name.c_str());
                     injection_point = node_list[i].name;
                     old_injectionpoint = injection_point;
                     if(injection_point.length() >= 2 && !is_move_autonomous){
