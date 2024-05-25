@@ -121,6 +121,7 @@ namespace controller_interface
             const int16_t can_paddy_install_id;
             const int16_t can_paddy_convergence_id;
             const int16_t can_arm_expansion_id;
+            const int16_t can_arm_down_id;
             const int16_t can_inject_calibration_id;
             const int16_t can_led_id;
 

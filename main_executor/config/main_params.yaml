@@ -52,6 +52,7 @@ launch: #起動パラメータ
       seedling_convergence: 0x212
       arm_expansion: 0x213
       arm_up: 0x214
+      arm_down: 0x215
       #籾
       paddy_collect: 0x220
       paddy_install: 0x221
@@ -84,11 +85,11 @@ launch: #起動パラメータ
 controller_interface_node:
   ros__parameters:
     # 手動の高速　並進　速度[m/s],加速度[m/s^2],加減速度[-m/s^2]
-    high_linear_max_vel: 1.0
+    high_linear_max_vel: 1.5
     high_linear_max_acc: 10.0
     high_linear_max_dec: 10.0
     # 手動の低速　並進　速度[m/s],加速度[m/s^2],加減速度[-m/s^2]
-    slow_linear_max_vel: 0.5
+    slow_linear_max_vel: 1.0
     slow_linear_max_acc: 10.0
     slow_linear_max_dec: 10.0
     # 手動の回転  速度[deg/s],加速度[deg/s^2],加減速度[-deg/s^2]
@@ -121,15 +122,15 @@ spline_pid_node:
     curvature_attenuation_rate: 0.0 #曲率の速度の減衰>=0 (0だと減衰なし)
     linear_planner_vel_limit_gain: 1.0  #速度計画機の速度上限値にかけるゲイン
 
-    linear_planner_gain: 1.2 #並進速度計画機ゲイン
-    linear_pos_gain: 3.0 #並進位置ズレのゲイン
-    linear_pos_diff_gain: 0.7
-    linear_pos_integral_gain: 0.01  #並進位置ズレの積分ゲイン
+    # linear_planner_gain: 1.2 #並進速度計画機ゲイン
+    # linear_pos_gain: 3.0 #並進位置ズレのゲイン
+    # linear_pos_diff_gain: 0.7
+    # linear_pos_integral_gain: 0.01  #並進位置ズレの積分ゲイン
 
-    #linear_planner_gain: 1.5 #並進速度計画機ゲイン
-    #linear_pos_gain: 5.0 #並進位置ズレのゲイン
-    #linear_pos_diff_gain: 0.7
-    #linear_pos_integral_gain: 0.01  #並進位置ズレの積分ゲイン
+    linear_planner_gain: 1.1 #並進速度計画機ゲイン
+    linear_pos_gain: 2.5 #並進位置ズレのゲイン
+    linear_pos_diff_gain: 0.5
+    linear_pos_integral_gain: 0.01  #並進位置ズレの積分ゲイン
 
     angular_planner_gain: 1.0 #回転速度計画機ゲイン
     angular_pos_gain: 3.0 #回転位置ズレのゲイン
@@ -143,8 +144,8 @@ spin_turn_node:
   ros__parameters:
     interval_ms: 20     #サイクル周期[ms]
 
-    angular_planner_gain: 5.0 #回転速度計画機ゲイン
-    angular_pos_gain: 5.0 #回転位置ズレのゲイン
+    angular_planner_gain: 1.0 #回転速度計画機ゲイン
+    angular_pos_gain: 2.0 #回転位置ズレのゲイン
     angular_pos_integral_gain: 0.01  #回転位置ズレの積分ゲイン
 
     angular_pos_tolerance: 1.0  #回転到達位置の許容誤差[deg]
