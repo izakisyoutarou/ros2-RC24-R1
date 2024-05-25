@@ -128,6 +128,7 @@ namespace injection_interface{
                             command_injection_pitch(linear_pitch[1]);
                             injection_num = 13;
                         }
+                        //RCLCPP_INFO(get_logger(),"%d",injection_num);
                     }
                 }
             }
@@ -168,6 +169,7 @@ namespace injection_interface{
                 case 7:
                 case 8:
                 case 9:
+                case 12:
                     RCLCPP_INFO(this->get_logger(), "backside_vel_0");
                     target_pos.x = strage_backside_0[0];
                     target_pos.y = strage_backside_0[1];
@@ -181,7 +183,6 @@ namespace injection_interface{
                 case 5:
                 case 10:
                 case 11:
-                case 12:
                     RCLCPP_INFO(this->get_logger(), "backside_vel_1");
                     target_pos.x = strage_backside_1[0];
                     target_pos.y = strage_backside_1[1];
@@ -225,7 +226,7 @@ namespace injection_interface{
         void InjectionInterface::command_injection_turn(){
             float self_z = self_pose.z;
             auto injection_angle = std::make_shared<path_msg::msg::Turning>();
-            injection_angle->angle_pos = atan2(target_pos.y - self_pose.y, target_pos.x - self_pose.x) - area(self_z, -f_pi, f_pi);
+            injection_angle->angle_pos = atan2(target_pos.y - self_pose.y, target_pos.x - self_pose.x);// - area(self_z, -f_pi, f_pi);
             injection_angle->accurate_convergence = true;
             _publisher_spin_position->publish(*injection_angle);
         }
