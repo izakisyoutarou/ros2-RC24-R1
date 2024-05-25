@@ -50,9 +50,11 @@ private:
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr _publisher_move_node;
     rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _publisher_canusb;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _publisher_move_autonomous;
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr _publisher_move_interrupt_node;
 
     void command_sequence(SEQUENCE_MODE sequence);
     void command_move_node(const std::string node);
+    void command_move_interrupt_node(const std::string node);
     
     void command_canusb_empty(const int16_t id);
     void command_canusb_uint8(const int16_t id, const uint8_t data);

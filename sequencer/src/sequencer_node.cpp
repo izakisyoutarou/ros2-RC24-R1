@@ -57,6 +57,7 @@ Sequencer::Sequencer(const std::string &name_space, const rclcpp::NodeOptions &o
     _publisher_move_node = this->create_publisher<std_msgs::msg::String>("move_node", _qos);
     _publisher_canusb = this->create_publisher<socketcan_interface_msg::msg::SocketcanIF>("can_tx", _qos);
     _publisher_move_autonomous = this->create_publisher<std_msgs::msg::Bool>("move_autonomous", _qos);
+    _publisher_move_interrupt_node = this->create_publisher<std_msgs::msg::String>("move_interrupt_node", _qos);
 
 }
 
@@ -274,6 +275,7 @@ void Sequencer::callback_target_node(const std_msgs::msg::String::SharedPtr msg)
         command_arm_up();
         command_move_node(target_node);  
     }
+    else if(msg->data == "a9") command_move_interrupt_node("a9");
     else command_move_node(target_node);  
 };
 
@@ -287,6 +289,12 @@ void Sequencer::command_move_node(const std::string node){
     msg_move_node->data = node;
     _publisher_move_node->publish(*msg_move_node);
 };
+
+void Sequencer::command_move_interrupt_node(const std::string node){
+    auto msg_move_interrupt_node = std::make_shared<std_msgs::msg::String>();
+    msg_move_interrupt_node->data = node;
+    _publisher_move_interrupt_node->publish(*msg_move_interrupt_node);
+}
 
 void Sequencer::command_canusb_empty(const int16_t id){
     auto msg_canusb = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
