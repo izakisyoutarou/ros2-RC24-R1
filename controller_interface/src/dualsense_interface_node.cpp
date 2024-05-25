@@ -63,6 +63,7 @@ namespace controller_interface
         can_paddy_install_id(get_parameter("canid.paddy_install").as_int()),
         can_paddy_convergence_id(get_parameter("canid.paddy_convergence").as_int()),
         can_arm_expansion_id(get_parameter("canid.arm_expansion").as_int()),
+        can_arm_down_id(get_parameter("canid.arm_down").as_int()),
         can_led_id(get_parameter("canid.led").as_int()),
         connection_check(get_parameter("connection_check").as_bool())
 
@@ -82,6 +83,7 @@ namespace controller_interface
             gamebtn.canid.seedling_collect = can_seedling_collect_id;
             gamebtn.canid.seedling_install = can_seedling_install_id;
             gamebtn.canid.arm_expansion = can_arm_expansion_id;
+            gamebtn.canid.arm_down = can_arm_down_id;
             gamebtn.canid.inject_calibration = can_inject_calibration_id;
 
             _sub_dualsense = this->create_subscription<sensor_msgs::msg::Joy>(
@@ -306,6 +308,7 @@ namespace controller_interface
                 gamebtn.arm_expansion(_pub_canusb);
                 arm_expansion_flag = true;
             }
+            else if(buttons[ps5_buttons::ps]) gamebtn.arm_down(_pub_canusb);
         }
 
         void DualSense::callback_Joystick()

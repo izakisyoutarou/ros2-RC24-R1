@@ -179,6 +179,15 @@ void Gamebtn::arm_expansion(rclcpp::Publisher<socketcan_interface_msg::msg::Sock
     msg_arm_expansion->candlc = 0;
     _pub_canusb->publish(*msg_arm_expansion);
 }
+
+void Gamebtn::arm_down(rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
+    cout<<"arm_down"<<endl;
+    auto msg_arm_down = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+    msg_arm_down->canid = canid.arm_down;
+    msg_arm_down->candlc = 0;
+    _pub_canusb->publish(*msg_arm_down);
+}
+
 void Gamebtn::inject_calibration(rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
     cout<<"inject_calibration"<<endl;
     auto msg_inject_calibration = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
