@@ -67,7 +67,6 @@ void Sequencer::callback_convergence(const controller_interface_msg::msg::Conver
         if(sequence_count == 1){
             if(progress == n++){
                 command_move_autonomous(true);
-                command_arm_expansion();
                 progress++;
             }
             else if(progress == n++ && move_autonomous){
@@ -75,6 +74,7 @@ void Sequencer::callback_convergence(const controller_interface_msg::msg::Conver
                 progress++;
             }
             else if(progress == n++ && way_point == "a0"){
+                command_arm_expansion();
                 command_move_node("A");
                 progress++;
             }
@@ -181,6 +181,10 @@ void Sequencer::callback_convergence(const controller_interface_msg::msg::Conver
                 progress++;
             }
             else if(progress == n++ && timer()){
+                command_move_node("a5");
+                progress++;
+            }
+            else if(progress == n++ && way_point == "a5"){
                 command_move_node("G");
                 progress++;     
             }
@@ -228,8 +232,12 @@ void Sequencer::callback_convergence(const controller_interface_msg::msg::Conver
             else if(progress == n++ && msg->seedlinghand){
                 timer(300);
                 progress++;
-            }   
+            } 
             else if(progress == n++ && timer()){
+                command_move_node("a7");
+                progress++;
+            }
+            else if(progress == n++ && way_point == "a7"){
                 command_move_node("IJ0");
                 command_sequence(SEQUENCE_MODE::stop);       
             }
