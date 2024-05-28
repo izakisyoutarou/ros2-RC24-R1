@@ -133,7 +133,7 @@ spline_pid_node:
     linear_pos_integral_gain: 0.01  #並進位置ズレの積分ゲイン
 
     angular_planner_gain: 1.0 #回転速度計画機ゲイン
-    angular_pos_gain: 3.0 #回転位置ズレのゲイン
+    angular_pos_gain: 2.0 #回転位置ズレのゲイン
     angular_pos_integral_gain: 0.01  #回転位置ズレの積分ゲイン
 
     linear_pos_tolerance: 0.015  #並進到達位置の許容誤差[m]

@@ -243,6 +243,7 @@ void Sequencer::callback_convergence(const controller_interface_msg::msg::Conver
             else if(target_node == "H3" || target_node == "H9") way = "b6";
             else if(target_node == "H4" || target_node == "H10") way = "b7";
             else if(target_node == "H5" || target_node == "H11") way = "b8";
+            else if(target_node == "H5" || target_node == "H11") way = "b8";
             command_move_node(way);  
             progress++;
         } 
@@ -261,6 +262,27 @@ void Sequencer::callback_convergence(const controller_interface_msg::msg::Conver
                 command_sequence(SEQUENCE_MODE::stop);    
             }
     }
+    else if(sequence_mode == SEQUENCE_MODE::evacuate){
+        // if(progress == n++){
+        //     if(pre_target_node == "H0" || pre_target_node == "H6") way = "b3";  
+        //     else if(pre_target_node == "H1" || pre_target_node == "H7") way = "b4";
+        //     else if(pre_target_node == "H2" || pre_target_node == "H8") way = "b5";
+        //     else if(pre_target_node == "H3" || pre_target_node == "H9") way = "b6";
+        //     else if(pre_target_node == "H4" || pre_target_node == "H10") way = "b7";
+        //     else if(pre_target_node == "H5" || pre_target_node == "H11") way = "b8";
+        //     else if(pre_target_node == "H12") way = "IJ0";
+        //     else if(pre_target_node == "IJ0"){
+        //         command_move_node("EV0");
+        //         command_sequence(SEQUENCE_MODE::stop);    
+        //     }
+        //     command_move_node(way);  
+        //     progress++;
+        // } 
+        // else if(progress == n++ && way_point == way){
+        //     command_move_node("EV0");  
+        //     command_sequence(SEQUENCE_MODE::stop);    
+        // } 
+    }
 }
 
 void Sequencer::callback_base_control(const controller_interface_msg::msg::BaseControl::SharedPtr msg){
@@ -275,7 +297,7 @@ void Sequencer::callback_target_node(const std_msgs::msg::String::SharedPtr msg)
     pre_target_node = target_node;
     target_node = msg->data;
     if(msg->data[0] == 'H') {
-        if((pre_target_node == "H0" && target_node == "H6") || (pre_target_node == "H1" && target_node == "H7") || (pre_target_node == "H2" && target_node == "H8") || (pre_target_node == "H3" && target_node == "H9") || (pre_target_node == "H4" && target_node == "H10") || (pre_target_node == "H5" && target_node == "H11")){
+        if((pre_target_node == "H0" && target_node == "H6") || (pre_target_node == "H1" && target_node == "H7") || (pre_target_node == "H2" && target_node == "H8") || (pre_target_node == "H3" && target_node == "H9") || (pre_target_node == "H4" && target_node == "H10") || (pre_target_node == "H5" && target_node == "H11") || (target_node == "H12")){
             command_move_node(target_node); 
         }
         else command_sequence(SEQUENCE_MODE::harvesting);

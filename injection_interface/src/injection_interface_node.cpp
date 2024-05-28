@@ -114,6 +114,7 @@ namespace injection_interface{
             self_pose.x = msg->x;
             self_pose.y = msg->y;
             self_pose.z = msg->z;
+            // RCLCPP_INFO(get_logger(),"x:%f y:%f z:%f",self_pose.x,self_pose.y,self_pose.z);
             for(int i = 0; i < node_list.size(); i++){
                 if(abs(node_list[i].x - self_pose.x) <= injectionpoint_tolerance[0] && abs(node_list[i].y - self_pose.y) <= injectionpoint_tolerance[1]){
                     if(old_injectionpoint ==  node_list[i].name) break;
@@ -128,7 +129,7 @@ namespace injection_interface{
                             command_injection_pitch(linear_pitch[1]);
                             injection_num = 13;
                         }
-                        //RCLCPP_INFO(get_logger(),"%d",injection_num);
+                        // RCLCPP_INFO(get_logger(),"%d",injection_num);
                     }
                 }
             }
@@ -138,6 +139,7 @@ namespace injection_interface{
             move_target_pose.x = msg->x;
             move_target_pose.y = msg->y;
             move_target_pose.z = msg->z;
+            RCLCPP_INFO(get_logger(),"x:%f y:%f z:%f",move_target_pose.x,move_target_pose.y,move_target_pose.z);
         }
 
         void InjectionInterface::_callback_target_node(const std_msgs::msg::String::SharedPtr msg){
@@ -217,6 +219,7 @@ namespace injection_interface{
         void InjectionInterface::command_calculation_vel(){
             auto injection_command = std::make_shared<injection_interface_msg::msg::InjectionCommand>();
             injection_command->distance = diff.length();
+            cout<<diff.length()<<endl;
             injection_command->height = target_height;
             injection_command->pitch = pitch;
             injection_command->gain = injection_gain[injection_num];
@@ -233,6 +236,7 @@ namespace injection_interface{
 
         void InjectionInterface::command_injection_pitch(double linear_pitch){
             pitch = linear_pitch;
+            // cout<<"linear_pitch:"<<linear_pitch<<endl;
             uint8_t _candata[8];
             float_to_bytes(_candata, static_cast<float>(linear_pitch));
             auto msg_injection_pitch = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();

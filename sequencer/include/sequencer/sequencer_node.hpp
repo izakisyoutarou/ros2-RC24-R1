@@ -31,7 +31,8 @@ private:
         stop,
         planting,
         harvesting,
-        comeback
+        comeback,
+        evacuate
     } sequence_mode = SEQUENCE_MODE::stop;
 
     rclcpp::Subscription<controller_interface_msg::msg::Convergence>::SharedPtr _subscription_convergence;
