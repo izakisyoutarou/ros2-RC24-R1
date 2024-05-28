@@ -29,6 +29,7 @@ class Gamebtn{
             int16_t arm_expansion;
             int16_t arm_down;
             int16_t inject_calibration;
+            int16_t motor_calibration;
             int16_t led;
         };
         CANID canid;
@@ -53,6 +54,7 @@ class Gamebtn{
         void arm_expansion(rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb);
         void arm_down(rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb);
         void inject_calibration(rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb);
+        void motor_calibration(rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb);
         void led(uint8_t led_num, rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb);
 
     private:

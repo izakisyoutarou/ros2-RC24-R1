@@ -46,6 +46,7 @@ launch: #起動パラメータ
       inject_convergence: 0x204
       inject_pitch: 0x205
       inject_calibration: 0x206
+      motor_calibrattion: 0x207
       #苗
       seedling_collect: 0x210
       seedling_install: 0x211

@@ -196,6 +196,14 @@ void Gamebtn::inject_calibration(rclcpp::Publisher<socketcan_interface_msg::msg:
     _pub_canusb->publish(*msg_inject_calibration);
 }
 
+void Gamebtn::motor_calibration(rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
+    cout<<"motor_calibration"<<endl;
+    auto msg_motor_calibration = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();
+    msg_motor_calibration->canid = canid.motor_calibration;
+    msg_motor_calibration->candlc = 1;
+    _pub_canusb->publish(*msg_motor_calibration);
+}
+
 void Gamebtn::led(uint8_t led_num, rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb){
     if(pre_num != led_num){
         auto msg_led = std::make_shared<socketcan_interface_msg::msg::SocketcanIF>();

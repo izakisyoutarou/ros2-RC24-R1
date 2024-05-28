@@ -72,6 +72,7 @@ namespace controller_interface
         can_inject_id(get_parameter("canid.inject").as_int()),
         can_inject_convergence_id(get_parameter("canid.inject_convergence").as_int()),
         can_inject_calibration_id(get_parameter("canid.inject_calibration").as_int()),
+        can_motor_calibration_id(get_parameter("canid.motor_calibrattion").as_int()),
         can_seedling_collect_id(get_parameter("canid.seedling_collect").as_int()),
         can_seedling_install_id(get_parameter("canid.seedling_install").as_int()),
         can_seedling_convergence_id(get_parameter("canid.seedling_convergence").as_int()),
@@ -101,6 +102,7 @@ namespace controller_interface
             gamebtn.canid.seedling_install = can_seedling_install_id;
             gamebtn.canid.arm_expansion = can_arm_expansion_id;
             gamebtn.canid.inject_calibration = can_inject_calibration_id;
+            gamebtn.canid.motor_calibration = can_motor_calibration_id;
             gamebtn.canid.led = can_led_id;
             
             //controller_mainからsub
@@ -167,6 +169,12 @@ namespace controller_interface
                 "Injection_Calibration",
                 _qos,
                 std::bind(&SmartphoneGamepad::callback_inject_calibration, this, std::placeholders::_1)
+            );
+
+            _sub_motor_calibration = this->create_subscription<std_msgs::msg::Empty>(
+                "motor_calibrate",
+                _qos,
+                std::bind(&SmartphoneGamepad::callback_motor_calibration, this, std::placeholders::_1)
             );
 
             _sub_move_autonomous = this->create_subscription<std_msgs::msg::Bool>(
@@ -354,6 +362,10 @@ namespace controller_interface
 
         void SmartphoneGamepad::callback_inject_calibration(const std_msgs::msg::Empty::SharedPtr msg){
             gamebtn.inject_calibration(_pub_canusb);
+        }
+
+        void SmartphoneGamepad::callback_motor_calibration(const std_msgs::msg::Empty::SharedPtr msg){
+            gamebtn.motor_calibration(_pub_canusb);
         }
 
         void SmartphoneGamepad::callback_subpad(const std_msgs::msg::String::SharedPtr msg){

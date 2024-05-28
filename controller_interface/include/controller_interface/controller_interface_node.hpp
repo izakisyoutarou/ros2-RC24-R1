@@ -40,6 +40,7 @@ namespace controller_interface
             rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_main_pad;
             rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_screen_pad;
             rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr _sub_inject_calibration;
+            rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr _sub_motor_calibration;
             rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr _sub_connection_state; 
 
             //R1_subのcontrollerから
@@ -90,6 +91,7 @@ namespace controller_interface
             void callback_main_pad(const std_msgs::msg::String::SharedPtr msg);
             void callback_screen_mainpad(const std_msgs::msg::String::SharedPtr msg);
             void callback_inject_calibration(const std_msgs::msg::Empty::SharedPtr msg);
+            void callback_motor_calibration(const std_msgs::msg::Empty::SharedPtr msg);
             void callback_connection_state(const std_msgs::msg::Empty::SharedPtr msg);
 
             //controller_subからのcallback
@@ -149,6 +151,8 @@ namespace controller_interface
             const int16_t can_steer_reset_id;
             const int16_t can_inject_id;
             const int16_t can_inject_convergence_id;
+            const int16_t can_inject_calibration_id;
+            const int16_t can_motor_calibration_id;
             const int16_t can_seedling_collect_id;
             const int16_t can_seedling_install_id;
             const int16_t can_seedling_convergence_id;
@@ -156,7 +160,6 @@ namespace controller_interface
             const int16_t can_paddy_install_id;
             const int16_t can_paddy_convergence_id;
             const int16_t can_arm_expansion_id;
-            const int16_t can_inject_calibration_id;
             const int16_t can_led_id;
 
             //計画機
