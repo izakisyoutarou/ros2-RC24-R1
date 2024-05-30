@@ -10,7 +10,7 @@ launch: #起動パラメータ
     initial_pose: [0.37, 1.24, 0.0]  #初期位置[x,y,yaw]
     2nd_initial_pose: [5.5, 0.35, 0.0]  #2つ目の初期位置[x,y,yaw]
     tf_laser2robot: [0.2835,0.0,0.0,  3.14159,0.0,0.0]  #ロボット->lidarのTF[x,y,z,r,p,y]
-    court_color: "blue" #コート情報
+    court_color: "red" #コート情報
 
     # 自動の並進  速度[m/s],加速度[m/s^2],加減速度[-m/s^2],躍度[m/s^3]
     linear_max_vel: 3.0
@@ -109,7 +109,7 @@ rasnac_localization:
     plot_mode: true            #実機のときはfalse
     laser_weight: 1.0        #lidarの重み->値を大きくするとlidarが優先される
     odom_weight_liner: 2.0e-3     #値が大きくなると共分散が小さくなる
-    odom_weight_angler: 4.0e-4
+    odom_weight_angler: 5.0e-4
     voxel_size: 0.03
     trial_num: 60
     inlier_dist_threshold: 0.014
@@ -129,7 +129,7 @@ spline_pid_node:
     # linear_pos_integral_gain: 0.01  #並進位置ズレの積分ゲイン
 
     linear_planner_gain: 1.1 #並進速度計画機ゲイン
-    linear_pos_gain: 2.5 #並進位置ズレのゲイン
+    linear_pos_gain: 2.3 #並進位置ズレのゲイン
     linear_pos_diff_gain: 0.5
     linear_pos_integral_gain: 0.01  #並進位置ズレの積分ゲイン
 
