@@ -184,5 +184,7 @@ namespace controller_interface
 
             const bool connection_check;
 
+            int led_num = 0;
+
     };
 }

@@ -235,6 +235,22 @@ namespace controller_interface
                     std::chrono::milliseconds(convergence_ms),
                     [this] {
                         _pub_convergence->publish(msg_convergence);
+                        if(msg_base_control.is_emergency && led_num != 0){
+                            led_num = 0;
+                            gamebtn.led(0,_pub_canusb);
+                        }
+                        else if(!msg_base_control.is_move_autonomous && !msg_base_control.is_slow_speed && led_num != 1) {
+                            led_num = 1;
+                            gamebtn.led(1,_pub_canusb);
+                        }
+                        else if(!msg_base_control.is_move_autonomous && msg_base_control.is_slow_speed && led_num != 2){
+                            led_num = 2;
+                            gamebtn.led(2,_pub_canusb);
+                        }
+                        else if(msg_base_control.is_move_autonomous && led_num != 3) {
+                            led_num = 3;
+                            gamebtn.led(3,_pub_canusb);
+                        }
                     }
                 );
 
@@ -333,14 +349,11 @@ namespace controller_interface
             else if(msg->data == "r3"){
                 msg_base_control.is_move_autonomous = !msg_base_control.is_move_autonomous;
                 _pub_base_control->publish(msg_base_control);
-                 if(msg_base_control.is_move_autonomous) gamebtn.led(3,_pub_canusb);
             }
             else if(msg->data == "l1") gamebtn.paddy_control(msg_convergence.ballhand,_pub_canusb); 
             else if(msg->data == "l2") {
                 msg_base_control.is_slow_speed = !msg_base_control.is_slow_speed;
                 _pub_base_control->publish(msg_base_control);
-                if(!msg_base_control.is_move_autonomous && !msg_base_control.is_slow_speed) gamebtn.led(1,_pub_canusb);
-                else if(!msg_base_control.is_move_autonomous && msg_base_control.is_slow_speed)gamebtn.led(2,_pub_canusb);
             }
             else if(msg->data == "l3") {
                     gamebtn.arm_expansion(_pub_canusb);
@@ -382,7 +395,6 @@ namespace controller_interface
                 msg_base_control.is_emergency = static_cast<bool>(msg->candata[0]);
                 _pub_base_control->publish(msg_base_control);
             }
-            if(msg_base_control.is_emergency)gamebtn.led(0,_pub_canusb);
         }
 
         //射出情報をsubsclib
