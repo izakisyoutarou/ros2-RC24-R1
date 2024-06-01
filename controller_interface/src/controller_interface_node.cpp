@@ -172,7 +172,7 @@ namespace controller_interface
             );
 
             _sub_motor_calibration = this->create_subscription<std_msgs::msg::Empty>(
-                "motor_calibrate",
+                "Motor_Calibration",
                 _qos,
                 std::bind(&SmartphoneGamepad::callback_motor_calibration, this, std::placeholders::_1)
             );

@@ -34,6 +34,7 @@ int main(int argc, char * argv[]){
     // auto logger_converter_node = std::make_shared<logger_converter::LoggerConverter>(nodes_option);
     
     exec.add_node(controller_node);
+    exec.add_node(untiy_node);
     exec.add_node(injection_interface_node);
     exec.add_node(injection_param_calculator_node);
     exec.add_node(ransac_localization);

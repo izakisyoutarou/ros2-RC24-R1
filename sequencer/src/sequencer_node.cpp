@@ -251,7 +251,6 @@ void Sequencer::callback_convergence(const controller_interface_msg::msg::Conver
             else if(target_node == "H3" || target_node == "H9") way = "b6";
             else if(target_node == "H4" || target_node == "H10") way = "b7";
             else if(target_node == "H5" || target_node == "H11") way = "b8";
-            else if(target_node == "H5" || target_node == "H11") way = "b8";
             command_move_node(way);  
             progress++;
         } 
