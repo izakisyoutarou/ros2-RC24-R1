@@ -39,6 +39,7 @@ namespace controller_interface
 
         private:
             rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr _sub_dualsense;
+            rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _sub_screen_pad;
             rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_emergency_state;
             rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_inject_convergence;
             rclcpp::Subscription<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _sub_paddy_convergence;
@@ -46,8 +47,8 @@ namespace controller_interface
             rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_is_move_tracking;
             rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_calculator_convergence;
             rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr _sub_inject_calibration;
-
             rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr _sub_move_autonomous;
+            rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr _sub_motor_calibration;
             
             rclcpp::Publisher<socketcan_interface_msg::msg::SocketcanIF>::SharedPtr _pub_canusb;
             rclcpp::Publisher<controller_interface_msg::msg::BaseControl>::SharedPtr _pub_base_control;
@@ -66,6 +67,8 @@ namespace controller_interface
             rclcpp::QoS _qos = rclcpp::QoS(10);
 
             void callback_dualsense(const sensor_msgs::msg::Joy::SharedPtr msg);
+            void callback_screen_mainpad(const std_msgs::msg::String::SharedPtr msg);
+            void callback_motor_calibration(const std_msgs::msg::Empty::SharedPtr msg);
             void callback_emergency_state(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
             void callback_inject_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
             void callback_seedling_convergence(const socketcan_interface_msg::msg::SocketcanIF::SharedPtr msg);
@@ -114,6 +117,8 @@ namespace controller_interface
             const int16_t can_steer_reset_id;
             const int16_t can_inject_id;
             const int16_t can_inject_convergence_id;
+            const int16_t can_inject_calibration_id;
+            const int16_t can_motor_calibration_id;
             const int16_t can_seedling_collect_id;
             const int16_t can_seedling_install_id;
             const int16_t can_seedling_convergence_id;
@@ -122,11 +127,12 @@ namespace controller_interface
             const int16_t can_paddy_convergence_id;
             const int16_t can_arm_expansion_id;
             const int16_t can_arm_down_id;
-            const int16_t can_inject_calibration_id;
             const int16_t can_led_id;
 
             const bool connection_check;
             bool arm_expansion_flag = false;
+
+            int led_num = 0;
 
             Gamebtn gamebtn;
 

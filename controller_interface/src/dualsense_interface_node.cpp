@@ -56,6 +56,7 @@ namespace controller_interface
         can_inject_id(get_parameter("canid.inject").as_int()),
         can_inject_convergence_id(get_parameter("canid.inject_convergence").as_int()),
         can_inject_calibration_id(get_parameter("canid.inject_calibration").as_int()),
+        can_motor_calibration_id(get_parameter("canid.motor_calibrattion").as_int()),
         can_seedling_collect_id(get_parameter("canid.seedling_collect").as_int()),
         can_seedling_install_id(get_parameter("canid.seedling_install").as_int()),
         can_seedling_convergence_id(get_parameter("canid.seedling_convergence").as_int()),
@@ -83,15 +84,20 @@ namespace controller_interface
             gamebtn.canid.seedling_collect = can_seedling_collect_id;
             gamebtn.canid.seedling_install = can_seedling_install_id;
             gamebtn.canid.arm_expansion = can_arm_expansion_id;
-            gamebtn.canid.arm_down = can_arm_down_id;
             gamebtn.canid.inject_calibration = can_inject_calibration_id;
+            gamebtn.canid.motor_calibration = can_motor_calibration_id;
+            gamebtn.canid.led = can_led_id;
 
             _sub_dualsense = this->create_subscription<sensor_msgs::msg::Joy>(
                 "/joy",
                 _qos,
                 std::bind(&DualSense::callback_dualsense, this, std::placeholders::_1)
             );
-
+            _sub_screen_pad = this->create_subscription<std_msgs::msg::String>(
+                "SCRN_info",
+                _qos,
+                std::bind(&DualSense::callback_screen_mainpad, this, std::placeholders::_1)
+            );
             _sub_emergency_state = this->create_subscription<socketcan_interface_msg::msg::SocketcanIF>(
                 "can_rx_"+ (boost::format("%x") % can_emergency_state_id).str(),
                 _qos,
@@ -133,6 +139,11 @@ namespace controller_interface
                 "move_autonomous",
                 _qos,
                 std::bind(&DualSense::callback_move_autonomous, this, std::placeholders::_1)
+            );
+            _sub_motor_calibration = this->create_subscription<std_msgs::msg::Empty>(
+                "Motor_Calibration",
+                _qos,
+                std::bind(&DualSense::callback_motor_calibration, this, std::placeholders::_1)
             );
 
             _pub_canusb = this->create_publisher<socketcan_interface_msg::msg::SocketcanIF>("can_tx", _qos);
@@ -178,9 +189,25 @@ namespace controller_interface
             //convergence
             _pub_timer_convergence = this->create_wall_timer(
                 std::chrono::milliseconds(convergence_ms),
-                [this] {
-                    _pub_convergence->publish(msg_convergence);
-                }
+                    [this] {
+                        _pub_convergence->publish(msg_convergence);
+                        if(msg_base_control.is_emergency && led_num != 0){
+                            led_num = 0;
+                            gamebtn.led(0,_pub_canusb);
+                        }
+                        else if(!msg_base_control.is_move_autonomous && !msg_base_control.is_slow_speed && led_num != 1) {
+                            led_num = 1;
+                            gamebtn.led(1,_pub_canusb);
+                        }
+                        else if(!msg_base_control.is_move_autonomous && msg_base_control.is_slow_speed && led_num != 2){
+                            led_num = 2;
+                            gamebtn.led(2,_pub_canusb);
+                        }
+                        else if(msg_base_control.is_move_autonomous && led_num != 3) {
+                            led_num = 3;
+                            gamebtn.led(3,_pub_canusb);
+                        }
+                    }
             );
 
             Joystick_timer = this->create_wall_timer(
@@ -369,6 +396,14 @@ namespace controller_interface
             _pub_gazebo->publish(*msg_gazebo);
         }
 
+        void DualSense::callback_screen_mainpad(const std_msgs::msg::String::SharedPtr msg){
+            if(msg->data.length() <= 3){
+                auto msg_target_node = std::make_shared<std_msgs::msg::String>();
+                msg_target_node->data = msg->data;
+                _pub_target_node->publish(*msg_target_node);
+            } 
+        }
+
         void DualSense::callback_inject_calibration(const std_msgs::msg::Empty::SharedPtr msg){
             gamebtn.inject_calibration(_pub_canusb);
         }
@@ -405,5 +440,9 @@ namespace controller_interface
         void DualSense::callback_move_autonomous(const std_msgs::msg::Bool::SharedPtr msg){
             msg_base_control.is_move_autonomous = msg->data;
             _pub_base_control->publish(msg_base_control);
+        }
+
+        void DualSense::callback_motor_calibration(const std_msgs::msg::Empty::SharedPtr msg){
+            gamebtn.motor_calibration(_pub_canusb);
         }
 }
