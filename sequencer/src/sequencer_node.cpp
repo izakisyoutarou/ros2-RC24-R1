@@ -306,16 +306,20 @@ void Sequencer::callback_target_node(const std_msgs::msg::String::SharedPtr msg)
     if(msg->data[0] == 'H') {
         if((pre_target_node == "H0" && target_node == "H6") || (pre_target_node == "H1" && target_node == "H7") || (pre_target_node == "H2" && target_node == "H8") || (pre_target_node == "H3" && target_node == "H9") || (pre_target_node == "H4" && target_node == "H10") || (pre_target_node == "H5" && target_node == "H11") || (target_node == "H12")){
             command_move_node(target_node); 
+            // RCLCPP_INFO(this->get_logger(), "-------------------------------H0からH12--------------------------");
         }
         else command_sequence(SEQUENCE_MODE::harvesting);
         command_arm_up();
+        //  RCLCPP_INFO(this->get_logger(), "------------------------command_arm_up-------------------------------");
     }
     else if(msg->data[0] == 'I') {
         command_arm_up();
         command_move_node(target_node);  
+        //  RCLCPP_INFO(this->get_logger(), "-----------------------------I---------------------------------------");
     }
     else if(msg->data == "a8") command_sequence(SEQUENCE_MODE::comeback);
     else command_move_node(target_node);  
+    // RCLCPP_INFO(this->get_logger(), "-------------------------------command_move_node1---------------------------");
 };
 
 void Sequencer::command_sequence(const SEQUENCE_MODE sequence){

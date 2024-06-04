@@ -435,7 +435,7 @@ namespace controller_interface
 
         //ジョイスティックの値
         void SmartphoneGamepad::_recv_joy_main(const unsigned char data[16]){
-
+            
             //手動モード
             if(msg_base_control.is_move_autonomous == false){
                 float values[4];
@@ -479,6 +479,9 @@ namespace controller_interface
                     high_velPlanner_linear_x.vel(static_cast<double>(values[1]));//unityとロボットにおける。xとyが違うので逆にしている。
                     high_velPlanner_linear_y.vel(static_cast<double>(-values[0]));
                     velPlanner_angular_z.vel(static_cast<double>(-values[2]));
+
+                    // RCLCPP_INFO(this->get_logger(), "0>%lf 1>%lf 2>%lf°", values[0], values[1],values[2]);
+
 
                     high_velPlanner_linear_x.cycle();
                     high_velPlanner_linear_y.cycle();

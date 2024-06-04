@@ -22,7 +22,7 @@ int main(int argc, char * argv[]){
     nodes_option.automatically_declare_parameters_from_overrides(true);
 
     auto controller_node = std::make_shared<controller_interface::SmartphoneGamepad>(nodes_option);
-    // auto controller_node = std::make_shared<controller_interface::DualSense>(nodes_option); 
+    auto DualSense_node = std::make_shared<controller_interface::DualSense>(nodes_option); 
     auto untiy_node = std::make_shared<controller_interface::Unity>(nodes_option);
     auto injection_interface_node = std::make_shared<injection_interface::InjectionInterface>(nodes_option);
     auto injection_param_calculator_node = std::make_shared<injection_param_calculator::InjectionParamCalculator>(nodes_option);
@@ -33,7 +33,8 @@ int main(int argc, char * argv[]){
     auto spin_turn_node = std::make_shared<spline_pid::SpinTurn>(nodes_option);
     // auto logger_converter_node = std::make_shared<logger_converter::LoggerConverter>(nodes_option);
     
-    exec.add_node(controller_node);
+    // exec.add_node(controller_node);
+    exec.add_node(DualSense_node);
     exec.add_node(untiy_node);
     exec.add_node(injection_interface_node);
     exec.add_node(injection_param_calculator_node);
